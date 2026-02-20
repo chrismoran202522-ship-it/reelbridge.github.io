@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoSocial Pro - Automated Social Media Management for Businesses</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        nav {
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #764ba2;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Section Styles */
+        section {
+            margin-bottom: 3rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.5rem;
+        }
+
+        /* Pricing Toggle */
+        .contract-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .toggle-btn {
+            padding: 0.8rem 1.5rem;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Savings Badge */
+        .savings-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+
+        /* Package Cards */
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .package-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .package-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .package-card.featured {
+            border-color: #667eea;
+            transform: scale(1.02);
+        }
+
+        .package-card.featured::before {
+            content: "MOST POPULAR";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #667eea;
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .package-name {
+            font-size: 1.5rem;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .package-price {
+            font-size: 2.5rem;
+            color: #333;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .package-price .period {
+            font-size: 1rem;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        .package-description {
+            color: #666;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+
+        .features-list {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .features-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+        }
+
+        .features-list li::before {
+            content: "✓";
+            color: #27ae60;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .addon-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px dashed #e0e0e0;
+        }
+
+        .addon-title {
+            font-size: 1.1rem;
+            color: #764ba2;
+            margin-bottom: 0.5rem;
+        }
+
+        .addon-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .addon-tag {
+            background: #f0f0f0;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 1rem;
+            background: #667eea;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        /* Features Section */
+        .feature-category {
+            margin-bottom: 2rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .feature-card h4 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .automation-badge {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+        }
+
+        .comparison-table tr:hover {
+            background: #f5f7fa;
+        }
+
+        .check {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .cross {
+            color: #e74c3c;
+        }
+
+        /* Calculator */
+        .calculator {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+        }
+
+        .calculator-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .calculator-row label {
+            font-weight: 600;
+            min-width: 150px;
+        }
+
+        .calculator-row select,
+        .calculator-row input {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .price-display {
+            font-size: 2rem;
+            color: #667eea;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .savings-display {
+            color: #27ae60;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* FAQ */
+        .faq-item {
+            margin-bottom: 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 1rem;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-answer {
+            padding: 1rem;
+            display: none;
+            background: white;
+        }
+
+        .faq-answer.active {
+            display: block;
+        }
+
+        /* Footer */
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .package-card.featured {
+                transform: none;
+            }
+            
+            .comparison-table {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Automation Indicator */
+        .auto-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: #27ae60;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🚀 AutoSocial Pro</h1>
+        <p>Fully Automated Social Media Management for Modern Businesses</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#packages">Packages</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#addons">Add-ons</a></li>
+            <li><a href="#calculator">Price Calculator</a></li>
+            <li><a href="#comparison">Compare</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <!-- Contract Length Toggle -->
+        <section id="packages">
+            <h2>Choose Your Package & Contract Length</h2>
+            <p style="margin-bottom: 1.5rem; color: #666;">
+                Select your contract length to unlock significant savings. All packages include our core automation engine.
+            </p>
+            
+            <div class="contract-toggle">
+                <button class="toggle-btn" onclick="setContract('monthly')">Monthly <span class="savings-badge">0% OFF</span></button>
+                <button class="toggle-btn active" onclick="setContract('quarterly')">3 Months <span class="savings-badge">15% OFF</span></button>
+                <button class="toggle-btn" onclick="setContract('biannual')">6 Months <span class="savings-badge">25% OFF</span></button>
+                <button class="toggle-btn" onclick="setContract('annual')">12 Months <span class="savings-badge">40% OFF</span></button>
+            </div>
+
+            <div class="packages-grid" id="packagesGrid">
+                <!-- Starter Package -->
+                <div class="package-card">
+                    <div class="package-name">Starter</div>
+                    <div class="package-description">Perfect for small businesses and startups</div>
+                    <div class="package-price">
+                        <span class="monthly-price">$299</span>
+                        <span class="quarterly-price" style="display:none">$254</span>
+                        <span class="biannual-price" style="display:none">$224</span>
+                        <span class="annual-price" style="display:none">$179</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <ul class="features-list">
+                        <li>3 Social Platforms <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>30 Scheduled Posts/Month <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Auto-Content Curation <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Basic Analytics Dashboard <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Auto-Hashtag Generation <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Email Support</li>
+                    </ul>
+                    <div class="addon-section">
+                        <div class="addon-title">Available Add-ons:</div>
+                        <div class="addon-list">
+                            <span class="addon-tag">+2 Platforms ($49)</span>
+                            <span class="addon-tag">+20 Posts ($39)</span>
+                            <span class="addon-tag">AI Caption Gen ($29)</span>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="selectPackage('starter')">Get Started</button>
+                </div>
+
+                <!-- Growth Package -->
+                <div class="package-card featured">
+                    <div class="package-name">Growth</div>
+                    <div class="package-description">For growing businesses ready to scale</div>
+                    <div class="package-price">
+                        <span class="monthly-price">$599</span>
+                        <span class="quarterly-price" style="display:none">$509</span>
+                        <span class="biannual-price" style="display:none">$449</span>
+                        <span class="annual-price" style="display:none">$359</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <ul class="features-list">
+                        <li>6 Social Platforms <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>75 Scheduled Posts/Month <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>AI Content Generation <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Advanced Analytics & Reports <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Auto-Comment Response <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Competitor Monitoring <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Priority Support</li>
+                    </ul>
+                    <div class="addon-section">
+                        <div class="addon-title">Available Add-ons:</div>
+                        <div class="addon-list">
+                            <span class="addon-tag">+3 Platforms ($79)</span>
+                            <span class="addon-tag">+50 Posts ($69)</span>
+                            <span class="addon-tag">Auto-DM Campaigns ($59)</span>
+                            <span class="addon-tag">Influencer Scout ($89)</span>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="selectPackage('growth')">Get Started</button>
+                </div>
+
+                <!-- Professional Package -->
+                <div class="package-card">
+                    <div class="package-name">Professional</div>
+                    <div class="package-description">Complete solution for established brands</div>
+                    <div class="package-price">
+                        <span class="monthly-price">$999</span>
+                        <span class="quarterly-price" style="display:none">$849</span>
+                        <span class="biannual-price" style="display:none">$749</span>
+                        <span class="annual-price" style="display:none">$599</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <ul class="features-list">
+                        <li>10 Social Platforms <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Unlimited Posts <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>AI Video Generation <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Real-time Analytics API <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Sentiment Analysis <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Crisis Detection Alerts <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Auto-Report Generation <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Dedicated Account Manager</li>
+                    </ul>
+                    <div class="addon-section">
+                        <div class="addon-title">Available Add-ons:</div>
+                        <div class="addon-list">
+                            <span class="addon-tag">White Label ($149)</span>
+                            <span class="addon-tag">API Access ($199)</span>
+                            <span class="addon-tag">Custom AI Training ($299)</span>
+                            <span class="addon-tag">Multi-location ($129)</span>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="selectPackage('professional')">Get Started</button>
+                </div>
+
+                <!-- Enterprise Package -->
+                <div class="package-card">
+                    <div class="package-name">Enterprise</div>
+                    <div class="package-description">Custom solutions for large organizations</div>
+                    <div class="package-price">
+                        <span class="monthly-price">$2,499</span>
+                        <span class="quarterly-price" style="display:none">$2,124</span>
+                        <span class="biannual-price" style="display:none">$1,874</span>
+                        <span class="annual-price" style="display:none">$1,499</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <ul class="features-list">
+                        <li>Unlimited Platforms <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Unlimited Everything <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Custom AI Model Training <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Full API Access <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Automated A/B Testing <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Predictive Analytics <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>Auto-Compliance Checking <span class="auto-indicator"><span class="pulse"></span>AUTO</span></li>
+                        <li>24/7 Priority Support</li>
+                        <li>Custom Integrations</li>
+                    </ul>
+                    <div class="addon-section">
+                        <div class="addon-title">All Add-ons Included + Custom:</div>
+                        <div class="addon-list">
+                            <span class="addon-tag">Dedicated Server ($499)</span>
+                            <span class="addon-tag">SLA Guarantee ($399)</span>
+                            <span class="addon-tag">Onboarding Specialist ($599)</span>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="selectPackage('enterprise')">Contact Sales</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features">
+            <h2>🤖 Fully Automated Features</h2>
+            <p style="margin-bottom: 1.5rem; color: #666;">
+                Every feature listed below is 100% automated, requiring zero manual intervention after initial setup.
+            </p>
+
+            <div class="feature-category">
+                <h3>Content Creation & Curation</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>AI Content Generation</h4>
+                        <p>Automatically creates engaging posts, captions, and articles based on your brand voice and trending topics.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Smart Content Curation</h4>
+                        <p>Auto-discovers and schedules relevant industry content from trusted sources to keep your feed active.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Visual Content Studio</h4>
+                        <p>Automatically generates images, infographics, and short videos using AI design tools.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Hashtag Intelligence</h4>
+                        <p>Auto-generates optimal hashtag sets based on real-time trending analysis and your content.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-category">
+                <h3>Publishing & Scheduling</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>Optimal Time Posting</h4>
+                        <p>AI analyzes your audience activity patterns to automatically post at peak engagement times.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Cross-Platform Sync</h4>
+                        <p>Automatically adapts and publishes content across all connected platforms with format optimization.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Evergreen Recycling</h4>
+                        <p>Auto-identifies top-performing content and reschedules it strategically to maximize reach.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Bulk Upload Processor</h4>
+                        <p>Automatically processes, optimizes, and schedules months of content from CSV or ZIP uploads.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-category">
+                <h3>Engagement & Community</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>Auto-Comment Response</h4>
+                        <p>AI-powered bot provides instant, context-aware replies to comments and mentions 24/7.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Direct Message Automation</h4>
+                        <p>Auto-sends personalized welcome messages, answers FAQs, and qualifies leads via DM.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Sentiment Monitoring</h4>
+                        <p>Automatically analyzes comment sentiment and escalates negative interactions to human team.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Influencer Auto-Discovery</h4>
+                        <p>Continuously scans for and identifies potential brand advocates in your niche.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-category">
+                <h3>Analytics & Intelligence</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>Performance Analytics</h4>
+                        <p>Auto-generates comprehensive reports on engagement, reach, and conversion metrics.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Competitor Intelligence</h4>
+                        <p>Automatically tracks competitor activity, benchmarks your performance, and alerts on opportunities.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Trend Forecasting</h4>
+                        <p>AI predicts emerging trends in your industry and auto-suggests content to capitalize on them.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Crisis Detection</h4>
+                        <p>Monitors for negative sentiment spikes and brand mentions crisis, alerting stakeholders instantly.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-category">
+                <h3>Optimization & Growth</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>A/B Testing Engine</h4>
+                        <p>Automatically tests different content variations and optimizes future posts based on results.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Follower Growth Bot</h4>
+                        <p>Auto-engages with target audiences through strategic likes, follows, and comments to grow organically.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Lead Qualification</h4>
+                        <p>Automatically identifies and scores potential leads from social interactions.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                    <div class="feature-card">
+                        <h4>ROI Tracking</h4>
+                        <p>Auto-calculates social media ROI by connecting social activity to sales and conversions.</p>
+                        <span class="automation-badge">100% Automated</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add-ons Section -->
+        <section id="addons">
+            <h2>⚡ Modular Add-ons (All Automated)</h2>
+            <p style="margin-bottom: 1.5rem; color: #666;">
+                Customize your package with these powerful automation modules. All add-ons are month-to-month with no long-term commitment.
+            </p>
+
+            <div class="feature-category">
+                <h3>Platform Extensions</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>+2 Additional Platforms</h4>
+                        <p>Expand your reach to 2 more social networks. Auto-syncs content across all platforms.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$49/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>+3 Additional Platforms</h4>
+                        <p>Scale to 3 more platforms with advanced cross-posting automation.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$79/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Multi-Location Manager</h4>
+                        <p>Manage social accounts for multiple business locations with auto-localization.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$129/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>White Label Solution</h4>
+                        <p>Rebrand our platform as your own with automated client reporting.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$149/month</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-category">
+                <h3>Content & Creative Boosts</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>+20 Extra Posts/Month</h4>
+                        <p>Increase your content volume with AI-generated additional posts.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$39/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>+50 Extra Posts/Month</h4>
+                        <p>Maximum content output for high-frequency posting strategies.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$69/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>AI Video Generator</h4>
+                        <p>Auto-creates short-form videos from text, images, or blog posts.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$89/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Custom AI Training</h4>
+                        <p>Train our AI on your brand voice, industry terms, and content style.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$299/month</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-category">
+                <h3>Engagement & Marketing Tools</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>AI Caption Generator</h4>
+                        <p>Advanced caption writing with tone adjustment and emoji optimization.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$29/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Auto-DM Campaigns</h4>
+                        <p>Automated direct message sequences for lead nurturing and promotions.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$59/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Influencer Scout</h4>
+                        <p>Auto-discovers, vets, and initiates contact with micro-influencers.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$89/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Social Listening Pro</h4>
+                        <p>Advanced brand mention monitoring across web and social platforms.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$69/month</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-category">
+                <h3>Enterprise & Advanced</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>API Access</h4>
+                        <p>Full REST API for custom integrations and data extraction.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$199/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Dedicated Server</h4>
+                        <p>Isolated infrastructure for maximum performance and security.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$499/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>SLA Guarantee</h4>
+                        <p>99.9% uptime guarantee with automated failover systems.</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$399/month</div>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Onboarding Specialist</h4>
+                        <p>One-time dedicated setup and training (one-time fee).</p>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$599 one-time</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Price Calculator -->
+        <section id="calculator">
+            <h2>💰 Smart Price Calculator</h2>
+            <p style="margin-bottom: 1.5rem; color: #666;">
+                Build your perfect package and see your savings in real-time.
+            </p>
+            
+            <div class="calculator">
+                <div class="calculator-row">
+                    <label>Select Base Package:</label>
+                    <select id="calcPackage" onchange="calculatePrice()">
+                        <option value="starter">Starter ($299/mo)</option>
+                        <option value="growth" selected>Growth ($599/mo)</option>
+                        <option value="professional">Professional ($999/mo)</option>
+                        <option value="enterprise">Enterprise ($2,499/mo)</option>
+                    </select>
+                </div>
+                
+                <div class="calculator-row">
+                    <label>Contract Length:</label>
+                    <select id="calcContract" onchange="calculatePrice()">
+                        <option value="1">Monthly (0% off)</option>
+                        <option value="3" selected>3 Months (15% off)</option>
+                        <option value="6">6 Months (25% off)</option>
+                        <option value="12">12 Months (40% off)</option>
+                    </select>
+                </div>
+                
+                <div class="calculator-row">
+                    <label>Add-ons (select multiple):</label>
+                    <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.3rem; font-weight: normal;">
+                            <input type="checkbox" value="49" onchange="calculatePrice()"> +2 Platforms ($49)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.3rem; font-weight: normal;">
+                            <input type="checkbox" value="79" onchange="calculatePrice()"> +3 Platforms ($79)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.3rem; font-weight: normal;">
+                            <input type="checkbox" value="39" onchange="calculatePrice()"> +20 Posts ($39)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.3rem; font-weight: normal;">
+                            <input type="checkbox" value="69" onchange="calculatePrice()"> +50 Posts ($69)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.3rem; font-weight: normal;">
+                            <input type="checkbox" value="29" onchange="calculatePrice()"> AI Captions ($29)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.3rem; font-weight: normal;">
+                            <input type="checkbox" value="59" onchange="calculatePrice()"> Auto-DMs ($59)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.3rem; font-weight: normal;">
+                            <input type="checkbox" value="89" onchange="calculatePrice()"> Influencer Scout ($89)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.3rem; font-weight: normal;">
+                            <input type="checkbox" value="149" onchange="calculatePrice()"> White Label ($149)
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="price-display" id="priceDisplay">
+                    Monthly: $509 | Quarterly Total: $1,527
+                </div>
+                <div class="savings-display" id="savingsDisplay">
+                    You save 15% with quarterly billing ($270/quarter)
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Table -->
+        <section id="comparison">
+            <h2>📊 Package Comparison Matrix</h2>
+            <div style="overflow-x: auto;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Starter</th>
+                            <th>Growth</th>
+                            <th>Professional</th>
+                            <th>Enterprise</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Social Platforms</strong></td>
+                            <td>3</td>
+                            <td>6</td>
+                            <td>10</td>
+                            <td>Unlimited</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Monthly Posts</strong></td>
+                            <td>30</td>
+                            <td>75</td>
+                            <td>Unlimited</td>
+                            <td>Unlimited</td>
+                        </tr>
+                        <tr>
+                            <td>AI Content Generation</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓</td>
+                            <td class="check">✓</td>
+                            <td class="check">✓</td>
+                        </tr>
+                        <tr>
+                            <td>Auto-Comment Response</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓</td>
+                            <td class="check">✓</td>
+                            <td class="check">✓</td>
+                        </tr>
+                        <tr>
+                            <td>Competitor Monitoring</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓</td>
+                            <td class="check">✓</td>
+                            <td class="check">✓</td>
+                        </tr>
+                        <tr>
+                            <td>Sentiment Analysis</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓</td>
+                            <td class="check">✓</td>
+                        </tr>
+                        <tr>
+                            <td>AI Video Generation</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓</td>
+                            <td class="check">✓</td>
+                        </tr>
+                        <tr>
+                            <td>Predictive Analytics</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓</td>
+                        </tr>
+                        <tr>
+                            <td>Custom AI Training</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓</td>
+                        </tr>
+                        <tr>
+                            <td>API Access</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓</td>
+                            <td class="check">✓</td>
+                        </tr>
+                        <tr>
+                            <td>White Label Option</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓</td>
+                            <td class="check">✓</td>
+                        </tr>
+                        <tr>
+                            <td>Support Level</td>
+                            <td>Email</td>
+                            <td>Priority</td>
+                            <td>Dedicated Manager</td>
+                            <td>24/7 Priority</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section id="faq">
+            <h2>❓ Frequently Asked Questions</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    How does the automation work?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    Our platform uses advanced AI and machine learning to handle content creation, scheduling, engagement, and analytics completely autonomously. Once you set your preferences and connect your accounts, the system runs 24/7 without requiring manual intervention.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Can I change my contract length later?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    Yes! You can upgrade your contract length at any time to unlock better rates. When you extend, the new discounted rate applies to your next billing cycle. You can also downgrade with 30 days notice.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Are there any setup fees?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    No setup fees for Starter, Growth, and Professional packages. Enterprise includes a dedicated onboarding specialist. Optional add-on onboarding is available for $599 if you need extra training.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    What if I exceed my post limit?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    The system will automatically notify you when you're approaching your limit. You can either upgrade your package or purchase additional post packs as add-ons. Unused posts don't roll over to the next month.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Is there a free trial?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    Yes! We offer a 14-day free trial on all packages with full access to features. No credit card required to start. You can upgrade to a paid contract anytime during or after the trial.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    How do I cancel?
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    Monthly plans can be canceled anytime with 7 days notice. Longer contracts can be downgraded to monthly with 30 days notice, or you can pause your account for up to 3 months without losing data.
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 AutoSocial Pro. All rights reserved.</p>
+        <p> Fully Automated Social Media Management</p>
+    </footer>
+
+    <script>
+        // Contract toggle functionality
+        let currentContract = 'quarterly';
+        
+        function setContract(type) {
+            currentContract = type;
+            
+            // Update button states
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update prices
+            updatePrices();
+        }
+        
+        function updatePrices() {
+            const prices = {
+                monthly: { starter: 299, growth: 599, professional: 999, enterprise: 2499 },
+                quarterly: { starter: 254, growth: 509, professional: 849, enterprise: 2124 },
+                biannual: { starter: 224, growth: 449, professional: 749, enterprise: 1874 },
+                annual: { starter: 179, growth: 359, professional: 599, enterprise: 1499 }
+            };
+            
+            const suffixes = {
+                monthly: 'monthly-price',
+                quarterly: 'quarterly-price',
+                biannual: 'biannual-price',
+                annual: 'annual-price'
+            };
+            
+            // Hide all prices first
+            document.querySelectorAll('.monthly-price, .quarterly-price, .biannual-price, .annual-price').forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // Show current contract prices
+            document.querySelectorAll('.' + suffixes[currentContract]).forEach(el => {
+                el.style.display = 'inline';
+            });
+        }
+        
+        // Package selection
+        function selectPackage(packageName) {
+            alert('You selected the ' + packageName.charAt(0).toUpperCase() + packageName.slice(1) + ' package with ' + currentContract + ' billing. Redirecting to checkout...');
+        }
+        
+        // Price calculator
+        function calculatePrice() {
+            const basePrices = {
+                starter: 299,
+                growth: 599,
+                professional: 999,
+                enterprise: 2499
+            };
+            
+            const discounts = {
+                1: 0,
+                3: 0.15,
+                6: 0.25,
+                12: 0.40
+            };
+            
+            const package = document.getElementById('calcPackage').value;
+            const months = parseInt(document.getElementById('calcContract').value);
+            const basePrice = basePrices[package];
+            
+            // Calculate add-ons
+            let addonTotal = 0;
+            document.querySelectorAll('#calculator input[type="checkbox"]:checked').forEach(cb => {
+                addonTotal += parseInt(cb.value);
+            });
+            
+            const monthlyTotal = basePrice + addonTotal;
+            const discountedMonthly = monthlyTotal * (1 - discounts[months]);
+            const totalContract = discountedMonthly * months;
+            const totalSavings = (monthlyTotal * months) - totalContract;
+            
+            document.getElementById('priceDisplay').innerHTML = 
+                `Monthly: $${discountedMonthly.toFixed(0)} | ${months}-Month Total: $${totalContract.toFixed(0)}`;
+            
+            document.getElementById('savingsDisplay').innerHTML = 
+                discounts[months] > 0 
+                    ? `You save ${(discounts[months]*100).toFixed(0)}% with ${months}-month billing ($${totalSavings.toFixed(0)} total savings)`
+                    : 'Monthly billing - no commitment required';
+        }
+        
+        // FAQ toggle
+        function toggleFaq(element) {
+            const answer = element.nextElementSibling;
+            answer.classList.toggle('active');
+            const span = element.querySelector('span');
+            span.textContent = answer.classList.contains('active') ? '−' : '+';
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePrices();
+            calculatePrice();
+        });
+    </script>
+</body>
+</html>
+
