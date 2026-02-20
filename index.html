@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoSocial Pro - Automated Social Media Management for Businesses</title>
+    <title>Reel Bridge - Automated Social Media Management for Businesses</title>
     <style>
         * {
             margin: 0;
@@ -14,37 +14,178 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: #f5f7fa;
+            color: #2c3e50;
+            background: #f0f4f8;
         }
 
-        /* Header */
-        header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem 0;
+        /* Floating Hamburger Menu */
+        .hamburger-menu {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(44, 62, 80, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .hamburger-btn {
+            width: 50px;
+            height: 50px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .hamburger-btn:hover {
+            background: rgba(52, 152, 219, 0.3);
+        }
+
+        .hamburger-btn span {
+            width: 28px;
+            height: 3px;
+            background: #ecf0f1;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        .hamburger-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .hamburger-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: rgba(44, 62, 80, 0.98);
+            min-width: 220px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+
+        .menu-dropdown.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .menu-dropdown a {
+            display: block;
+            padding: 15px 20px;
+            color: #ecf0f1;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .menu-dropdown a:hover {
+            background: #3498db;
+            padding-left: 25px;
+        }
+
+        .menu-dropdown a:last-child {
+            border-bottom: none;
+        }
+
+        /* Banner Section with Image */
+        .banner-section {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            overflow: hidden;
+        }
+
+        .banner-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .banner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(44, 62, 80, 0.7) 0%, rgba(52, 152, 219, 0.5) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 2rem;
         }
 
-        header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
+        .banner-content h1 {
+            font-size: 3.5rem;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            font-weight: 700;
         }
 
-        header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
+        .banner-content p {
+            font-size: 1.4rem;
+            color: #ecf0f1;
+            max-width: 600px;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Contact Bar */
+        .contact-bar {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            font-size: 0.95rem;
+        }
+
+        .contact-bar a {
+            color: #3498db;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .contact-bar a:hover {
+            color: #5dade2;
+            text-decoration: underline;
         }
 
         /* Navigation */
         nav {
-            background: white;
+            background: #34495e;
             padding: 1rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 99;
         }
 
         nav ul {
@@ -57,13 +198,16 @@
 
         nav a {
             text-decoration: none;
-            color: #667eea;
+            color: #ecf0f1;
             font-weight: 600;
             transition: color 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
         }
 
         nav a:hover {
-            color: #764ba2;
+            color: #3498db;
+            background: rgba(255,255,255,0.1);
         }
 
         /* Container */
@@ -79,19 +223,20 @@
             background: white;
             padding: 2rem;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-top: 4px solid #3498db;
         }
 
         h2 {
-            color: #667eea;
+            color: #2c3e50;
             margin-bottom: 1.5rem;
             font-size: 2rem;
-            border-bottom: 3px solid #667eea;
+            border-bottom: 3px solid #3498db;
             padding-bottom: 0.5rem;
         }
 
         h3 {
-            color: #764ba2;
+            color: #2980b9;
             margin: 1.5rem 0 1rem 0;
             font-size: 1.5rem;
         }
@@ -107,9 +252,9 @@
 
         .toggle-btn {
             padding: 0.8rem 1.5rem;
-            border: 2px solid #667eea;
+            border: 2px solid #3498db;
             background: white;
-            color: #667eea;
+            color: #3498db;
             border-radius: 25px;
             cursor: pointer;
             font-weight: 600;
@@ -117,7 +262,7 @@
         }
 
         .toggle-btn.active {
-            background: #667eea;
+            background: #3498db;
             color: white;
         }
 
@@ -157,13 +302,14 @@
 
         .package-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-            border-color: #667eea;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+            border-color: #3498db;
         }
 
         .package-card.featured {
-            border-color: #667eea;
+            border-color: #3498db;
             transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.2);
         }
 
         .package-card.featured::before {
@@ -172,7 +318,7 @@
             top: -12px;
             left: 50%;
             transform: translateX(-50%);
-            background: #667eea;
+            background: #3498db;
             color: white;
             padding: 0.3rem 1rem;
             border-radius: 15px;
@@ -182,32 +328,33 @@
 
         .package-name {
             font-size: 1.5rem;
-            color: #667eea;
+            color: #2c3e50;
             margin-bottom: 0.5rem;
+            font-weight: 700;
         }
 
         .package-price {
             font-size: 2.5rem;
-            color: #333;
+            color: #2c3e50;
             font-weight: bold;
             margin: 1rem 0;
         }
 
         .package-price .period {
             font-size: 1rem;
-            color: #666;
+            color: #7f8c8d;
             font-weight: normal;
         }
 
         .original-price {
             text-decoration: line-through;
-            color: #999;
+            color: #95a5a6;
             font-size: 1.2rem;
             margin-right: 0.5rem;
         }
 
         .package-description {
-            color: #666;
+            color: #7f8c8d;
             margin-bottom: 1rem;
             font-style: italic;
         }
@@ -219,7 +366,7 @@
 
         .features-list li {
             padding: 0.5rem 0;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #ecf0f1;
             display: flex;
             align-items: center;
         }
@@ -234,12 +381,12 @@
         .addon-section {
             margin-top: 1.5rem;
             padding-top: 1.5rem;
-            border-top: 2px dashed #e0e0e0;
+            border-top: 2px dashed #bdc3c7;
         }
 
         .addon-title {
             font-size: 1.1rem;
-            color: #764ba2;
+            color: #2980b9;
             margin-bottom: 0.5rem;
         }
 
@@ -250,18 +397,19 @@
         }
 
         .addon-tag {
-            background: #f0f0f0;
+            background: #ecf0f1;
             padding: 0.3rem 0.8rem;
             border-radius: 15px;
             font-size: 0.85rem;
-            color: #555;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
         }
 
         .btn {
             display: inline-block;
             width: 100%;
             padding: 1rem;
-            background: #667eea;
+            background: #3498db;
             color: white;
             text-align: center;
             text-decoration: none;
@@ -274,8 +422,9 @@
         }
 
         .btn:hover {
-            background: #764ba2;
+            background: #2980b9;
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
         }
 
         /* Features Section */
@@ -294,17 +443,23 @@
             background: #f8f9fa;
             padding: 1.5rem;
             border-radius: 8px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .feature-card h4 {
-            color: #667eea;
+            color: #2c3e50;
             margin-bottom: 0.5rem;
         }
 
         .feature-card p {
             font-size: 0.9rem;
-            color: #666;
+            color: #7f8c8d;
         }
 
         .automation-badge {
@@ -330,16 +485,16 @@
         .comparison-table td {
             padding: 1rem;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #ecf0f1;
         }
 
         .comparison-table th {
-            background: #667eea;
+            background: #2c3e50;
             color: white;
         }
 
         .comparison-table tr:hover {
-            background: #f5f7fa;
+            background: #f8f9fa;
         }
 
         .check {
@@ -353,7 +508,7 @@
 
         /* Calculator */
         .calculator {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            background: linear-gradient(135deg, #ecf0f1 0%, #d5dbdb 100%);
             padding: 2rem;
             border-radius: 12px;
             margin-top: 2rem;
@@ -370,12 +525,13 @@
         .calculator-row label {
             font-weight: 600;
             min-width: 150px;
+            color: #2c3e50;
         }
 
         .calculator-row select,
         .calculator-row input {
             padding: 0.5rem;
-            border: 1px solid #ccc;
+            border: 1px solid #bdc3c7;
             border-radius: 4px;
             flex: 1;
             min-width: 200px;
@@ -383,13 +539,14 @@
 
         .price-display {
             font-size: 2rem;
-            color: #667eea;
+            color: #2c3e50;
             font-weight: bold;
             text-align: center;
             margin-top: 1.5rem;
             padding: 1rem;
             background: white;
             border-radius: 8px;
+            border: 2px solid #3498db;
         }
 
         .savings-display {
@@ -397,12 +554,13 @@
             font-size: 1.2rem;
             text-align: center;
             margin-top: 0.5rem;
+            font-weight: 600;
         }
 
         /* FAQ */
         .faq-item {
             margin-bottom: 1rem;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #ecf0f1;
             border-radius: 8px;
             overflow: hidden;
         }
@@ -415,12 +573,19 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: #2c3e50;
+            transition: all 0.3s;
+        }
+
+        .faq-question:hover {
+            background: #ecf0f1;
         }
 
         .faq-answer {
             padding: 1rem;
             display: none;
             background: white;
+            color: #555;
         }
 
         .faq-answer.active {
@@ -429,27 +594,54 @@
 
         /* Footer */
         footer {
-            background: #333;
-            color: white;
+            background: #2c3e50;
+            color: #ecf0f1;
             text-align: center;
             padding: 2rem;
             margin-top: 3rem;
         }
 
+        footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: #5dade2;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
-            header h1 {
-                font-size: 1.8rem;
+            .banner-section {
+                height: 350px;
             }
-            
+
+            .banner-content h1 {
+                font-size: 2rem;
+            }
+
+            .banner-content p {
+                font-size: 1rem;
+            }
+
+            .contact-bar {
+                gap: 1rem;
+                font-size: 0.85rem;
+            }
+
+            .hamburger-menu {
+                top: 10px;
+                right: 10px;
+            }
+
             .packages-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .package-card.featured {
                 transform: none;
             }
-            
+
             .comparison-table {
                 font-size: 0.9rem;
             }
@@ -466,6 +658,7 @@
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 600;
+            margin-left: auto;
         }
 
         .pulse {
@@ -481,20 +674,58 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>🚀 AutoSocial Pro</h1>
-        <p>Fully Automated Social Media Management for Modern Businesses</p>
-    </header>
+    <!-- Floating Hamburger Menu -->
+    <div class="hamburger-menu">
+        <button class="hamburger-btn" onclick="toggleMenu()" aria-label="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="menu-dropdown" id="menuDropdown">
+            <a href="#packages" onclick="closeMenu()">📦 Packages & Pricing</a>
+            <a href="#features" onclick="closeMenu()">🤖 Automated Features</a>
+            <a href="#addons" onclick="closeMenu()">⚡ Add-ons</a>
+            <a href="#calculator" onclick="closeMenu()">💰 Price Calculator</a>
+            <a href="#comparison" onclick="closeMenu()">📊 Compare Packages</a>
+            <a href="#faq" onclick="closeMenu()">❓ FAQ</a>
+            <a href="mailto:contact@reelbridge.site" onclick="closeMenu()">📧 Email Us</a>
+            <a href="tel:506-271-7605" onclick="closeMenu()">📞 Call Now</a>
+        </div>
+    </div>
 
+    <!-- Banner Section with Image -->
+    <div class="banner-section">
+        <img src="/upload/ai_image_1771622966846.png" alt="Reel Bridge - Connection and Integration" class="banner-image">
+        <div class="banner-overlay">
+            <div class="banner-content">
+                <h1>REEL BRIDGE</h1>
+                <p>Fully Automated Social Media Management for Modern Businesses</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Bar -->
+    <div class="contact-bar">
+        <span>📧 <a href="mailto:contact@reelbridge.site">contact@reelbridge.site</a></span>
+        <span>📞 <a href="tel:506-271-7605">506-271-7605</a></span>
+        <span>🌐 Connection and Integration</span>
+    </div>
+
+    <!-- Navigation -->
     <nav>
         <ul>
             <li><a href="#packages">Packages</a></li>
             <li><a href="#features">Features</a></li>
             <li><a href="#addons">Add-ons</a></li>
-            <li><a href="#calculator">Price Calculator</a></li>
+            <li><a href="#calculator">Calculator</a></li>
             <li><a href="#comparison">Compare</a></li>
             <li><a href="#faq">FAQ</a></li>
         </ul>
@@ -797,22 +1028,22 @@
                     <div class="feature-card">
                         <h4>+2 Additional Platforms</h4>
                         <p>Expand your reach to 2 more social networks. Auto-syncs content across all platforms.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$49/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$49/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>+3 Additional Platforms</h4>
                         <p>Scale to 3 more platforms with advanced cross-posting automation.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$79/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$79/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>Multi-Location Manager</h4>
                         <p>Manage social accounts for multiple business locations with auto-localization.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$129/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$129/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>White Label Solution</h4>
                         <p>Rebrand our platform as your own with automated client reporting.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$149/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$149/month</div>
                     </div>
                 </div>
             </div>
@@ -823,22 +1054,22 @@
                     <div class="feature-card">
                         <h4>+20 Extra Posts/Month</h4>
                         <p>Increase your content volume with AI-generated additional posts.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$39/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$39/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>+50 Extra Posts/Month</h4>
                         <p>Maximum content output for high-frequency posting strategies.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$69/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$69/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>AI Video Generator</h4>
                         <p>Auto-creates short-form videos from text, images, or blog posts.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$89/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$89/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>Custom AI Training</h4>
                         <p>Train our AI on your brand voice, industry terms, and content style.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$299/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$299/month</div>
                     </div>
                 </div>
             </div>
@@ -849,22 +1080,22 @@
                     <div class="feature-card">
                         <h4>AI Caption Generator</h4>
                         <p>Advanced caption writing with tone adjustment and emoji optimization.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$29/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$29/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>Auto-DM Campaigns</h4>
                         <p>Automated direct message sequences for lead nurturing and promotions.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$59/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$59/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>Influencer Scout</h4>
                         <p>Auto-discovers, vets, and initiates contact with micro-influencers.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$89/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$89/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>Social Listening Pro</h4>
                         <p>Advanced brand mention monitoring across web and social platforms.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$69/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$69/month</div>
                     </div>
                 </div>
             </div>
@@ -875,22 +1106,22 @@
                     <div class="feature-card">
                         <h4>API Access</h4>
                         <p>Full REST API for custom integrations and data extraction.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$199/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$199/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>Dedicated Server</h4>
                         <p>Isolated infrastructure for maximum performance and security.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$499/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$499/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>SLA Guarantee</h4>
                         <p>99.9% uptime guarantee with automated failover systems.</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$399/month</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$399/month</div>
                     </div>
                     <div class="feature-card">
                         <h4>Onboarding Specialist</h4>
                         <p>One-time dedicated setup and training (one-time fee).</p>
-                        <div style="margin-top: 0.5rem; font-weight: bold; color: #667eea;">$599 one-time</div>
+                        <div style="margin-top: 0.5rem; font-weight: bold; color: #2980b9;">$599 one-time</div>
                     </div>
                 </div>
             </div>
@@ -1134,11 +1365,35 @@
     </div>
 
     <footer>
-        <p>&copy; 2024 AutoSocial Pro. All rights reserved.</p>
-        <p> Fully Automated Social Media Management</p>
+        <p>&copy; 2024 Reel Bridge. All rights reserved.</p>
+        <p>📧 <a href="mailto:contact@reelbridge.site">contact@reelbridge.site</a> | 📞 <a href="tel:506-271-7605">506-271-7605</a></p>
+        <p>Connection and Integration</p>
     </footer>
 
     <script>
+        // Hamburger menu functionality
+        function toggleMenu() {
+            const btn = document.querySelector('.hamburger-btn');
+            const dropdown = document.getElementById('menuDropdown');
+            btn.classList.toggle('active');
+            dropdown.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const btn = document.querySelector('.hamburger-btn');
+            const dropdown = document.getElementById('menuDropdown');
+            btn.classList.remove('active');
+            dropdown.classList.remove('active');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const menu = document.querySelector('.hamburger-menu');
+            if (!menu.contains(event.target)) {
+                closeMenu();
+            }
+        });
+
         // Contract toggle functionality
         let currentContract = 'quarterly';
         
@@ -1183,7 +1438,7 @@
         
         // Package selection
         function selectPackage(packageName) {
-            alert('You selected the ' + packageName.charAt(0).toUpperCase() + packageName.slice(1) + ' package with ' + currentContract + ' billing. Redirecting to checkout...');
+            alert('You selected the ' + packageName.charAt(0).toUpperCase() + packageName.slice(1) + ' package with ' + currentContract + ' billing. Contact us at contact@reelbridge.site or 506-271-7605 to proceed.');
         }
         
         // Price calculator
@@ -1242,4 +1497,3 @@
     </script>
 </body>
 </html>
-
