@@ -494,6 +494,124 @@
             </div>
         </div>
     </section>
+    <!-- Customer Dashboard (shown after payment) -->
+<section class="section" id="dashboard" style="display: none;">
+    <h2 class="section-title">Your Dashboard</h2>
+    
+    <!-- Account Stats -->
+    <div class="package-card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+                <div class="package-name" id="userPackage">Growth</div>
+                <div class="package-desc" id="userEmail">user@example.com</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="postsRemaining">75</div>
+                <div style="font-size: 12px; color: #666;">Posts Left</div>
+            </div>
+        </div>
+        
+        <!-- Connected Accounts -->
+        <div style="margin: 16px 0;">
+            <h4 style="margin-bottom: 12px; font-size: 16px;">Connected Accounts</h4>
+            <div id="connectedAccounts" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+        
+        <button class="select-btn" onclick="openConnectModal()" style="background: var(--success);">
+            + Connect Account
+        </button>
+    </div>
+    
+    <!-- Create Post -->
+    <div class="package-card">
+        <div class="package-name">Create New Post</div>
+        
+        <div class="form-group" style="margin-top: 16px;">
+            <label>Content</label>
+            <textarea id="postContent" rows="4" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; resize: vertical;" placeholder="What's on your mind?"></textarea>
+            <div style="text-align: right; font-size: 12px; color: #666; margin-top: 4px;">
+                <span id="charCount">0</span> characters
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Platforms</label>
+            <div id="platformSelector" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
+                    <input type="checkbox" value="instagram" class="platform-check"> Instagram
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
+                    <input type="checkbox" value="tiktok" class="platform-check"> TikTok
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
+                    <input type="checkbox" value="twitter" class="platform-check"> Twitter/X
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
+                    <input type="checkbox" value="facebook" class="platform-check"> Facebook
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
+                    <input type="checkbox" value="linkedin" class="platform-check"> LinkedIn
+                </label>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Schedule Time</label>
+            <input type="datetime-local" id="scheduleTime" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px;">
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button class="select-btn" onclick="generateAIContent()" style="flex: 1; background: #9b59b6;">
+                ✨ AI Generate
+            </button>
+            <button class="select-btn" onclick="schedulePost()" style="flex: 2;">
+                Schedule Post
+            </button>
+        </div>
+    </div>
+    
+    <!-- Scheduled Posts -->
+    <div class="package-card" style="margin-top: 16px;">
+        <div class="package-name">Upcoming Posts</div>
+        <div id="scheduledPostsList" style="margin-top: 16px;">
+            <!-- Dynamically populated -->
+            <div style="text-align: center; color: #666; padding: 20px;">
+                No scheduled posts yet
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Connect Account Modal -->
+<div class="modal" id="connectModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">Connect Social Account</div>
+            <button class="close-modal" onclick="closeConnectModal()">×</button>
+        </div>
+        
+        <div style="display: grid; gap: 12px; margin-top: 16px;">
+            <button onclick="connectPlatform('instagram')" class="select-btn" style="background: #E4405F;">
+                Connect Instagram
+            </button>
+            <button onclick="connectPlatform('tiktok')" class="select-btn" style="background: #000000;">
+                Connect TikTok
+            </button>
+            <button onclick="connectPlatform('twitter')" class="select-btn" style="background: #1DA1F2;">
+                Connect Twitter/X
+            </button>
+            <button onclick="connectPlatform('facebook')" class="select-btn" style="background: #1877F2;">
+                Connect Facebook
+            </button>
+            <button onclick="connectPlatform('linkedin')" class="select-btn" style="background: #0A66C2;">
+                Connect LinkedIn
+            </button>
+        </div>
+    </div>
+</div>
+
     
     <!-- Footer -->
     <footer class="footer">
