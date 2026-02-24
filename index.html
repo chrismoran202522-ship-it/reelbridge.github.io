@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Reel Bridge - Mobile</title>
+    <title>Reel Bridge - Automated Social Media Management</title>
     <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -12,6 +13,8 @@
             --primary: #2c3e50;
             --accent: #3498db;
             --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
             --bg: #f0f4f8;
             --card: #ffffff;
         }
@@ -25,7 +28,7 @@
             -webkit-font-smoothing: antialiased;
         }
         
-        /* Mobile Header */
+        /* Header with Login */
         .mobile-header {
             position: fixed;
             top: 0;
@@ -41,79 +44,43 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
-        .logo {
-            font-size: 20px;
-            font-weight: 700;
-        }
+        .logo { font-size: 20px; font-weight: 700; }
         
-        .menu-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 8px;
-        }
-        
-        /* Mobile Menu Overlay */
-        .mobile-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.95);
-            z-index: 999;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
+        .header-login {
+            display: flex;
+            gap: 8px;
             align-items: center;
-            gap: 24px;
         }
         
-        .mobile-menu.active { display: flex; }
-        
-        .mobile-menu a {
-            color: white;
-            text-decoration: none;
-            font-size: 20px;
-            padding: 16px 32px;
-            border: 2px solid var(--accent);
-            border-radius: 30px;
-            width: 80%;
-            text-align: center;
-        }
-        
-        .close-menu {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: white;
-            font-size: 32px;
-            background: none;
+        .header-login input {
+            padding: 8px 12px;
             border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 120px;
         }
         
-        /* Hero Section - Compact */
+        .header-login button {
+            padding: 8px 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* Hero */
         .hero {
-            margin-top: 56px;
+            margin-top: 60px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
             color: white;
             padding: 40px 20px;
             text-align: center;
         }
         
-        .hero h1 {
-            font-size: 28px;
-            margin-bottom: 12px;
-            line-height: 1.2;
-        }
-        
-        .hero p {
-            font-size: 16px;
-            opacity: 0.9;
-            margin-bottom: 20px;
-        }
+        .hero h1 { font-size: 28px; margin-bottom: 12px; }
+        .hero p { font-size: 16px; opacity: 0.9; margin-bottom: 20px; }
         
         .cta-btn {
             display: inline-block;
@@ -130,7 +97,7 @@
             max-width: 300px;
         }
         
-        /* Section Styling */
+        /* Sections */
         .section {
             padding: 32px 16px;
             background: var(--card);
@@ -145,7 +112,7 @@
             padding-left: 12px;
         }
         
-        /* Package Cards - Mobile Optimized */
+        /* Package Cards */
         .package-card {
             background: var(--card);
             border: 2px solid #e0e0e0;
@@ -156,75 +123,16 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         
-        .package-card.featured {
-            border-color: var(--accent);
-            background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%);
-        }
+        .package-card.featured { border-color: var(--accent); background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%); }
+        .package-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .package-name { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        .package-price { font-size: 36px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        .package-price span { font-size: 16px; font-weight: 400; color: #666; }
+        .savings { color: var(--success); font-size: 14px; font-weight: 600; margin-bottom: 16px; }
         
-        .package-badge {
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--accent);
-            color: white;
-            padding: 4px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-        
-        .package-name {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .package-desc {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 16px;
-        }
-        
-        .package-price {
-            font-size: 36px;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 4px;
-        }
-        
-        .package-price span {
-            font-size: 16px;
-            font-weight: 400;
-            color: #666;
-        }
-        
-        .savings {
-            color: var(--success);
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-        
-        .features-list {
-            list-style: none;
-            margin: 16px 0;
-        }
-        
-        .features-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .features-list li:before {
-            content: "✓";
-            color: var(--success);
-            font-weight: 700;
-        }
+        .features-list { list-style: none; margin: 16px 0; }
+        .features-list li { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .features-list li:before { content: "✓"; color: var(--success); font-weight: 700; }
         
         .select-btn {
             width: 100%;
@@ -239,27 +147,34 @@
             margin-top: 16px;
         }
         
-        /* Compact Feature Grid */
-        .feature-grid {
-            display: grid;
-            gap: 12px;
+        /* Custom Package Builder */
+        .custom-builder {
+            background: linear-gradient(135deg, #fff 0%, #f0fff4 100%);
+            border: 2px solid var(--success);
         }
         
-        .feature-item {
+        .addon-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
             background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .addon-price { color: var(--success); font-weight: 700; }
+        
+        .total-price {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--success);
+            text-align: center;
+            margin: 20px 0;
             padding: 16px;
+            background: white;
             border-radius: 12px;
-            border-left: 4px solid var(--accent);
-        }
-        
-        .feature-item h4 {
-            font-size: 16px;
-            margin-bottom: 4px;
-        }
-        
-        .feature-item p {
-            font-size: 13px;
-            color: #666;
+            border: 2px solid var(--success);
         }
         
         /* Payment Modal */
@@ -276,9 +191,7 @@
             align-items: flex-end;
         }
         
-        .modal.active {
-            display: flex;
-        }
+        .modal.active { display: flex; }
         
         .modal-content {
             background: white;
@@ -302,11 +215,6 @@
             margin-bottom: 20px;
         }
         
-        .modal-title {
-            font-size: 20px;
-            font-weight: 700;
-        }
-        
         .close-modal {
             background: none;
             border: none;
@@ -314,41 +222,38 @@
             cursor: pointer;
         }
         
-        /* Form Elements */
-        .form-group {
-            margin-bottom: 16px;
+        .payment-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
         }
         
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 14px;
+        .payment-tab {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
             font-weight: 600;
         }
         
-        .form-group input,
-        .form-group select {
+        .payment-tab.active {
+            border-color: var(--accent);
+            background: #f0f7ff;
+        }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; }
+        .form-group input, .form-group select {
             width: 100%;
             padding: 14px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             font-size: 16px;
-            -webkit-appearance: none;
         }
         
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-        
-        /* Stripe Card Element */
-        #card-element {
-            padding: 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            background: white;
-        }
+        #card-element { padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; background: white; }
         
         .pay-btn {
             width: 100%;
@@ -363,262 +268,444 @@
             margin-top: 20px;
         }
         
-        .pay-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+        .pay-btn:disabled { background: #ccc; cursor: not-allowed; }
         
-        .secure-badge {
-            text-align: center;
-            margin-top: 12px;
-            font-size: 12px;
-            color: #666;
-        }
-        
-        /* Footer */
-        .footer {
+        /* Dashboard Styles */
+        .dashboard-header {
             background: var(--primary);
             color: white;
-            padding: 32px 16px;
+            padding: 20px;
+            margin: -32px -16px 20px -16px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 12px;
             text-align: center;
         }
         
-        .footer a {
-            color: var(--accent);
-            text-decoration: none;
+        .stat-value { font-size: 28px; font-weight: 700; color: var(--accent); }
+        .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
+        
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0;
         }
         
-        /* Utility */
-        .text-center { text-align: center; }
-        .mb-2 { margin-bottom: 16px; }
-        .mt-2 { margin-top: 16px; }
+        .platform-btn {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            background: white;
+        }
         
-        /* Hide on mobile */
-        .desktop-only { display: none; }
+        .platform-btn.connected { border-color: var(--success); background: #f0fff4; }
+        .platform-btn:hover { border-color: var(--accent); }
+        
+        /* Admin Styles */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .admin-table th, .admin-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .admin-table th { background: #f8f9fa; font-weight: 600; }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-active { background: #d4edda; color: #155724; }
+        .status-suspended { background: #f8d7da; color: #721c24; }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        
+        .btn-suspend { background: var(--warning); color: white; }
+        .btn-activate { background: var(--success); color: white; }
+        .btn-delete { background: var(--danger); color: white; }
+        
+        .password-change-notice {
+            background: #fff3cd;
+            border: 2px solid var(--warning);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <!-- Mobile Header -->
+    <!-- Header with Login -->
     <header class="mobile-header">
         <div class="logo">REEL BRIDGE</div>
-        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+        <div class="header-login" id="headerLogin">
+            <input type="email" id="loginEmail" placeholder="Email">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button onclick="login()">Login</button>
+        </div>
+        <div class="header-login hidden" id="headerUser">
+            <span id="userName"></span>
+            <button onclick="logout()" style="background: var(--danger);">Logout</button>
+        </div>
     </header>
     
-    <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobileMenu">
-        <button class="close-menu" onclick="toggleMenu()">×</button>
-        <a href="#packages" onclick="toggleMenu()">Packages</a>
-        <a href="#features" onclick="toggleMenu()">Features</a>
-        <a href="tel:506-271-7605">Call Now</a>
-        <a href="mailto:contact@reelbridge.site">Email Us</a>
+    <!-- Main Content (shown when NOT logged in) -->
+    <div id="mainContent">
+        <!-- Hero -->
+        <section class="hero">
+            <h1>Automated Social Media</h1>
+            <p>AI-powered management for your business</p>
+            <a href="#packages" class="cta-btn">View Packages</a>
+        </section>
+        
+        <!-- Packages Section -->
+        <section class="section" id="packages">
+            <h2 class="section-title">Choose Your Plan</h2>
+            
+            <!-- Starter -->
+            <div class="package-card">
+                <div class="package-name">Starter</div>
+                <div class="package-price">$254<span>/mo</span></div>
+                <div class="savings">Save 15% with quarterly</div>
+                <ul class="features-list">
+                    <li>3 Social Platforms</li>
+                    <li>30 Posts/Month</li>
+                    <li>AI Content Generation</li>
+                    <li>Basic Analytics</li>
+                </ul>
+                <button class="select-btn" onclick="openPayment('starter', 254)">Get Started</button>
+            </div>
+            
+            <!-- Growth -->
+            <div class="package-card featured">
+                <div class="package-badge">MOST POPULAR</div>
+                <div class="package-name">Growth</div>
+                <div class="package-price">$509<span>/mo</span></div>
+                <div class="savings">Save 15% with quarterly</div>
+                <ul class="features-list">
+                    <li>6 Social Platforms</li>
+                    <li>75 Posts/Month</li>
+                    <li>AI Video Generation</li>
+                    <li>Auto-Engagement</li>
+                    <li>Priority Support</li>
+                </ul>
+                <button class="select-btn" onclick="openPayment('growth', 509)">Get Started</button>
+            </div>
+            
+            <!-- Professional -->
+            <div class="package-card">
+                <div class="package-name">Professional</div>
+                <div class="package-price">$849<span>/mo</span></div>
+                <div class="savings">Save 15% with quarterly</div>
+                <ul class="features-list">
+                    <li>10 Platforms</li>
+                    <li>Unlimited Posts</li>
+                    <li>AI Video & Image Gen</li>
+                    <li>Dedicated Account Manager</li>
+                </ul>
+                <button class="select-btn" onclick="openPayment('professional', 849)">Get Started</button>
+            </div>
+            
+            <!-- Custom Package Builder -->
+            <div class="package-card custom-builder">
+                <div class="package-name">Custom Package</div>
+                <div class="package-price">$99<span> base</span></div>
+                <div class="savings">Build your perfect plan</div>
+                
+                <div style="margin: 16px 0;">
+                    <h4 style="margin-bottom: 12px;">Select Add-ons:</h4>
+                    
+                    <div class="addon-item">
+                        <div>
+                            <div style="font-weight: 600;">Extra Platforms</div>
+                            <div style="font-size: 12px; color: #666;">+$25 per platform</div>
+                        </div>
+                        <select id="addonPlatforms" onchange="calculateCustomPrice()">
+                            <option value="0">0</option>
+                            <option value="1">1 (+$25)</option>
+                            <option value="2">2 (+$50)</option>
+                            <option value="3">3 (+$75)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="addon-item">
+                        <div>
+                            <div style="font-weight: 600;">Extra Posts</div>
+                            <div style="font-size: 12px; color: #666;">+$15 per 10 posts</div>
+                        </div>
+                        <select id="addonPosts" onchange="calculateCustomPrice()">
+                            <option value="0">0</option>
+                            <option value="10">10 (+$15)</option>
+                            <option value="20">20 (+$30)</option>
+                            <option value="50">50 (+$75)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="addon-item">
+                        <div>
+                            <div style="font-weight: 600;">AI Video Generation</div>
+                            <div style="font-size: 12px; color: #666;">Auto-create videos</div>
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="addonVideo" onchange="calculateCustomPrice()">
+                            <span class="addon-price">+$50</span>
+                        </label>
+                    </div>
+                    
+                    <div class="addon-item">
+                        <div>
+                            <div style="font-weight: 600;">Priority Support</div>
+                            <div style="font-size: 12px; color: #666;">24/7 chat support</div>
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="addonSupport" onchange="calculateCustomPrice()">
+                            <span class="addon-price">+$30</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="total-price" id="customTotalPrice">$99/mo</div>
+                
+                <button class="select-btn" onclick="openPayment('custom', 99)" style="background: var(--success);">
+                    Build My Package
+                </button>
+            </div>
+        </section>
+        
+        <!-- Features -->
+        <section class="section" id="features">
+            <h2 class="section-title">Key Features</h2>
+            <div style="display: grid; gap: 12px;">
+                <div class="package-card" style="margin: 0;">
+                    <h4>🤖 AI Content Generation</h4>
+                    <p style="color: #666; font-size: 14px;">Auto-create posts, captions, and hashtags</p>
+                </div>
+                <div class="package-card" style="margin: 0;">
+                    <h4>📅 Smart Scheduling</h4>
+                    <p style="color: #666; font-size: 14px;">Post at optimal times automatically</p>
+                </div>
+                <div class="package-card" style="margin: 0;">
+                    <h4>📊 Real-time Analytics</h4>
+                    <p style="color: #666; font-size: 14px;">Track engagement and growth</p>
+                </div>
+                <div class="package-card" style="margin: 0;">
+                    <h4>💬 Auto-Engagement</h4>
+                    <p style="color: #666; font-size: 14px;">Auto-respond to comments and DMs</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Footer -->
+        <footer class="section" style="background: var(--primary); color: white; text-align: center; margin-bottom: 0;">
+            <p>📞 <a href="tel:506-271-7605" style="color: var(--accent);">506-271-7605</a></p>
+            <p style="margin-top: 8px;">✉️ <a href="mailto:contact@reelbridge.site" style="color: var(--accent);">contact@reelbridge.site</a></p>
+            <p style="margin-top: 16px; opacity: 0.7; font-size: 14px;">© 2024 Reel Bridge</p>
+        </footer>
     </div>
     
-    <!-- Hero -->
-    <section class="hero">
-        <h1>Automated Social Media</h1>
-        <p>AI-powered management for your business</p>
-        <a href="#packages" class="cta-btn">View Packages</a>
-    </section>
-    
-    <!-- Packages Section -->
-    <section class="section" id="packages">
-        <h2 class="section-title">Choose Your Plan</h2>
-        
-        <!-- Starter -->
-        <div class="package-card">
-            <div class="package-name">Starter</div>
-            <div class="package-desc">Perfect for small businesses</div>
-            <div class="package-price">$254<span>/mo</span></div>
-            <div class="savings">Save 15% with quarterly</div>
-            <ul class="features-list">
-                <li>3 Social Platforms</li>
-                <li>30 Posts/Month</li>
-                <li>Auto-Content</li>
-                <li>Basic Analytics</li>
-            </ul>
-            <button class="select-btn" onclick="openPayment('starter', 254)">Get Started</button>
-        </div>
-        
-        <!-- Growth -->
-        <div class="package-card featured">
-            <div class="package-badge">MOST POPULAR</div>
-            <div class="package-name">Growth</div>
-            <div class="package-desc">For growing businesses</div>
-            <div class="package-price">$509<span>/mo</span></div>
-            <div class="savings">Save 15% with quarterly</div>
-            <ul class="features-list">
-                <li>6 Social Platforms</li>
-                <li>75 Posts/Month</li>
-                <li>AI Content Gen</li>
-                <li>Auto-Comments</li>
-                <li>Priority Support</li>
-            </ul>
-            <button class="select-btn" onclick="openPayment('growth', 509)">Get Started</button>
-        </div>
-        
-        <!-- Professional -->
-        <div class="package-card">
-            <div class="package-name">Professional</div>
-            <div class="package-desc">Complete solution</div>
-            <div class="package-price">$849<span>/mo</span></div>
-            <div class="savings">Save 15% with quarterly</div>
-            <ul class="features-list">
-                <li>10 Platforms</li>
-                <li>Unlimited Posts</li>
-                <li>AI Video Gen</li>
-                <li>Dedicated Manager</li>
-            </ul>
-            <button class="select-btn" onclick="openPayment('professional', 849)">Get Started</button>
-        </div>
-    </section>
-    
-    <!-- Features Section -->
-    <section class="section" id="features">
-        <h2 class="section-title">Key Features</h2>
-        <div class="feature-grid">
-            <div class="feature-item">
-                <h4>🤖 AI Content</h4>
-                <p>Auto-generates posts, captions, and visuals</p>
+    <!-- Customer Dashboard (shown when logged in as customer) -->
+    <div id="customerDashboard" class="hidden" style="margin-top: 60px;">
+        <div class="section">
+            <!-- Password Change Notice -->
+            <div class="password-change-notice hidden" id="passwordChangeNotice">
+                <strong>⚠️ Security Notice:</strong> Please change your temporary password
+                <button onclick="showPasswordChange()" style="margin-left: 12px; padding: 8px 16px; background: var(--warning); color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    Change Now
+                </button>
             </div>
-            <div class="feature-item">
-                <h4>📅 Smart Scheduling</h4>
-                <p>Posts at optimal times automatically</p>
+            
+            <div class="dashboard-header">
+                <h2 style="font-size: 24px;">My Dashboard</h2>
+                <p id="dashboardEmail" style="opacity: 0.9; margin-top: 4px;"></p>
             </div>
-            <div class="feature-item">
-                <h4>💬 Auto-Engagement</h4>
-                <p>Responds to comments and DMs 24/7</p>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statRemaining">0</div>
+                    <div class="stat-label">Posts Remaining</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statUsed">0</div>
+                    <div class="stat-label">Posts Used</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statPackage">-</div>
+                    <div class="stat-label">Package</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statConnected">0</div>
+                    <div class="stat-label">Accounts Connected</div>
+                </div>
             </div>
-            <div class="feature-item">
-                <h4>📊 Analytics</h4>
-                <p>Real-time performance tracking</p>
+            
+            <!-- Connect Accounts -->
+            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Connect Social Accounts</h3>
+            <div class="platform-grid" id="platformGrid">
+                <button class="platform-btn" onclick="connectPlatform('instagram')">
+                    📸 Instagram
+                </button>
+                <button class="platform-btn" onclick="connectPlatform('tiktok')">
+                    🎵 TikTok
+                </button>
+                <button class="platform-btn" onclick="connectPlatform('twitter')">
+                    🐦 Twitter
+                </button>
+                <button class="platform-btn" onclick="connectPlatform('facebook')">
+                    👥 Facebook
+                </button>
+                <button class="platform-btn" onclick="connectPlatform('linkedin')">
+                    💼 LinkedIn
+                </button>
+                <button class="platform-btn" onclick="connectPlatform('youtube')">
+                    📺 YouTube
+                </button>
             </div>
-        </div>
-    </section>
-    <!-- Customer Dashboard (shown after payment) -->
-<section class="section" id="dashboard" style="display: none;">
-    <h2 class="section-title">Your Dashboard</h2>
-    
-    <!-- Account Stats -->
-    <div class="package-card" style="margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <div>
-                <div class="package-name" id="userPackage">Growth</div>
-                <div class="package-desc" id="userEmail">user@example.com</div>
+            
+            <!-- Create Post -->
+            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Create New Post</h3>
+            <div class="package-card">
+                <textarea id="postContent" rows="4" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; resize: vertical;" placeholder="What's on your mind?"></textarea>
+                <div style="text-align: right; font-size: 12px; color: #666; margin-top: 4px;">
+                    <span id="charCount">0</span> chars
+                </div>
+                
+                <div style="margin: 16px 0;">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Platforms:</label>
+                    <div id="postPlatforms" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Schedule Time</label>
+                    <input type="datetime-local" id="scheduleTime">
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button class="select-btn" onclick="generateAIContent()" style="flex: 1; background: #9b59b6;">
+                        ✨ AI Generate
+                    </button>
+                    <button class="select-btn" onclick="schedulePost()" style="flex: 2;">
+                        Schedule Post
+                    </button>
+                </div>
             </div>
-            <div style="text-align: right;">
-                <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="postsRemaining">75</div>
-                <div style="font-size: 12px; color: #666;">Posts Left</div>
-            </div>
-        </div>
-        
-        <!-- Connected Accounts -->
-        <div style="margin: 16px 0;">
-            <h4 style="margin-bottom: 12px; font-size: 16px;">Connected Accounts</h4>
-            <div id="connectedAccounts" style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <!-- Dynamically populated -->
-            </div>
-        </div>
-        
-        <button class="select-btn" onclick="openConnectModal()" style="background: var(--success);">
-            + Connect Account
-        </button>
-    </div>
-    
-    <!-- Create Post -->
-    <div class="package-card">
-        <div class="package-name">Create New Post</div>
-        
-        <div class="form-group" style="margin-top: 16px;">
-            <label>Content</label>
-            <textarea id="postContent" rows="4" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; resize: vertical;" placeholder="What's on your mind?"></textarea>
-            <div style="text-align: right; font-size: 12px; color: #666; margin-top: 4px;">
-                <span id="charCount">0</span> characters
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label>Platforms</label>
-            <div id="platformSelector" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
-                    <input type="checkbox" value="instagram" class="platform-check"> Instagram
-                </label>
-                <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
-                    <input type="checkbox" value="tiktok" class="platform-check"> TikTok
-                </label>
-                <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
-                    <input type="checkbox" value="twitter" class="platform-check"> Twitter/X
-                </label>
-                <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
-                    <input type="checkbox" value="facebook" class="platform-check"> Facebook
-                </label>
-                <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
-                    <input type="checkbox" value="linkedin" class="platform-check"> LinkedIn
-                </label>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label>Schedule Time</label>
-            <input type="datetime-local" id="scheduleTime" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px;">
-        </div>
-        
-        <div style="display: flex; gap: 12px; margin-top: 16px;">
-            <button class="select-btn" onclick="generateAIContent()" style="flex: 1; background: #9b59b6;">
-                ✨ AI Generate
-            </button>
-            <button class="select-btn" onclick="schedulePost()" style="flex: 2;">
-                Schedule Post
-            </button>
-        </div>
-    </div>
-    
-    <!-- Scheduled Posts -->
-    <div class="package-card" style="margin-top: 16px;">
-        <div class="package-name">Upcoming Posts</div>
-        <div id="scheduledPostsList" style="margin-top: 16px;">
-            <!-- Dynamically populated -->
-            <div style="text-align: center; color: #666; padding: 20px;">
-                No scheduled posts yet
+            
+            <!-- Scheduled Posts -->
+            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Scheduled Posts</h3>
+            <div id="scheduledPostsList">
+                <div style="text-align: center; color: #666; padding: 40px;">
+                    No posts scheduled yet
+                </div>
             </div>
         </div>
     </div>
-</section>
-!+
-<!-- Connect Account Modal -->
-<div class="modal" id="connectModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <div class="modal-title">Connect Social Account</div>
-            <button class="close-modal" onclick="closeConnectModal()">×</button>
-        </div>
-        
-        <div style="display: grid; gap: 12px; margin-top: 16px;">
-            <button onclick="connectPlatform('instagram')" class="select-btn" style="background: #E4405F;">
-                Connect Instagram
-            </button>
-            <button onclick="connectPlatform('tiktok')" class="select-btn" style="background: #000000;">
-                Connect TikTok
-            </button>
-            <button onclick="connectPlatform('twitter')" class="select-btn" style="background: #1DA1F2;">
-                Connect Twitter/X
-            </button>
-            <button onclick="connectPlatform('facebook')" class="select-btn" style="background: #1877F2;">
-                Connect Facebook
-            </button>
-            <button onclick="connectPlatform('linkedin')" class="select-btn" style="background: #0A66C2;">
-                Connect LinkedIn
-            </button>
+    
+    <!-- Admin Dashboard (shown when logged in as admin) -->
+    <div id="adminDashboard" class="hidden" style="margin-top: 60px;">
+        <div class="section">
+            <div class="dashboard-header">
+                <h2 style="font-size: 24px;">Admin Dashboard</h2>
+                <p style="opacity: 0.9; margin-top: 4px;">Manage all accounts and view analytics</p>
+            </div>
+            
+            <!-- Admin Stats -->
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-value" id="adminTotalUsers">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="adminRevenue">$0</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="adminActiveWeek">0</div>
+                    <div class="stat-label">Active This Week</div>
+                </div>
+            </div>
+            
+            <!-- Package Breakdown -->
+            <div class="package-card" style="margin-top: 20px;">
+                <h4 style="margin-bottom: 16px;">Package Distribution</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminStarter">0</div>
+                        <div class="stat-label">Starter</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminGrowth">0</div>
+                        <div class="stat-label">Growth</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminPro">0</div>
+                        <div class="stat-label">Professional</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminCustom">0</div>
+                        <div class="stat-label">Custom</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- All Users Table -->
+            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">All Customers</h3>
+            <div style="overflow-x: auto;">
+                <table class="admin-table" id="adminUsersTable">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Package</th>
+                            <th>Posts</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUsersBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Recent Activity -->
+            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Recent Activity</h3>
+            <div id="adminActivity" style="max-height: 300px; overflow-y: auto;">
+                <!-- Populated dynamically -->
+            </div>
         </div>
     </div>
-</div>
-
-    
-    <!-- Footer -->
-    <footer class="footer">
-        <p>📞 <a href="tel:506-271-7605">506-271-7605</a></p>
-        <p>✉️ <a href="mailto:contact@reelbridge.site">contact@reelbridge.site</a></p>
-        <p style="margin-top: 16px; opacity: 0.7;">© 2026 Reel Bridge</p>
-    </footer>
     
     <!-- Payment Modal -->
     <div class="modal" id="paymentModal">
@@ -629,157 +716,315 @@
             </div>
             
             <div id="packageSummary" style="margin-bottom: 20px; padding: 16px; background: #f0f7ff; border-radius: 10px;">
-                % <span id="selectedPackage">-</span><br>
+                <strong>Package:</strong> <span id="selectedPackage">-</span><br>
                 <strong>Price:</strong> $<span id="selectedPrice">-</span>/mo
             </div>
             
-            <form id="paymentForm">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="email" placeholder="your@email.com" required>
-                </div>
-                
+            <!-- Account Creation -->
+            <div class="form-group">
+                <label>Create Your Account</label>
+                <input type="email" id="newAccountEmail" placeholder="your@email.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="newAccountPassword" placeholder="Min 8 characters" required>
+            </div>
+            
+            <!-- Payment Method Tabs -->
+            <div class="payment-tabs">
+                <div class="payment-tab active" onclick="switchPaymentMethod('stripe')">💳 Card</div>
+                <div class="payment-tab" onclick="switchPaymentMethod('paypal')">🅿️ PayPal</div>
+            </div>
+            
+            <!-- Stripe Form -->
+            <div id="stripeForm">
                 <div class="form-group">
                     <label>Card Details</label>
                     <div id="card-element"></div>
                 </div>
-                
-                <div class="form-group">
-                    <label>Billing Cycle</label>
-                    <select id="billingCycle">
-                        <option value="monthly">Monthly</option>
-                        <option value="quarterly" selected>Quarterly (15% off)</option>
-                        <option value="annual">Annual (40% off)</option>
-                    </select>
-                </div>
-                
-                <button type="submit" class="pay-btn" id="submitBtn">
-                    Pay $<span id="payAmount">0</span>
+                <button class="pay-btn" id="stripePayBtn" onclick="processStripePayment()">
+                    Pay $<span id="stripePayAmount">0</span>
                 </button>
-                
-                <div class="secure-badge">
-                    🔒 Secured by Stripe
-                </div>
-            </form>
+            </div>
+            
+            <!-- PayPal Form -->
+            <div id="paypalForm" style="display: none;">
+                <div id="paypal-button-container" style="margin-top: 20px;"></div>
+            </div>
+            
+            <div class="secure-badge" style="text-align: center; margin-top: 12px; font-size: 12px; color: #666;">
+                🔒 Secured by Stripe & PayPal
+            </div>
             
             <div id="paymentResult" style="display: none; margin-top: 20px; padding: 16px; border-radius: 10px; text-align: center;"></div>
         </div>
     </div>
+    
+    <!-- Password Change Modal -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Change Password</div>
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="newPassword" placeholder="Enter new password">
+            </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="confirmPassword" placeholder="Confirm new password">
+            </div>
+            <button class="pay-btn" onclick="changePassword()">Update Password</button>
+        </div>
+    </div>
 
     <script>
-        // Mobile Menu Toggle
-        function toggleMenu() {
-            document.getElementById('mobileMenu').classList.toggle('active');
+        // ==================== GLOBAL STATE ====================
+        let currentUser = null;
+        let currentPackage = '';
+        let currentPrice = 0;
+        let stripe = null;
+        let cardElement = null;
+        let customFeatures = {};
+        
+        // ==================== AUTHENTICATION ====================
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (!response.ok) throw new Error('Login failed');
+                
+                const data = await response.json();
+                currentUser = data.user;
+                localStorage.setItem('token', data.token);
+                
+                // Update UI
+                document.getElementById('headerLogin').classList.add('hidden');
+                document.getElementById('headerUser').classList.remove('hidden');
+                document.getElementById('userName').textContent = currentUser.email;
+                
+                // Show appropriate dashboard
+                document.getElementById('mainContent').classList.add('hidden');
+                
+                if (currentUser.role === 'admin') {
+                    document.getElementById('adminDashboard').classList.remove('hidden');
+                    loadAdminData();
+                } else {
+                    document.getElementById('customerDashboard').classList.remove('hidden');
+                    if (currentUser.forcePasswordChange) {
+                        document.getElementById('passwordChangeNotice').classList.remove('hidden');
+                    }
+                    loadCustomerData();
+                }
+                
+            } catch (error) {
+                alert('Invalid credentials');
+            }
         }
         
-        // Stripe Setup
-        const stripe = Stripe('pk_live_51T3pHE6YrzSogalhXK9NKSvgHGQUvGbS5xCrYGT5W4J28cFoMRgJRyoMJF6YBc4q0lZu7pR66auxbS51PsAhIIyl00yHA5mot2'); // Replace with your key
-        const elements = stripe.elements();
-        const cardElement = elements.create('card', {
-            style: {
-                base: {
-                    fontSize: '16px',
-                    color: '#2c3e50',
-                    '::placeholder': { color: '#aab7c4' }
-                }
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('token');
+            location.reload();
+        }
+        
+        // Auto-login if token exists
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Verify token and login
+                fetch('/api/user/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(res => {
+                    if (res.ok) {
+                        document.getElementById('loginEmail').value = '';
+                        document.getElementById('loginPassword').value = '';
+                        login(); // Will use stored values, but we need to decode token
+                    }
+                })
+                .catch(() => localStorage.removeItem('token'));
             }
         });
         
-        let currentPackage = '';
-        let currentPrice = 0;
+        // ==================== CUSTOM PACKAGE CALCULATOR ====================
+        function calculateCustomPrice() {
+            let base = 99;
+            const platforms = parseInt(document.getElementById('addonPlatforms').value);
+            const posts = parseInt(document.getElementById('addonPosts').value);
+            const video = document.getElementById('addonVideo').checked;
+            const support = document.getElementById('addonSupport').checked;
+            
+            let total = base + (platforms * 25) + (posts * 1.5);
+            if (video) total += 50;
+            if (support) total += 30;
+            
+            document.getElementById('customTotalPrice').textContent = `$${Math.round(total)}/mo`;
+            
+            customFeatures = {
+                platforms: 3 + platforms,
+                posts: 30 + posts,
+                videoGen: video,
+                prioritySupport: support
+            };
+            
+            return Math.round(total);
+        }
         
-        // Open Payment Modal
+        // ==================== PAYMENT HANDLING ====================
         function openPayment(pkg, price) {
             currentPackage = pkg;
-            currentPrice = price;
+            currentPrice = pkg === 'custom' ? calculateCustomPrice() : price;
             
-            document.getElementById('selectedPackage').textContent = pkg.charAt(0).toUpperCase() + pkg.slice(1);
-            document.getElementById('selectedPrice').textContent = price;
-            document.getElementById('payAmount').textContent = price * 3; // Default quarterly
+            document.getElementById('selectedPackage').textContent = 
+                pkg.charAt(0).toUpperCase() + pkg.slice(1) + (pkg === 'custom' ? ' (Build Your Own)' : '');
+            document.getElementById('selectedPrice').textContent = currentPrice;
+            document.getElementById('stripePayAmount').textContent = currentPrice;
             
             document.getElementById('paymentModal').classList.add('active');
             
-            // Mount card element
-            setTimeout(() => {
-                cardElement.mount('#card-element');
-            }, 100);
+            // Initialize Stripe
+            if (!stripe) {
+                stripe = Stripe('pk_live_YOUR_STRIPE_KEY');
+                const elements = stripe.elements();
+                cardElement = elements.create('card', {
+                    style: { base: { fontSize: '16px', color: '#2c3e50' } }
+                });
+            }
+            setTimeout(() => cardElement.mount('#card-element'), 100);
+            
+            // Initialize PayPal
+            initPayPal();
         }
         
-        // Close Payment Modal
         function closePayment() {
             document.getElementById('paymentModal').classList.remove('active');
             cardElement.unmount();
         }
         
-        // Update price when billing cycle changes
-        document.getElementById('billingCycle').addEventListener('change', function(e) {
-            const cycle = e.target.value;
-            let multiplier = 1;
-            let discount = 0;
+        function switchPaymentMethod(method) {
+            document.querySelectorAll('.payment-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
             
-            if (cycle === 'quarterly') {
-                multiplier = 3;
-                discount = 0.15;
-            } else if (cycle === 'annual') {
-                multiplier = 12;
-                discount = 0.40;
+            document.getElementById('stripeForm').style.display = method === 'stripe' ? 'block' : 'none';
+            document.getElementById('paypalForm').style.display = method === 'paypal' ? 'block' : 'none';
+        }
+        
+        async function processStripePayment() {
+            const email = document.getElementById('newAccountEmail').value;
+            const password = document.getElementById('newAccountPassword').value;
+            const btn = document.getElementById('stripePayBtn');
+            
+            if (!email || !password || password.length < 8) {
+                alert('Please enter valid email and password (min 8 chars)');
+                return;
             }
             
-            const finalPrice = Math.round(currentPrice * multiplier * (1 - discount));
-            document.getElementById('payAmount').textContent = finalPrice;
-        });
-        
-        // Handle Payment Submission
-        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Processing...';
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
             
             try {
-                // Create payment intent on your server
-              const response = await fetch('https://reelbridge-payments.chrismoran202522.workers.dev', {
+                // Create payment intent
+                const intentRes = await fetch('/api/create-stripe-intent', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         package: currentPackage,
-                        amount: document.getElementById('payAmount').textContent,
-                        email: document.getElementById('email').value,
-                        billingCycle: document.getElementById('billingCycle').value
+                        amount: currentPrice,
+                        email: email,
+                        billingCycle: 'monthly',
+                        features: customFeatures
                     })
                 });
                 
-                const { clientSecret } = await response.json();
+                const { clientSecret } = await intentRes.json();
                 
                 // Confirm payment
                 const result = await stripe.confirmCardPayment(clientSecret, {
                     payment_method: {
                         card: cardElement,
-                        billing_details: {
-                            email: document.getElementById('email').value
-                        }
+                        billing_details: { email: email }
                     }
                 });
                 
-                if (result.error) {
-                    showResult(result.error.message, 'error');
-                } else {
-                    showResult('Payment successful! Check your email for confirmation.', 'success');
-                    setTimeout(() => {
-                        closePayment();
-                        alert('Thank you! We will contact you shortly to set up your account.');
-                    }, 2000);
-                }
+                if (result.error) throw new Error(result.error.message);
+                
+                showPaymentResult('Payment successful! Check your email for login credentials.', 'success');
+                
+                setTimeout(() => {
+                    closePayment();
+                    alert('Account created! Please login with your email and password.');
+                }, 2000);
+                
             } catch (error) {
-                showResult('Payment failed. Please try again.', 'error');
+                showPaymentResult(error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = `Pay $${currentPrice}`;
             }
-            
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Pay $' + document.getElementById('payAmount').textContent;
-        });
+        }
         
-        function showResult(message, type) {
+        function initPayPal() {
+            const container = document.getElementById('paypal-button-container');
+            container.innerHTML = '';
+            
+            paypal.Buttons({
+                createOrder: async () => {
+                    const email = document.getElementById('newAccountEmail').value;
+                    if (!email) {
+                        alert('Please enter your email first');
+                        return;
+                    }
+                    
+                    const response = await fetch('/api/create-paypal-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            package: currentPackage,
+                            amount: currentPrice,
+                            billingCycle: 'monthly',
+                            features: customFeatures
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    return data.orderId;
+                },
+                onApprove: async (data) => {
+                    const email = document.getElementById('newAccountEmail').value;
+                    const password = document.getElementById('newAccountPassword').value;
+                    
+                    const response = await fetch('/api/capture-paypal-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            orderId: data.orderID,
+                            email: email,
+                            password: password
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showPaymentResult('Payment successful! You can now login.', 'success');
+                        setTimeout(() => {
+                            closePayment();
+                            alert('Account created! Please login.');
+                        }, 2000);
+                    }
+                }
+            }).render('#paypal-button-container');
+        }
+        
+        function showPaymentResult(message, type) {
             const resultDiv = document.getElementById('paymentResult');
             resultDiv.textContent = message;
             resultDiv.style.display = 'block';
@@ -787,20 +1032,322 @@
             resultDiv.style.color = type === 'success' ? '#155724' : '#721c24';
         }
         
-        // Close modal on outside click
-        document.getElementById('paymentModal').addEventListener('click', function(e) {
-            if (e.target === this) closePayment();
-        });
-            // ==================== DASHBOARD FUNCTIONALITY ====================
-    let currentUser = null;
-    
-    // ... all the JavaScript functions from Number 3 ...
-    
-    // Update payment success handler to show dashboard
-    function showResult(message, type) {
-        // ... updated showResult function ...
-    }
-
+        // ==================== CUSTOMER DASHBOARD ====================
+        async function loadCustomerData() {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch('/api/user/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                const profile = data.profile;
+                
+                // Update stats
+                document.getElementById('statRemaining').textContent = profile.posts_remaining;
+                document.getElementById('statUsed').textContent = profile.posts_used;
+                document.getElementById('statPackage').textContent = profile.package;
+                document.getElementById('statConnected').textContent = data.accounts.length;
+                document.getElementById('dashboardEmail').textContent = profile.email;
+                
+                // Update platform buttons
+                data.accounts.forEach(acc => {
+                    const btn = document.querySelector(`button[onclick="connectPlatform('${acc.platform}')"]`);
+                    if (btn) {
+                        btn.classList.add('connected');
+                        btn.textContent += ' ✓';
+                    }
+                });
+                
+                // Render posts
+                renderScheduledPosts(data.posts);
+                
+            } catch (error) {
+                console.error('Failed to load customer data:', error);
+            }
+        }
+        
+        function renderScheduledPosts(posts) {
+            const container = document.getElementById('scheduledPostsList');
+            if (!posts.length) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No posts scheduled yet</div>';
+                return;
+            }
+            
+            container.innerHTML = posts.map(post => `
+                <div class="package-card" style="margin-bottom: 12px;">
+                    <div style="font-weight: 600; margin-bottom: 8px;">${post.content.substring(0, 60)}...</div>
+                    <div style="font-size: 12px; color: #666;">
+                        ${new Date(post.scheduled_time).toLocaleString()} | 
+                        ${post.platforms.join(', ')} | 
+                        <span style="color: ${post.status === 'published' ? 'var(--success)' : post.status === 'pending' ? 'var(--warning)' : 'var(--danger)'}">
+                            ${post.status}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showPasswordChange() {
+            document.getElementById('passwordModal').classList.add('active');
+        }
+        
+        async function changePassword() {
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            
+            if (newPass !== confirmPass || newPass.length < 8) {
+                alert('Passwords must match and be at least 8 characters');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ newPassword: newPass })
+                });
+                
+                if (response.ok) {
+                    alert('Password updated successfully!');
+                    document.getElementById('passwordModal').classList.remove('active');
+                    document.getElementById('passwordChangeNotice').classList.add('hidden');
+                }
+            } catch (error) {
+                alert('Failed to update password');
+            }
+        }
+        
+        // ==================== ADMIN DASHBOARD ====================
+        async function loadAdminData() {
+            const token = localStorage.getItem('token');
+            
+            try {
+                // Load stats
+                const statsRes = await fetch('/api/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const stats = await statsRes.json();
+                
+                document.getElementById('adminTotalUsers').textContent = stats.users.total_users;
+                document.getElementById('adminRevenue').textContent = 
+                    '$' + (parseInt(stats.revenue.paypal_revenue) + parseInt(stats.revenue.stripe_revenue)).toLocaleString();
+                document.getElementById('adminActiveWeek').textContent = stats.users.active_this_week;
+                document.getElementById('adminStarter').textContent = stats.users.starter_users;
+                document.getElementById('adminGrowth').textContent = stats.users.growth_users;
+                document.getElementById('adminPro').textContent = stats.users.pro_users;
+                document.getElementById('adminCustom').textContent = stats.users.custom_users;
+                
+                // Load users
+                const usersRes = await fetch('/api/admin/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const users = await usersRes.json();
+                
+                const tbody = document.getElementById('adminUsersBody');
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.email}</td>
+                        <td>${user.package}</td>
+                        <td>${user.posts_used}/${user.posts_used + user.posts_remaining}</td>
+                        <td>
+                            <span class="status-badge ${user.is_active ? 'status-active' : 'status-suspended'}">
+                                ${user.is_active ? 'Active' : 'Suspended'}
+                            </span>
+                        </td>
+                        <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="action-btn ${user.is_active ? 'btn-suspend' : 'btn-activate'}" 
+                                    onclick="toggleUserStatus(${user.id}, ${!user.is_active})">
+                                ${user.is_active ? 'Suspend' : 'Activate'}
+                            </button>
+                            <button class="action-btn" style="background: var(--accent); color: white;"
+                                    onclick="addPosts(${user.id})">
+                                +Posts
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // Load activity
+                const activityDiv = document.getElementById('adminActivity');
+                activityDiv.innerHTML = stats.recentActivity.map(log => `
+                    <div style="padding: 12px; border-bottom: 1px solid #eee; font-size: 14px;">
+                        <strong>${log.action}</strong> - ${new Date(log.created_at).toLocaleString()}<br>
+                        <span style="color: #666; font-size: 12px;">${JSON.stringify(log.details)}</span>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load admin data:', error);
+            }
+        }
+        
+        async function toggleUserStatus(userId, isActive) {
+            const token = localStorage.getItem('token');
+            
+            try {
+                await fetch('/api/admin/user-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ userId, isActive })
+                });
+                
+                loadAdminData(); // Refresh
+            } catch (error) {
+                alert('Failed to update user status');
+            }
+        }
+        
+        async function addPosts(userId) {
+            const posts = prompt('How many posts to add?');
+            if (!posts || isNaN(posts)) return;
+            
+            const token = localStorage.getItem('token');
+            
+            try {
+                await fetch('/api/admin/add-posts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ userId, postsToAdd: parseInt(posts) })
+                });
+                
+                loadAdminData();
+            } catch (error) {
+                alert('Failed to add posts');
+            }
+        }
+        
+        // ==================== POST MANAGEMENT ====================
+        async function connectPlatform(platform) {
+            // OAuth flow - redirect to platform auth
+            const width = 500, height = 600;
+            const left = (screen.width - width) / 2;
+            const top = (screen.height - height) / 2;
+            
+            const authWindow = window.open(
+                `/auth/${platform}`,
+                'Connect Account',
+                `width=${width},height=${height},top=${top},left=${left}`
+            );
+            
+            // Listen for auth completion
+            window.addEventListener('message', async (e) => {
+                if (e.data.type === 'oauth_success') {
+                    const token = localStorage.getItem('token');
+                    await fetch('/api/connect-account', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            platform: platform,
+                            authCode: e.data.code
+                        })
+                    });
+                    
+                    loadCustomerData(); // Refresh
+                }
+            });
+        }
+        
+        async function generateAIContent() {
+            const content = document.getElementById('postContent').value;
+            const platforms = Array.from(document.querySelectorAll('#postPlatforms input:checked')).map(cb => cb.value);
+            
+            if (!platforms.length) {
+                alert('Please select at least one platform');
+                return;
+            }
+            
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            
+            try {
+                const response = await fetch('/api/generate-content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        topic: content || 'social media marketing',
+                        platforms: platforms,
+                        tone: 'professional'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('postContent').value = data.content;
+                updateCharCount();
+                
+            } catch (error) {
+                alert('AI generation failed');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '✨ AI Generate';
+        }
+        
+        async function schedulePost() {
+            const content = document.getElementById('postContent').value;
+            const platforms = Array.from(document.querySelectorAll('#postPlatforms input:checked')).map(cb => cb.value);
+            const scheduledTime = document.getElementById('scheduleTime').value;
+            
+            if (!content || !platforms.length || !scheduledTime) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch('/api/schedule-post', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        content,
+                        platforms,
+                        mediaUrls: [],
+                        scheduledTime: new Date(scheduledTime).toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Post scheduled successfully!');
+                    document.getElementById('postContent').value = '';
+                    loadCustomerData();
+                } else {
+                    alert(data.error || 'Failed to schedule');
+                }
+                
+            } catch (error) {
+                alert('Network error');
+            }
+        }
+        
+        function updateCharCount() {
+            document.getElementById('charCount').textContent = document.getElementById('postContent').value.length;
+        }
+        
+        document.getElementById('postContent').addEventListener('input', updateCharCount);
     </script>
 </body>
 </html>
