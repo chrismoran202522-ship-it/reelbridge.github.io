@@ -1,0 +1,34 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install
+      run: npm ci
+      
+    - name: Create env
+      run: |
+        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+        echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> .env
+        echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> .env
+        echo "STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}" >> .env
+        echo "PAYPAL_CLIENT_ID=${{ secrets.PAYPAL_CLIENT_ID }}" >> .env
+        echo "PAYPAL_CLIENT_SECRET=${{ secrets.PAYPAL_CLIENT_SECRET }}" >> .env
+        echo "PORT=3000" >> .env
+        echo "NODE_ENV=production" >> .env
+        
+    - name: Deploy
+      run: echo "Add your deploy commands here"
