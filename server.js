@@ -16,16 +16,17 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-// PayPal setup
-const paypalEnvironment = new paypal.core.SandboxEnvironment(
+// PayPal setup - Use LiveEnvironment for production
+const Environment = process.env.NODE_ENV === 'production' 
+    ? paypal.core.LiveEnvironment 
+    : paypal.core.SandboxEnvironment;
+
+const paypalEnvironment = new Environment(
     process.env.PAYPAL_CLIENT_ID,
     process.env.PAYPAL_CLIENT_SECRET
 );
 const paypalClient = new paypal.core.PayPalHttpClient(paypalEnvironment);
 
-// Middleware
-app.use(cors({ origin: '*' }));
-app.use(express.json());
 
 // JWT middleware
 const authenticateToken = (req, res, next) => {
