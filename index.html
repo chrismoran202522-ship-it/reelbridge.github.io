@@ -17,6 +17,7 @@
             --danger: #e74c3c;
             --bg: #f0f4f8;
             --card: #ffffff;
+            --demo: #9b59b6;
         }
         
         body {
@@ -95,6 +96,20 @@
             cursor: pointer;
             width: 100%;
             max-width: 300px;
+        }
+        
+        .demo-btn {
+            display: inline-block;
+            background: var(--demo);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border: 2px solid white;
+            cursor: pointer;
+            margin-top: 12px;
         }
         
         /* Sections */
@@ -245,7 +260,7 @@
         
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; }
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 14px;
             border: 2px solid #e0e0e0;
@@ -316,6 +331,32 @@
         .platform-btn:hover { border-color: var(--accent); }
         
         /* Admin Styles */
+        .admin-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        
+        .admin-nav-btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 20px;
+            background: #e0e0e0;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        
+        .admin-nav-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+        
         .admin-table {
             width: 100%;
             border-collapse: collapse;
@@ -339,6 +380,7 @@
         
         .status-active { background: #d4edda; color: #155724; }
         .status-suspended { background: #f8d7da; color: #721c24; }
+        .status-demo { background: #e1d5f7; color: #5a2d9c; }
         
         .action-btn {
             padding: 6px 12px;
@@ -352,6 +394,8 @@
         .btn-suspend { background: var(--warning); color: white; }
         .btn-activate { background: var(--success); color: white; }
         .btn-delete { background: var(--danger); color: white; }
+        .btn-view { background: var(--accent); color: white; }
+        .btn-impersonate { background: var(--demo); color: white; }
         
         .password-change-notice {
             background: #fff3cd;
@@ -362,7 +406,104 @@
             text-align: center;
         }
         
+        .impersonation-banner {
+            background: var(--demo);
+            color: white;
+            padding: 12px;
+            text-align: center;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            font-weight: 600;
+        }
+        
         .hidden { display: none !important; }
+        
+        /* FAQ Styles */
+        .faq-item {
+            border-bottom: 1px solid #eee;
+            padding: 16px 0;
+        }
+        
+        .faq-question {
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .faq-answer {
+            margin-top: 12px;
+            color: #666;
+            display: none;
+        }
+        
+        .faq-answer.show { display: block; }
+        
+        .faq-category {
+            background: var(--accent);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+        
+        .help-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .help-modal .modal-content {
+            max-height: 80vh;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        /* Package Editor */
+        .package-editor {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .package-editor input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        
+        .feature-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -380,6 +521,14 @@
         </div>
     </header>
     
+    <!-- Impersonation Banner -->
+    <div id="impersonationBanner" class="impersonation-banner hidden">
+        🔮 Impersonating: <span id="impersonatedUser"></span> | 
+        <button onclick="stopImpersonation()" style="background: white; color: var(--demo); border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; margin-left: 8px;">
+            Stop
+        </button>
+    </div>
+    
     <!-- Main Content (shown when NOT logged in) -->
     <div id="mainContent">
         <!-- Hero -->
@@ -387,119 +536,19 @@
             <h1>Automated Social Media</h1>
             <p>AI-powered management for your business</p>
             <a href="#packages" class="cta-btn">View Packages</a>
+            <br>
+            <button onclick="startDemo()" class="demo-btn">🎮 Try Demo (No Signup)</button>
+            <br>
+            <button onclick="showFreeSignup()" style="background: transparent; color: white; border: 1px solid white; padding: 10px 20px; border-radius: 20px; margin-top: 12px; cursor: pointer;">
+                Create Free Account
+            </button>
         </section>
         
         <!-- Packages Section -->
         <section class="section" id="packages">
             <h2 class="section-title">Choose Your Plan</h2>
-            
-            <!-- Starter -->
-            <div class="package-card">
-                <div class="package-name">Starter</div>
-                <div class="package-price">$254<span>/mo</span></div>
-                <div class="savings">Save 15% with quarterly</div>
-                <ul class="features-list">
-                    <li>3 Social Platforms</li>
-                    <li>30 Posts/Month</li>
-                    <li>AI Content Generation</li>
-                    <li>Basic Analytics</li>
-                </ul>
-                <button class="select-btn" onclick="openPayment('starter', 254)">Get Started</button>
-            </div>
-            
-            <!-- Growth -->
-            <div class="package-card featured">
-                <div class="package-badge">MOST POPULAR</div>
-                <div class="package-name">Growth</div>
-                <div class="package-price">$509<span>/mo</span></div>
-                <div class="savings">Save 15% with quarterly</div>
-                <ul class="features-list">
-                    <li>6 Social Platforms</li>
-                    <li>75 Posts/Month</li>
-                    <li>AI Video Generation</li>
-                    <li>Auto-Engagement</li>
-                    <li>Priority Support</li>
-                </ul>
-                <button class="select-btn" onclick="openPayment('growth', 509)">Get Started</button>
-            </div>
-            
-            <!-- Professional -->
-            <div class="package-card">
-                <div class="package-name">Professional</div>
-                <div class="package-price">$849<span>/mo</span></div>
-                <div class="savings">Save 15% with quarterly</div>
-                <ul class="features-list">
-                    <li>10 Platforms</li>
-                    <li>Unlimited Posts</li>
-                    <li>AI Video & Image Gen</li>
-                    <li>Dedicated Account Manager</li>
-                </ul>
-                <button class="select-btn" onclick="openPayment('professional', 849)">Get Started</button>
-            </div>
-            
-            <!-- Custom Package Builder -->
-            <div class="package-card custom-builder">
-                <div class="package-name">Custom Package</div>
-                <div class="package-price">$99<span> base</span></div>
-                <div class="savings">Build your perfect plan</div>
-                
-                <div style="margin: 16px 0;">
-                    <h4 style="margin-bottom: 12px;">Select Add-ons:</h4>
-                    
-                    <div class="addon-item">
-                        <div>
-                            <div style="font-weight: 600;">Extra Platforms</div>
-                            <div style="font-size: 12px; color: #666;">+$25 per platform</div>
-                        </div>
-                        <select id="addonPlatforms" onchange="calculateCustomPrice()">
-                            <option value="0">0</option>
-                            <option value="1">1 (+$25)</option>
-                            <option value="2">2 (+$50)</option>
-                            <option value="3">3 (+$75)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="addon-item">
-                        <div>
-                            <div style="font-weight: 600;">Extra Posts</div>
-                            <div style="font-size: 12px; color: #666;">+$15 per 10 posts</div>
-                        </div>
-                        <select id="addonPosts" onchange="calculateCustomPrice()">
-                            <option value="0">0</option>
-                            <option value="10">10 (+$15)</option>
-                            <option value="20">20 (+$30)</option>
-                            <option value="50">50 (+$75)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="addon-item">
-                        <div>
-                            <div style="font-weight: 600;">AI Video Generation</div>
-                            <div style="font-size: 12px; color: #666;">Auto-create videos</div>
-                        </div>
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" id="addonVideo" onchange="calculateCustomPrice()">
-                            <span class="addon-price">+$50</span>
-                        </label>
-                    </div>
-                    
-                    <div class="addon-item">
-                        <div>
-                            <div style="font-weight: 600;">Priority Support</div>
-                            <div style="font-size: 12px; color: #666;">24/7 chat support</div>
-                        </div>
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" id="addonSupport" onchange="calculateCustomPrice()">
-                            <span class="addon-price">+$30</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="total-price" id="customTotalPrice">$99/mo</div>
-                
-                <button class="select-btn" onclick="openPayment('custom', 99)" style="background: var(--success);">
-                    Build My Package
-                </button>
+            <div id="packagesContainer">
+                <!-- Packages loaded dynamically -->
             </div>
         </section>
         
@@ -545,6 +594,12 @@
                 </button>
             </div>
             
+            <!-- Demo Notice -->
+            <div class="password-change-notice hidden" id="demoNotice" style="background: #e1d5f7; border-color: var(--demo);">
+                <strong>🎮 Demo Mode:</strong> You're exploring with sample data. 
+                <a href="#" onclick="showPaymentModal()" style="color: var(--demo); text-decoration: underline;">Upgrade to full access</a>
+            </div>
+            
             <div class="dashboard-header">
                 <h2 style="font-size: 24px;">My Dashboard</h2>
                 <p id="dashboardEmail" style="opacity: 0.9; margin-top: 4px;"></p>
@@ -572,24 +627,12 @@
             <!-- Connect Accounts -->
             <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Connect Social Accounts</h3>
             <div class="platform-grid" id="platformGrid">
-                <button class="platform-btn" onclick="connectPlatform('instagram')">
-                    📸 Instagram
-                </button>
-                <button class="platform-btn" onclick="connectPlatform('tiktok')">
-                    🎵 TikTok
-                </button>
-                <button class="platform-btn" onclick="connectPlatform('twitter')">
-                    🐦 Twitter
-                </button>
-                <button class="platform-btn" onclick="connectPlatform('facebook')">
-                    👥 Facebook
-                </button>
-                <button class="platform-btn" onclick="connectPlatform('linkedin')">
-                    💼 LinkedIn
-                </button>
-                <button class="platform-btn" onclick="connectPlatform('youtube')">
-                    📺 YouTube
-                </button>
+                <button class="platform-btn" onclick="connectPlatform('instagram')">📸 Instagram</button>
+                <button class="platform-btn" onclick="connectPlatform('tiktok')">🎵 TikTok</button>
+                <button class="platform-btn" onclick="connectPlatform('twitter')">🐦 Twitter</button>
+                <button class="platform-btn" onclick="connectPlatform('facebook')">👥 Facebook</button>
+                <button class="platform-btn" onclick="connectPlatform('linkedin')">💼 LinkedIn</button>
+                <button class="platform-btn" onclick="connectPlatform('youtube')">📺 YouTube</button>
             </div>
             
             <!-- Create Post -->
@@ -625,9 +668,7 @@
             <!-- Scheduled Posts -->
             <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Scheduled Posts</h3>
             <div id="scheduledPostsList">
-                <div style="text-align: center; color: #666; padding: 40px;">
-                    No posts scheduled yet
-                </div>
+                <div style="text-align: center; color: #666; padding: 40px;">No posts scheduled yet</div>
             </div>
         </div>
     </div>
@@ -637,72 +678,125 @@
         <div class="section">
             <div class="dashboard-header">
                 <h2 style="font-size: 24px;">Admin Dashboard</h2>
-                <p style="opacity: 0.9; margin-top: 4px;">Manage all accounts and view analytics</p>
+                <p style="opacity: 0.9; margin-top: 4px;">Manage all accounts and system settings</p>
             </div>
             
-            <!-- Admin Stats -->
-            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
-                <div class="stat-card">
-                    <div class="stat-value" id="adminTotalUsers">0</div>
-                    <div class="stat-label">Total Users</div>
+            <!-- Admin Navigation -->
+            <div class="admin-nav">
+                <button class="admin-nav-btn active" onclick="showAdminSection('overview')">Overview</button>
+                <button class="admin-nav-btn" onclick="showAdminSection('users')">Users</button>
+                <button class="admin-nav-btn" onclick="showAdminSection('packages')">Packages</button>
+                <button class="admin-nav-btn" onclick="showAdminSection('settings')">Settings</button>
+                <button class="admin-nav-btn" onclick="showAdminSection('faq')">FAQ</button>
+            </div>
+            
+            <!-- Overview Section -->
+            <div id="adminOverview" class="admin-section active">
+                <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminTotalUsers">0</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminActiveWeek">0</div>
+                        <div class="stat-label">Active This Week</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminRevenue">$0</div>
+                        <div class="stat-label">Paid Customers</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="adminRevenue">$0</div>
-                    <div class="stat-label">Total Revenue</div>
+                
+                <div class="package-card" style="margin-top: 20px;">
+                    <h4 style="margin-bottom: 16px;">Package Distribution</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                        <div class="stat-card">
+                            <div class="stat-value" id="adminStarter">0</div>
+                            <div class="stat-label">Starter</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="adminGrowth">0</div>
+                            <div class="stat-label">Growth</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="adminPro">0</div>
+                            <div class="stat-label">Professional</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="adminCustom">0</div>
+                            <div class="stat-label">Custom</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="adminFree">0</div>
+                            <div class="stat-label">Free</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="adminActiveWeek">0</div>
-                    <div class="stat-label">Active This Week</div>
+                
+                <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Recent Activity</h3>
+                <div id="adminActivity" style="max-height: 300px; overflow-y: auto;"></div>
+            </div>
+            
+            <!-- Users Section -->
+            <div id="adminUsers" class="admin-section">
+                <h3 style="margin-bottom: 16px;">All Customers</h3>
+                <div style="overflow-x: auto;">
+                    <table class="admin-table" id="adminUsersTable">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Package</th>
+                                <th>Posts</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersBody"></tbody>
+                    </table>
                 </div>
             </div>
             
-            <!-- Package Breakdown -->
-            <div class="package-card" style="margin-top: 20px;">
-                <h4 style="margin-bottom: 16px;">Package Distribution</h4>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                    <div class="stat-card">
-                        <div class="stat-value" id="adminStarter">0</div>
-                        <div class="stat-label">Starter</div>
+            <!-- Packages Section -->
+            <div id="adminPackages" class="admin-section">
+                <h3 style="margin-bottom: 16px;">Package Configuration</h3>
+                <div id="packageEditorContainer"></div>
+                <button onclick="addNewPackage()" class="select-btn" style="background: var(--success); margin-top: 16px;">
+                    + Add New Package
+                </button>
+            </div>
+            
+            <!-- Settings Section -->
+            <div id="adminSettings" class="admin-section">
+                <h3 style="margin-bottom: 16px;">Admin Settings</h3>
+                
+                <div class="package-card">
+                    <h4>Change Admin Password</h4>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>Current Password</label>
+                        <input type="password" id="adminCurrentPass" placeholder="Enter current password">
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="adminGrowth">0</div>
-                        <div class="stat-label">Growth</div>
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="adminNewPass" placeholder="Min 8 characters">
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="adminPro">0</div>
-                        <div class="stat-label">Professional</div>
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="adminConfirmPass" placeholder="Confirm new password">
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="adminCustom">0</div>
-                        <div class="stat-label">Custom</div>
-                    </div>
+                    <button onclick="changeAdminPassword()" class="select-btn" style="background: var(--warning);">
+                        Update Password
+                    </button>
                 </div>
             </div>
             
-            <!-- All Users Table -->
-            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">All Customers</h3>
-            <div style="overflow-x: auto;">
-                <table class="admin-table" id="adminUsersTable">
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Package</th>
-                            <th>Posts</th>
-                            <th>Status</th>
-                            <th>Joined</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminUsersBody">
-                        <!-- Populated dynamically -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Recent Activity -->
-            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Recent Activity</h3>
-            <div id="adminActivity" style="max-height: 300px; overflow-y: auto;">
-                <!-- Populated dynamically -->
+            <!-- FAQ Section -->
+            <div id="adminFaq" class="admin-section">
+                <h3 style="margin-bottom: 16px;">FAQ Management</h3>
+                <div id="faqEditorContainer"></div>
+                <button onclick="addNewFaq()" class="select-btn" style="background: var(--success); margin-top: 16px;">
+                    + Add FAQ Entry
+                </button>
             </div>
         </div>
     </div>
@@ -720,7 +814,6 @@
                 <strong>Price:</strong> $<span id="selectedPrice">-</span>/mo
             </div>
             
-            <!-- Account Creation -->
             <div class="form-group">
                 <label>Create Your Account</label>
                 <input type="email" id="newAccountEmail" placeholder="your@email.com" required>
@@ -731,13 +824,11 @@
                 <input type="password" id="newAccountPassword" placeholder="Min 8 characters" required>
             </div>
             
-            <!-- Payment Method Tabs -->
             <div class="payment-tabs">
                 <div class="payment-tab active" onclick="switchPaymentMethod('stripe')">💳 Card</div>
                 <div class="payment-tab" onclick="switchPaymentMethod('paypal')">🅿️ PayPal</div>
             </div>
             
-            <!-- Stripe Form -->
             <div id="stripeForm">
                 <div class="form-group">
                     <label>Card Details</label>
@@ -748,7 +839,6 @@
                 </button>
             </div>
             
-            <!-- PayPal Form -->
             <div id="paypalForm" style="display: none;">
                 <div id="paypal-button-container" style="margin-top: 20px;"></div>
             </div>
@@ -766,6 +856,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title">Change Password</div>
+                <button class="close-modal" onclick="closeModal('passwordModal')">×</button>
             </div>
             <div class="form-group">
                 <label>New Password</label>
@@ -778,10 +869,46 @@
             <button class="pay-btn" onclick="changePassword()">Update Password</button>
         </div>
     </div>
+    
+    <!-- Free Signup Modal -->
+    <div class="modal" id="freeSignupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Create Free Account</div>
+                <button class="close-modal" onclick="closeModal('freeSignupModal')">×</button>
+            </div>
+            <p style="margin-bottom: 16px; color: #666;">Get 5 free posts per month to try Reel Bridge!</p>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="freeEmail" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="freePassword" placeholder="Min 8 characters">
+            </div>
+            <button class="pay-btn" onclick="createFreeAccount()" style="background: var(--success);">
+                Create Free Account
+            </button>
+        </div>
+    </div>
+    
+    <!-- Help/FAQ Modal -->
+    <div class="modal help-modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Help & FAQ</div>
+                <button class="close-modal" onclick="closeModal('helpModal')">×</button>
+            </div>
+            <input type="text" class="search-box" id="faqSearch" placeholder="Search help articles..." onkeyup="searchFaq()">
+            <div id="faqContainer"></div>
+        </div>
+    </div>
+    
+    <!-- Help Button -->
+    <button class="help-btn" onclick="openHelp()">?</button>
 
     <script>
         // ==================== API CONFIGURATION ====================
-        // CHANGE THIS TO YOUR RENDER URL
         const API_URL = 'https://reelbridge-api.onrender.com';
         
         // ==================== GLOBAL STATE ====================
@@ -791,6 +918,8 @@
         let stripe = null;
         let cardElement = null;
         let customFeatures = {};
+        let isImpersonating = false;
+        let originalAdminToken = null;
         
         // ==================== AUTHENTICATION ====================
         async function login() {
@@ -810,24 +939,12 @@
                 currentUser = data.user;
                 localStorage.setItem('token', data.token);
                 
-                // Update UI
-                document.getElementById('headerLogin').classList.add('hidden');
-                document.getElementById('headerUser').classList.remove('hidden');
-                document.getElementById('userName').textContent = currentUser.email;
-                
-                // Show appropriate dashboard
-                document.getElementById('mainContent').classList.add('hidden');
-                
-                if (currentUser.role === 'admin') {
-                    document.getElementById('adminDashboard').classList.remove('hidden');
-                    loadAdminData();
-                } else {
-                    document.getElementById('customerDashboard').classList.remove('hidden');
-                    if (currentUser.forcePasswordChange) {
-                        document.getElementById('passwordChangeNotice').classList.remove('hidden');
-                    }
-                    loadCustomerData();
+                if (isImpersonating) {
+                    document.getElementById('impersonationBanner').classList.remove('hidden');
+                    document.getElementById('impersonatedUser').textContent = currentUser.email;
                 }
+                
+                updateUIForUser();
                 
             } catch (error) {
                 alert('Invalid credentials');
@@ -835,81 +952,172 @@
         }
         
         function logout() {
+            if (isImpersonating) {
+                stopImpersonation();
+                return;
+            }
             currentUser = null;
             localStorage.removeItem('token');
             location.reload();
         }
         
-        // Auto-login if token exists
+        function updateUIForUser() {
+            document.getElementById('headerLogin').classList.add('hidden');
+            document.getElementById('headerUser').classList.remove('hidden');
+            document.getElementById('userName').textContent = currentUser.email;
+            document.getElementById('mainContent').classList.add('hidden');
+            
+            if (currentUser.role === 'admin' && !isImpersonating) {
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                loadAdminData();
+            } else {
+                document.getElementById('customerDashboard').classList.remove('hidden');
+                if (currentUser.forcePasswordChange) {
+                    document.getElementById('passwordChangeNotice').classList.remove('hidden');
+                }
+                if (currentUser.isDemo || currentUser.package === 'free') {
+                    document.getElementById('demoNotice').classList.remove('hidden');
+                }
+                loadCustomerData();
+            }
+        }
+        
+        // Auto-login check
         window.addEventListener('load', () => {
             const token = localStorage.getItem('token');
             if (token) {
-                // Verify token and auto-login
-                fetch(`${API_URL}/api/user/profile`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-                .then(res => {
-                    if (res.ok) {
-                        // Token valid, trigger login with stored credentials
-                        // We need to decode token or just reload with token
-                        document.getElementById('loginEmail').value = '';
-                        document.getElementById('loginPassword').value = '';
-                        // Try to auto-login by setting current user from token
-                        try {
-                            const payload = JSON.parse(atob(token.split('.')[1]));
-                            if (payload.email) {
-                                document.getElementById('loginEmail').value = payload.email;
-                                // Can't auto-login without password, but we can show dashboard
-                                // For now, just let user login manually or we can improve this
-                            }
-                        } catch (e) {
-                            console.error('Token decode error', e);
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    if (payload.exp * 1000 > Date.now()) {
+                        currentUser = payload;
+                        if (payload.impersonatedBy) {
+                            isImpersonating = true;
+                            originalAdminToken = localStorage.getItem('originalAdminToken');
                         }
+                        updateUIForUser();
                     } else {
                         localStorage.removeItem('token');
                     }
-                })
-                .catch(() => localStorage.removeItem('token'));
+                } catch (e) {
+                    localStorage.removeItem('token');
+                }
             }
+            loadPackages();
+            loadFaq();
         });
         
-        // ==================== CUSTOM PACKAGE CALCULATOR ====================
-        function calculateCustomPrice() {
-            let base = 99;
-            const platforms = parseInt(document.getElementById('addonPlatforms').value);
-            const posts = parseInt(document.getElementById('addonPosts').value);
-            const video = document.getElementById('addonVideo').checked;
-            const support = document.getElementById('addonSupport').checked;
+        // ==================== DEMO MODE ====================
+        async function startDemo() {
+            try {
+                const response = await fetch(`${API_URL}/api/demo/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                currentUser = { email: 'demo@reelbridge.temp', package: 'growth', isDemo: true };
+                localStorage.setItem('token', data.token);
+                
+                alert('🎮 Demo mode activated! You have 2 hours to explore.');
+                updateUIForUser();
+                
+            } catch (error) {
+                alert('Failed to start demo');
+            }
+        }
+        
+        // ==================== FREE SIGNUP ====================
+        function showFreeSignup() {
+            document.getElementById('freeSignupModal').classList.add('active');
+        }
+        
+        async function createFreeAccount() {
+            const email = document.getElementById('freeEmail').value;
+            const password = document.getElementById('freePassword').value;
             
-            let total = base + (platforms * 25) + (posts * 1.5);
-            if (video) total += 50;
-            if (support) total += 30;
+            if (!email || !password || password.length < 8) {
+                alert('Please enter valid email and password (min 8 chars)');
+                return;
+            }
             
-            document.getElementById('customTotalPrice').textContent = `$${Math.round(total)}/mo`;
+            try {
+                const response = await fetch(`${API_URL}/api/register-free`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ Free account created! You can now login.');
+                    closeModal('freeSignupModal');
+                    document.getElementById('loginEmail').value = email;
+                    document.getElementById('loginPassword').value = password;
+                    login();
+                } else {
+                    alert(data.error || 'Failed to create account');
+                }
+            } catch (error) {
+                alert('Network error');
+            }
+        }
+        
+        // ==================== PACKAGES ====================
+        async function loadPackages() {
+            try {
+                const response = await fetch(`${API_URL}/api/packages`);
+                const packages = await response.json();
+                
+                const container = document.getElementById('packagesContainer');
+                container.innerHTML = packages.map(pkg => renderPackageCard(pkg)).join('');
+                
+            } catch (error) {
+                console.error('Failed to load packages');
+            }
+        }
+        
+        function renderPackageCard(pkg) {
+            const features = pkg.features || {};
+            let featureList = '';
             
-            customFeatures = {
-                platforms: 3 + platforms,
-                posts: 30 + posts,
-                videoGen: video,
-                prioritySupport: support
-            };
+            if (pkg.package_name === 'starter') {
+                featureList = '<li>3 Social Platforms</li><li>30 Posts/Month</li><li>AI Content Generation</li><li>Basic Analytics</li>';
+            } else if (pkg.package_name === 'growth') {
+                featureList = '<li>6 Social Platforms</li><li>75 Posts/Month</li><li>AI Video Generation</li><li>Auto-Engagement</li><li>Priority Support</li>';
+            } else if (pkg.package_name === 'professional') {
+                featureList = '<li>10 Platforms</li><li>Unlimited Posts</li><li>AI Video & Image Gen</li><li>Dedicated Account Manager</li>';
+            } else {
+                featureList = `<li>Up to ${pkg.platforms_limit} Platforms</li><li>${pkg.posts_limit} Posts/Month</li>`;
+            }
             
-            return Math.round(total);
+            const isPopular = pkg.package_name === 'growth';
+            
+            return `
+                <div class="package-card ${isPopular ? 'featured' : ''}">
+                    ${isPopular ? '<div class="package-badge">MOST POPULAR</div>' : ''}
+                    <div class="package-name">${pkg.package_name.charAt(0).toUpperCase() + pkg.package_name.slice(1)}</div>
+                    <div class="package-price">$${pkg.price_monthly}<span>/mo</span></div>
+                    <div class="savings">Save 15% with quarterly</div>
+                    <ul class="features-list">${featureList}</ul>
+                    <button class="select-btn" onclick="openPayment('${pkg.package_name}', ${pkg.price_monthly})">
+                        Get Started
+                    </button>
+                </div>
+            `;
         }
         
         // ==================== PAYMENT HANDLING ====================
         function openPayment(pkg, price) {
             currentPackage = pkg;
-            currentPrice = pkg === 'custom' ? calculateCustomPrice() : price;
+            currentPrice = price;
             
-            document.getElementById('selectedPackage').textContent = 
-                pkg.charAt(0).toUpperCase() + pkg.slice(1) + (pkg === 'custom' ? ' (Build Your Own)' : '');
-            document.getElementById('selectedPrice').textContent = currentPrice;
-            document.getElementById('stripePayAmount').textContent = currentPrice;
+            document.getElementById('selectedPackage').textContent = pkg.charAt(0).toUpperCase() + pkg.slice(1);
+            document.getElementById('selectedPrice').textContent = price;
+            document.getElementById('stripePayAmount').textContent = price;
             
             document.getElementById('paymentModal').classList.add('active');
             
-            // Initialize Stripe
             if (!stripe) {
                 stripe = Stripe('pk_live_YOUR_STRIPE_KEY');
                 const elements = stripe.elements();
@@ -919,13 +1127,12 @@
             }
             setTimeout(() => cardElement.mount('#card-element'), 100);
             
-            // Initialize PayPal
             initPayPal();
         }
         
         function closePayment() {
             document.getElementById('paymentModal').classList.remove('active');
-            cardElement.unmount();
+            if (cardElement) cardElement.unmount();
         }
         
         function switchPaymentMethod(method) {
@@ -950,7 +1157,6 @@
             btn.textContent = 'Processing...';
             
             try {
-                // Create payment intent
                 const intentRes = await fetch(`${API_URL}/api/create-stripe-intent`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -958,14 +1164,12 @@
                         package: currentPackage,
                         amount: currentPrice,
                         email: email,
-                        billingCycle: 'monthly',
-                        features: customFeatures
+                        billingCycle: 'monthly'
                     })
                 });
                 
                 const { clientSecret } = await intentRes.json();
                 
-                // Confirm payment
                 const result = await stripe.confirmCardPayment(clientSecret, {
                     payment_method: {
                         card: cardElement,
@@ -1007,8 +1211,7 @@
                         body: JSON.stringify({
                             package: currentPackage,
                             amount: currentPrice,
-                            billingCycle: 'monthly',
-                            features: customFeatures
+                            billingCycle: 'monthly'
                         })
                     });
                     
@@ -1062,7 +1265,6 @@
                 const data = await response.json();
                 const profile = data.profile;
                 
-                // Update stats
                 document.getElementById('statRemaining').textContent = profile.posts_remaining;
                 document.getElementById('statUsed').textContent = profile.posts_used;
                 document.getElementById('statPackage').textContent = profile.package;
@@ -1074,11 +1276,10 @@
                     const btn = document.querySelector(`button[onclick="connectPlatform('${acc.platform}')"]`);
                     if (btn) {
                         btn.classList.add('connected');
-                        btn.textContent += ' ✓';
+                        btn.innerHTML = btn.textContent + ' ✓';
                     }
                 });
                 
-                // Render posts
                 renderScheduledPosts(data.posts);
                 
             } catch (error) {
@@ -1132,7 +1333,7 @@
                 
                 if (response.ok) {
                     alert('Password updated successfully!');
-                    document.getElementById('passwordModal').classList.remove('active');
+                    closeModal('passwordModal');
                     document.getElementById('passwordChangeNotice').classList.add('hidden');
                 }
             } catch (error) {
@@ -1141,26 +1342,43 @@
         }
         
         // ==================== ADMIN DASHBOARD ====================
+        function showAdminSection(section) {
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById('admin' + section.charAt(0).toUpperCase() + section.slice(1)).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (section === 'packages') loadPackageEditor();
+            if (section === 'faq') loadFaqEditor();
+        }
+        
         async function loadAdminData() {
             const token = localStorage.getItem('token');
             
             try {
-                // Load stats
                 const statsRes = await fetch(`${API_URL}/api/admin/stats`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const stats = await statsRes.json();
                 
                 document.getElementById('adminTotalUsers').textContent = stats.users.total_users;
-                document.getElementById('adminRevenue').textContent = 
-                    '$' + (parseInt(stats.revenue.paypal_revenue) + parseInt(stats.revenue.stripe_revenue)).toLocaleString();
-                document.getElementById('adminActiveWeek').textContent = stats.users.active_this_week;
+                document.getElementById('adminActiveWeek').textContent = stats.users.active_week;
+                document.getElementById('adminRevenue').textContent = '$' + (parseInt(stats.revenue.paypal) + parseInt(stats.revenue.stripe));
                 document.getElementById('adminStarter').textContent = stats.users.starter_users;
                 document.getElementById('adminGrowth').textContent = stats.users.growth_users;
                 document.getElementById('adminPro').textContent = stats.users.pro_users;
                 document.getElementById('adminCustom').textContent = stats.users.custom_users;
+                document.getElementById('adminFree').textContent = stats.users.free_users;
                 
-                // Load users
+                const activityDiv = document.getElementById('adminActivity');
+                activityDiv.innerHTML = stats.recentActivity.map(log => `
+                    <div style="padding: 12px; border-bottom: 1px solid #eee; font-size: 14px;">
+                        <strong>${log.action}</strong> - ${new Date(log.created_at).toLocaleString()}<br>
+                        <span style="color: #666; font-size: 12px;">${JSON.stringify(log.details)}</span>
+                    </div>
+                `).join('');
+                
                 const usersRes = await fetch(`${API_URL}/api/admin/users`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -1183,21 +1401,15 @@
                                     onclick="toggleUserStatus(${user.id}, ${!user.is_active})">
                                 ${user.is_active ? 'Suspend' : 'Activate'}
                             </button>
+                            <button class="action-btn btn-impersonate" onclick="impersonateUser(${user.id})">
+                                View
+                            </button>
                             <button class="action-btn" style="background: var(--accent); color: white;"
                                     onclick="addPosts(${user.id})">
                                 +Posts
                             </button>
                         </td>
                     </tr>
-                `).join('');
-                
-                // Load activity
-                const activityDiv = document.getElementById('adminActivity');
-                activityDiv.innerHTML = stats.recentActivity.map(log => `
-                    <div style="padding: 12px; border-bottom: 1px solid #eee; font-size: 14px;">
-                        <strong>${log.action}</strong> - ${new Date(log.created_at).toLocaleString()}<br>
-                        <span style="color: #666; font-size: 12px;">${JSON.stringify(log.details)}</span>
-                    </div>
                 `).join('');
                 
             } catch (error) {
@@ -1218,9 +1430,50 @@
                     body: JSON.stringify({ userId, isActive })
                 });
                 
-                loadAdminData(); // Refresh
+                loadAdminData();
             } catch (error) {
                 alert('Failed to update user status');
+            }
+        }
+        
+        async function impersonateUser(userId) {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/admin/impersonate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                
+                const data = await response.json();
+                
+                // Save admin token
+                originalAdminToken = token;
+                localStorage.setItem('originalAdminToken', token);
+                
+                // Set impersonation token
+                localStorage.setItem('token', data.token);
+                isImpersonating = true;
+                currentUser = data.user;
+                
+                updateUIForUser();
+                
+            } catch (error) {
+                alert('Failed to impersonate user');
+            }
+        }
+        
+        function stopImpersonation() {
+            if (originalAdminToken) {
+                localStorage.setItem('token', originalAdminToken);
+                localStorage.removeItem('originalAdminToken');
+                isImpersonating = false;
+                currentUser = null;
+                location.reload();
             }
         }
         
@@ -1246,9 +1499,281 @@
             }
         }
         
+        // ==================== PACKAGE EDITOR ====================
+        async function loadPackageEditor() {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/admin/packages`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const packages = await response.json();
+                const container = document.getElementById('packageEditorContainer');
+                
+                container.innerHTML = packages.map(pkg => `
+                    <div class="package-editor">
+                        <h4>${pkg.package_name.toUpperCase()}</h4>
+                        <input type="number" id="price_${pkg.package_name}" value="${pkg.price_monthly}" placeholder="Monthly Price">
+                        <input type="number" id="posts_${pkg.package_name}" value="${pkg.posts_limit}" placeholder="Posts Limit">
+                        <input type="number" id="platforms_${pkg.package_name}" value="${pkg.platforms_limit}" placeholder="Platforms Limit">
+                        <button onclick="savePackage('${pkg.package_name}')" class="select-btn" style="margin-top: 8px;">
+                            Save Changes
+                        </button>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load packages');
+            }
+        }
+        
+        async function savePackage(packageName) {
+            const token = localStorage.getItem('token');
+            
+            const price = document.getElementById(`price_${packageName}`).value;
+            const posts = document.getElementById(`posts_${packageName}`).value;
+            const platforms = document.getElementById(`platforms_${packageName}`).value;
+            
+            try {
+                await fetch(`${API_URL}/api/admin/packages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        package_name: packageName,
+                        price_monthly: parseInt(price),
+                        posts_limit: parseInt(posts),
+                        platforms_limit: parseInt(platforms),
+                        features: {}
+                    })
+                });
+                
+                alert('Package updated successfully!');
+                loadPackages();
+                
+            } catch (error) {
+                alert('Failed to update package');
+            }
+        }
+        
+        function addNewPackage() {
+            const name = prompt('Package name (lowercase, no spaces):');
+            if (!name) return;
+            
+            const price = prompt('Monthly price:');
+            const posts = prompt('Posts limit:');
+            const platforms = prompt('Platforms limit:');
+            
+            savePackageConfig(name, parseInt(price), parseInt(posts), parseInt(platforms));
+        }
+        
+        async function savePackageConfig(name, price, posts, platforms) {
+            const token = localStorage.getItem('token');
+            
+            try {
+                await fetch(`${API_URL}/api/admin/packages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        package_name: name,
+                        price_monthly: price,
+                        posts_limit: posts,
+                        platforms_limit: platforms,
+                        features: {}
+                    })
+                });
+                
+                loadPackageEditor();
+                
+            } catch (error) {
+                alert('Failed to create package');
+            }
+        }
+        
+        // ==================== ADMIN PASSWORD CHANGE ====================
+        async function changeAdminPassword() {
+            const current = document.getElementById('adminCurrentPass').value;
+            const newPass = document.getElementById('adminNewPass').value;
+            const confirm = document.getElementById('adminConfirmPass').value;
+            
+            if (!current || !newPass || newPass.length < 8) {
+                alert('Please fill all fields. Password must be 8+ characters.');
+                return;
+            }
+            
+            if (newPass !== confirm) {
+                alert('New passwords do not match');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/api/change-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ currentPassword: current, newPassword: newPass })
+                });
+                
+                if (response.ok) {
+                    alert('Password updated successfully! Please login again.');
+                    logout();
+                } else {
+                    alert('Current password is incorrect');
+                }
+                
+            } catch (error) {
+                alert('Failed to update password');
+            }
+        }
+        
+        // ==================== FAQ SYSTEM ====================
+        let faqData = [];
+        
+        async function loadFaq() {
+            try {
+                const response = await fetch(`${API_URL}/api/faq`);
+                faqData = await response.json();
+                renderFaq();
+            } catch (error) {
+                console.error('Failed to load FAQ');
+            }
+        }
+        
+        function renderFaq() {
+            const container = document.getElementById('faqContainer');
+            if (!container) return;
+            
+            container.innerHTML = faqData.map(faq => `
+                <div class="faq-item" data-question="${faq.question.toLowerCase()}" data-answer="${faq.answer.toLowerCase()}">
+                    <span class="faq-category">${faq.category}</span>
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        ${faq.question}
+                        <span>▼</span>
+                    </div>
+                    <div class="faq-answer">${faq.answer}</div>
+                </div>
+            `).join('');
+        }
+        
+        function toggleFaq(element) {
+            const answer = element.nextElementSibling;
+            answer.classList.toggle('show');
+            element.querySelector('span').textContent = answer.classList.contains('show') ? '▲' : '▼';
+        }
+        
+        function searchFaq() {
+            const query = document.getElementById('faqSearch').value.toLowerCase();
+            const items = document.querySelectorAll('.faq-item');
+            
+            items.forEach(item => {
+                const question = item.getAttribute('data-question');
+                const answer = item.getAttribute('data-answer');
+                
+                if (question.includes(query) || answer.includes(query)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        function openHelp() {
+            document.getElementById('helpModal').classList.add('active');
+        }
+        
+        async function loadFaqEditor() {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/faq`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const faqs = await response.json();
+                const container = document.getElementById('faqEditorContainer');
+                
+                container.innerHTML = faqs.map(faq => `
+                    <div class="package-editor">
+                        <input type="text" id="faq_cat_${faq.id}" value="${faq.category}" placeholder="Category">
+                        <input type="text" id="faq_q_${faq.id}" value="${faq.question}" placeholder="Question">
+                        <textarea id="faq_a_${faq.id}" rows="3" placeholder="Answer">${faq.answer}</textarea>
+                        <button onclick="updateFaq(${faq.id})" class="action-btn" style="background: var(--success); color: white;">
+                            Save
+                        </button>
+                        <button onclick="deleteFaq(${faq.id})" class="action-btn btn-delete">
+                            Delete
+                        </button>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load FAQ editor');
+            }
+        }
+        
+        async function updateFaq(id) {
+            // Implementation for updating FAQ
+            alert('FAQ update functionality - implement as needed');
+        }
+        
+        async function deleteFaq(id) {
+            if (!confirm('Delete this FAQ?')) return;
+            
+            const token = localStorage.getItem('token');
+            
+            try {
+                await fetch(`${API_URL}/api/admin/faq/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                loadFaqEditor();
+                
+            } catch (error) {
+                alert('Failed to delete FAQ');
+            }
+        }
+        
+        function addNewFaq() {
+            const category = prompt('Category:');
+            const question = prompt('Question:');
+            const answer = prompt('Answer:');
+            
+            if (!category || !question || !answer) return;
+            
+            saveNewFaq(category, question, answer);
+        }
+        
+        async function saveNewFaq(category, question, answer) {
+            const token = localStorage.getItem('token');
+            
+            try {
+                await fetch(`${API_URL}/api/admin/faq`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ category, question, answer, order_index: 0 })
+                });
+                
+                loadFaqEditor();
+                
+            } catch (error) {
+                alert('Failed to create FAQ');
+            }
+        }
+        
         // ==================== POST MANAGEMENT ====================
         async function connectPlatform(platform) {
-            // OAuth flow - redirect to platform auth
             const width = 500, height = 600;
             const left = (screen.width - width) / 2;
             const top = (screen.height - height) / 2;
@@ -1259,7 +1784,6 @@
                 `width=${width},height=${height},top=${top},left=${left}`
             );
             
-            // Listen for auth completion
             window.addEventListener('message', async (e) => {
                 if (e.data.type === 'oauth_success') {
                     const token = localStorage.getItem('token');
@@ -1271,25 +1795,19 @@
                         },
                         body: JSON.stringify({
                             platform: platform,
-                            authCode: e.data.code
+                            accountUsername: e.data.username || 'connected'
                         })
                     });
                     
-                    loadCustomerData(); // Refresh
+                    loadCustomerData();
                 }
             });
         }
         
         async function generateAIContent() {
             const content = document.getElementById('postContent').value;
-            const platforms = Array.from(document.querySelectorAll('#postPlatforms input:checked')).map(cb => cb.value);
-            
-            if (!platforms.length) {
-                alert('Please select at least one platform');
-                return;
-            }
-            
             const btn = event.target;
+            
             btn.disabled = true;
             btn.textContent = 'Generating...';
             
@@ -1302,7 +1820,7 @@
                     },
                     body: JSON.stringify({
                         topic: content || 'social media marketing',
-                        platforms: platforms,
+                        platforms: ['instagram', 'facebook'],
                         tone: 'professional'
                     })
                 });
@@ -1321,10 +1839,9 @@
         
         async function schedulePost() {
             const content = document.getElementById('postContent').value;
-            const platforms = Array.from(document.querySelectorAll('#postPlatforms input:checked')).map(cb => cb.value);
             const scheduledTime = document.getElementById('scheduleTime').value;
             
-            if (!content || !platforms.length || !scheduledTime) {
+            if (!content || !scheduledTime) {
                 alert('Please fill in all fields');
                 return;
             }
@@ -1340,8 +1857,7 @@
                     },
                     body: JSON.stringify({
                         content,
-                        platforms,
-                        mediaUrls: [],
+                        platforms: ['instagram', 'facebook'],
                         scheduledTime: new Date(scheduledTime).toISOString()
                     })
                 });
@@ -1366,7 +1882,14 @@
         }
         
         document.getElementById('postContent').addEventListener('input', updateCharCount);
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        function showPaymentModal() {
+            openPayment('growth', 509);
+        }
     </script>
 </body>
 </html>
-
