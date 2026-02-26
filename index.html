@@ -1127,7 +1127,171 @@
             }
             setTimeout(() => cardElement.mount('#card-element'), 100);
             
-            initPayPal();
+            function initPayPal() {
+    const container = document.getElementById('paypal-button-container');
+    
+    // Clear any existing buttons
+    container.innerHTML = '';
+    
+    // Check if email and password are entered
+    const email = document.getElementById('newAccountEmail').value;
+    const password = document.getElementById('newAccountPassword').value;
+    
+    if (!email || !password || password.length < 8) {
+        container.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: var(--danger);">
+                <p>⚠️ Please enter email and password (min 8 characters) first</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show loading while PayPal initializes
+    container.innerHTML = '<p style="text-align: center; color: #666;">Loading PayPal...</p>';
+    
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+        try {
+            // Clear loading message
+            container.innerHTML = '';
+            
+            paypal.Buttons({
+                // Button style
+                style: {
+                    layout: 'vertical',
+                    color: 'gold',
+                    shape: 'rect',
+                    label: 'paypal'
+                },
+                
+                // Enable standard checkout flow
+                fundingSource: paypal.FUNDING.PAYPAL,
+                
+                // Create the order
+                createOrder: function(data, actions) {
+                    const email = document.getElementById('newAccountEmail').value;
+                    
+                    if (!email) {
+                        alert('Please enter your email first');
+                        return Promise.reject(new Error('Email required'));
+                    }
+                    
+                    return fetch(`${API_URL}/api/create-paypal-order`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            package: currentPackage,
+                            amount: currentPrice,
+                            billingCycle: 'monthly',
+                            features: customFeatures
+                        })
+                    })
+                    .then(res => {
+                        if (!res.ok) {
+                            return res.json().then(err => { throw new Error(err.error || 'Failed to create order'); });
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (!data.orderId) {
+                            throw new Error('No order ID received from server');
+                        }
+                        return data.orderId;
+                    })
+                    .catch(err => {
+                        console.error('Order creation error:', err);
+                        alert('Error: ' + err.message);
+                        throw err;
+                    });
+                },
+                
+                // Handle approval/payment completion
+                onApprove: function(data, actions) {
+                    const email = document.getElementById('newAccountEmail').value;
+                    const password = document.getElementById('newAccountPassword').value;
+                    
+                    // Show processing state
+                    container.innerHTML = `
+                        <div style="padding: 20px; text-align: center;">
+                            <p style="color: var(--success);">✅ Payment approved! Creating your account...</p>
+                        </div>
+                    `;
+                    
+                    return fetch(`${API_URL}/api/capture-paypal-order`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            orderId: data.orderID,
+                            email: email,
+                            password: password
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(result => {
+                        if (result.success) {
+                            showPaymentResult(
+                                '✅ Payment successful! Your account has been created.<br><br>' +
+                                'Email: ' + email + '<br>' +
+                                'You can now login with your password.', 
+                                'success'
+                            );
+                            
+                            // Clear forms
+                            document.getElementById('newAccountEmail').value = '';
+                            document.getElementById('newAccountPassword').value = '';
+                            
+                            setTimeout(() => {
+                                closePayment();
+                                alert('Account created! Please login.');
+                            }, 3000);
+                        } else {
+                            throw new Error(result.error || 'Payment processing failed');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Payment capture error:', err);
+                        showPaymentResult('❌ Error: ' + err.message, 'error');
+                        // Reset PayPal button
+                        setTimeout(() => initPayPal(), 3000);
+                    });
+                },
+                
+                // Handle cancellation
+                onCancel: function(data) {
+                    console.log('Payment cancelled by user');
+                    container.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: var(--warning);">
+                            <p>Payment cancelled. You can try again.</p>
+                        </div>
+                    `;
+                    setTimeout(() => initPayPal(), 2000);
+                },
+                
+                // Handle errors
+                onError: function(err) {
+                    console.error('PayPal error:', err);
+                    container.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: var(--danger);">
+                            <p>❌ PayPal error. Please try again or use credit card.</p>
+                            <p style="font-size: 12px; margin-top: 8px;">Error: ${err.message || 'Unknown error'}</p>
+                        </div>
+                    `;
+                    setTimeout(() => initPayPal(), 5000);
+                }
+            }).render('#paypal-button-container');
+            
+        } catch (error) {
+            console.error('Failed to render PayPal buttons:', error);
+            container.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: var(--danger);">
+                    <p>❌ PayPal button failed to load.</p>
+                    <p style="font-size: 12px;">Please use credit card option or refresh the page.</p>
+                </div>
+            `;
+        }
+    }, 100);
+}
+
         }
         
         function closePayment() {
