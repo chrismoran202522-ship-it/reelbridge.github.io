@@ -1300,12 +1300,20 @@
         }
         
         function switchPaymentMethod(method) {
-            document.querySelectorAll('.payment-tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            document.getElementById('stripeForm').style.display = method === 'stripe' ? 'block' : 'none';
-            document.getElementById('paypalForm').style.display = method === 'paypal' ? 'block' : 'none';
-        }
+    // Update tabs
+    document.querySelectorAll('.payment-tab').forEach(tab => tab.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Show/hide forms
+    document.getElementById('stripeForm').style.display = method === 'stripe' ? 'block' : 'none';
+    document.getElementById('paypalForm').style.display = method === 'paypal' ? 'block' : 'none';
+    
+    // Initialize PayPal if selected (with delay to ensure DOM is ready)
+    if (method === 'paypal') {
+        setTimeout(() => initPayPal(), 200);
+    }
+}
+
         
         async function processStripePayment() {
             const email = document.getElementById('newAccountEmail').value;
