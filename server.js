@@ -16,7 +16,7 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-// PayPal setup - Use LiveEnvironment for production
+// PayPal setup - FIXED: Use LiveEnvironment for production
 const Environment = process.env.NODE_ENV === 'production' 
     ? paypal.core.LiveEnvironment 
     : paypal.core.SandboxEnvironment;
@@ -27,6 +27,9 @@ const paypalEnvironment = new Environment(
 );
 const paypalClient = new paypal.core.PayPalHttpClient(paypalEnvironment);
 
+// Middleware
+app.use(cors({ origin: '*' }));
+app.use(express.json());
 
 // JWT middleware
 const authenticateToken = (req, res, next) => {
@@ -67,8 +70,7 @@ async function initDatabase() {
                 last_login TIMESTAMP,
                 force_password_change BOOLEAN DEFAULT false,
                 paypal_order_id VARCHAR(255),
-                stripe_customer_id VARCHAR(255),
-                is_demo BOOLEAN DEFAULT false
+                stripe_customer_id VARCHAR(255)
             );
             
             CREATE TABLE IF NOT EXISTS scheduled_posts (
@@ -124,15 +126,6 @@ async function initDatabase() {
                 is_active BOOLEAN DEFAULT true,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-            
-            CREATE TABLE IF NOT EXISTS faq_entries (
-                id SERIAL PRIMARY KEY,
-                category VARCHAR(50),
-                question TEXT NOT NULL,
-                answer TEXT NOT NULL,
-                order_index INTEGER DEFAULT 0,
-                is_active BOOLEAN DEFAULT true
-            );
         `);
         
         // Create admin if not exists
@@ -155,31 +148,9 @@ async function initDatabase() {
                 ('starter', 254, 30, 3, '{"ai_content": true, "basic_analytics": true}'),
                 ('growth', 509, 75, 6, '{"ai_video": true, "auto_engagement": true, "priority_support": true}'),
                 ('professional', 849, 999999, 10, '{"ai_video_image": true, "dedicated_manager": true, "unlimited": true}'),
-                ('custom', 99, 50, 3, '{"base": true}'),
-                ('free', 0, 5, 2, '{"trial": true, "limited_features": true}')
+                ('custom', 99, 50, 3, '{"base": true}')
             `);
             console.log('✅ Default packages created');
-        }
-        
-        // Initialize FAQ if not exists
-        const faq = await client.query('SELECT * FROM faq_entries');
-        if (faq.rows.length === 0) {
-            await client.query(`
-                INSERT INTO faq_entries (category, question, answer, order_index) VALUES
-                ('Getting Started', 'What is Reel Bridge?', 'Reel Bridge is an AI-powered social media management platform that automates content creation, scheduling, and engagement across multiple platforms.', 1),
-                ('Getting Started', 'How do I get started?', 'Sign up for a free account to explore the dashboard, or choose a paid plan to unlock full features. Connect your social accounts and start scheduling posts.', 2),
-                ('Getting Started', 'Is there a free trial?', 'Yes! Create a free account to get 5 posts per month and access to basic features. No credit card required.', 3),
-                ('Account', 'How do I change my password?', 'Go to your dashboard settings or click the profile menu. If you''re an admin, use the Admin Panel > Change Password option.', 4),
-                ('Account', 'Can I upgrade or downgrade my plan?', 'Yes, you can change your plan anytime from your account settings. Changes take effect immediately.', 5),
-                ('Billing', 'What payment methods do you accept?', 'We accept credit cards via Stripe and PayPal. All payments are secure and encrypted.', 6),
-                ('Billing', 'How do I cancel my subscription?', 'You can cancel anytime from your account settings. Your access continues until the end of your billing period.', 7),
-                ('Features', 'What platforms are supported?', 'We support Instagram, TikTok, Twitter/X, Facebook, LinkedIn, YouTube, Pinterest, and Threads depending on your plan.', 8),
-                ('Features', 'How does AI content generation work?', 'Our AI analyzes your topic and generates engaging posts, captions, and hashtags optimized for each platform.', 9),
-                ('Features', 'Can I schedule posts in advance?', 'Yes! Schedule posts days, weeks, or months ahead. Our system auto-publishes at your chosen time.', 10),
-                ('Support', 'How do I contact support?', 'Growth and Professional plans include priority support. Email us at contact@reelbridge.site or use the help button.', 11),
-                ('Support', 'What are your support hours?', 'Priority support is available 24/7 for paid plans. Free accounts have community support via our help center.', 12)
-            `);
-            console.log('✅ Default FAQ created');
         }
         
         console.log('✅ Database ready');
@@ -218,270 +189,46 @@ app.post('/api/login', async (req, res) => {
                 postsRemaining: user.posts_remaining,
                 postsUsed: user.posts_used,
                 platforms: user.platforms,
-                forcePasswordChange: user.force_password_change,
-                isDemo: user.is_demo
+                forcePasswordChange: user.force_password_change
             }
         });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/register-free', async (req, res) => {
-    const { email, password } = req.body;
-    
-    if (!email || !password || password.length < 8) {
-        return res.status(400).json({ error: 'Valid email and password (min 8 chars) required' });
-    }
-    
-    try {
-        const existing = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (existing.rows.length > 0) {
-            return res.status(400).json({ error: 'Email already registered' });
-        }
-        
-        const hash = await bcrypt.hash(password, 10);
-        const result = await pool.query(
-            `INSERT INTO users (email, password_hash, package, posts_remaining, platforms, role, is_active)
-             VALUES ($1, $2, 'free', 5, ARRAY['instagram', 'facebook'], 'customer', true)
-             RETURNING id`,
-            [email, hash]
-        );
-        
-        await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, 
-            ['free_signup', { email, userId: result.rows[0].id }]);
-        
-        res.json({ success: true, message: 'Free account created! You can now login.' });
-        
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/change-password', authenticateToken, async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
-    
-    if (!newPassword || newPassword.length < 8) {
-        return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
-    
+    const { newPassword } = req.body;
     try {
-        // Verify current password if not admin forcing change
-        if (currentPassword) {
-            const user = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.userId]);
-            if (!await bcrypt.compare(currentPassword, user.rows[0].password_hash)) {
-                return res.status(401).json({ error: 'Current password is incorrect' });
-            }
-        }
-        
         const hash = await bcrypt.hash(newPassword, 10);
-        await pool.query(
-            'UPDATE users SET password_hash = $1, force_password_change = false WHERE id = $2',
-            [hash, req.user.userId]
-        );
-        
-        res.json({ success: true, message: 'Password updated successfully' });
+        await pool.query('UPDATE users SET password_hash = $1, force_password_change = false WHERE id = $2', [hash, req.user.userId]);
+        res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// ==================== DEMO MODE ====================
-app.post('/api/demo/start', async (req, res) => {
+// ==================== PACKAGES ====================
+app.get('/api/packages', async (req, res) => {
     try {
-        // Create temporary demo user
-        const demoEmail = `demo_${Date.now()}@reelbridge.temp`;
-        const demoPass = await bcrypt.hash('demo123', 10);
-        
-        const result = await pool.query(
-            `INSERT INTO users (email, password_hash, package, posts_remaining, platforms, role, is_active, is_demo)
-             VALUES ($1, $2, 'growth', 75, ARRAY['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube'], 'customer', true, true)
-             RETURNING id, email`,
-            [demoEmail, demoPass]
-        );
-        
-        const token = jwt.sign(
-            { userId: result.rows[0].id, email: result.rows[0].email, role: 'customer', package: 'growth', isDemo: true },
-            process.env.JWT_SECRET,
-            { expiresIn: '2h' }
-        );
-        
-        // Add sample data
-        await pool.query(
-            `INSERT INTO scheduled_posts (user_id, content, platforms, scheduled_time, status)
-             VALUES 
-             ($1, 'Welcome to Reel Bridge! 🚀 This is a demo post showing how your content will look.', ARRAY['instagram', 'facebook'], NOW() + INTERVAL '1 day', 'pending'),
-             ($1, 'Demo: AI-generated content example for your social media strategy.', ARRAY['twitter', 'linkedin'], NOW() + INTERVAL '2 days', 'pending')`,
-            [result.rows[0].id]
-        );
-        
-        await pool.query(
-            `INSERT INTO social_accounts (user_id, platform, account_username, is_active)
-             VALUES 
-             ($1, 'instagram', 'demo_account', true),
-             ($1, 'facebook', 'demo_page', true)`,
-            [result.rows[0].id]
-        );
-        
-        res.json({
-            token,
-            message: 'Demo mode activated! Explore the dashboard for 2 hours.',
-            expiresIn: '2 hours'
-        });
-        
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ==================== PACKAGE CONFIGURATION (ADMIN) ====================
-app.get('/api/admin/packages', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const packages = await pool.query('SELECT * FROM package_config ORDER BY price_monthly');
+        const packages = await pool.query('SELECT * FROM package_config WHERE is_active = true ORDER BY price_monthly');
         res.json(packages.rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/admin/packages', authenticateToken, requireAdmin, async (req, res) => {
-    const { package_name, price_monthly, price_quarterly, posts_limit, platforms_limit, features } = req.body;
-    
-    try {
-        await pool.query(
-            `INSERT INTO package_config (package_name, price_monthly, price_quarterly, posts_limit, platforms_limit, features)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             ON CONFLICT (package_name) 
-             DO UPDATE SET price_monthly = $2, price_quarterly = $3, posts_limit = $4, platforms_limit = $5, features = $6, updated_at = NOW()`,
-            [package_name, price_monthly, price_quarterly, posts_limit, platforms_limit, JSON.stringify(features)]
-        );
-        
-        await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, 
-            ['package_update', { package_name, price_monthly }]);
-        
-        res.json({ success: true, message: 'Package updated' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.delete('/api/admin/packages/:name', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        await pool.query('UPDATE package_config SET is_active = false WHERE package_name = $1', [req.params.name]);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ==================== FAQ MANAGEMENT ====================
-app.get('/api/faq', async (req, res) => {
-    try {
-        const faq = await pool.query(
-            'SELECT * FROM faq_entries WHERE is_active = true ORDER BY category, order_index'
-        );
-        res.json(faq.rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/admin/faq', authenticateToken, requireAdmin, async (req, res) => {
-    const { category, question, answer, order_index } = req.body;
-    try {
-        await pool.query(
-            'INSERT INTO faq_entries (category, question, answer, order_index) VALUES ($1, $2, $3, $4)',
-            [category, question, answer, order_index]
-        );
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.delete('/api/admin/faq/:id', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        await pool.query('UPDATE faq_entries SET is_active = false WHERE id = $1', [req.params.id]);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ==================== ADMIN IMPERSONATION ====================
-app.post('/api/admin/impersonate', authenticateToken, requireAdmin, async (req, res) => {
-    const { userId } = req.body;
-    
-    try {
-        const user = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
-        if (!user.rows.length) return res.status(404).json({ error: 'User not found' });
-        
-        const target = user.rows[0];
-        
-        // Create impersonation token
-        const token = jwt.sign(
-            { 
-                userId: target.id, 
-                email: target.email, 
-                role: target.role, 
-                package: target.package,
-                impersonatedBy: req.user.userId,
-                originalAdmin: req.user.email
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
-        
-        await pool.query(`INSERT INTO admin_logs (action, user_id, details) VALUES ($1, $2, $3)`, 
-            ['impersonate', req.user.userId, { targetUser: target.email, targetId: target.id }]);
-        
-        res.json({
-            token,
-            user: {
-                id: target.id,
-                email: target.email,
-                role: target.role,
-                package: target.package,
-                impersonated: true
-            }
-        });
-        
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
 // ==================== PAYMENTS ====================
-app.get('/api/packages', async (req, res) => {
-    try {
-        const packages = await pool.query(
-            'SELECT * FROM package_config WHERE is_active = true AND package_name != $1 ORDER BY price_monthly',
-            ['free']
-        );
-        res.json(packages.rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 app.post('/api/create-stripe-intent', async (req, res) => {
     const { package, amount, email, billingCycle, features } = req.body;
+    const postsMap = { 'starter': 30, 'growth': 75, 'professional': 999999, 'custom': features?.posts || 50 };
     
     try {
-        const pkg = await pool.query('SELECT * FROM package_config WHERE package_name = $1', [package]);
-        const pkgData = pkg.rows[0];
-        
         const intent = await stripe.paymentIntents.create({
             amount: amount * 100,
             currency: 'usd',
             receipt_email: email,
-            metadata: { 
-                package, 
-                billingCycle, 
-                customer_email: email, 
-                posts_limit: pkgData?.posts_limit || 50,
-                platforms_limit: pkgData?.platforms_limit || 3
-            }
+            metadata: { package, billingCycle, customer_email: email, posts_limit: postsMap[package] || 50 }
         });
         res.json({ clientSecret: intent.client_secret });
     } catch (error) {
@@ -491,11 +238,17 @@ app.post('/api/create-stripe-intent', async (req, res) => {
 
 app.post('/api/create-paypal-order', async (req, res) => {
     const { package, amount, billingCycle, features } = req.body;
+    
+    console.log('Creating PayPal order:', { package, amount, billingCycle });
+    
     const request = new paypal.orders.OrdersCreateRequest();
     request.requestBody({
         intent: 'CAPTURE',
         purchase_units: [{
-            amount: { currency_code: 'USD', value: amount.toString() },
+            amount: { 
+                currency_code: 'USD', 
+                value: amount.toString() 
+            },
             description: `Reel Bridge ${package}`,
             custom_id: JSON.stringify({ package, billingCycle, features })
         }]
@@ -503,40 +256,48 @@ app.post('/api/create-paypal-order', async (req, res) => {
     
     try {
         const order = await paypalClient.execute(request);
+        console.log('PayPal order created:', order.result.id);
         res.json({ orderId: order.result.id });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('PayPal order creation error:', error);
+        res.status(500).json({ error: error.message, details: error.statusCode });
     }
 });
 
 app.post('/api/capture-paypal-order', async (req, res) => {
     const { orderId, email, password } = req.body;
+    
+    console.log('Capturing PayPal order:', orderId);
+    
     const request = new paypal.orders.OrdersCaptureRequest(orderId);
     
     try {
         const capture = await paypalClient.execute(request);
+        console.log('PayPal capture status:', capture.result.status);
+        
         if (capture.result.status === 'COMPLETED') {
-            const data = JSON.parse(capture.result.purchase_units[0].payments.captures[0].custom_id);
-            const { package, billingCycle, features } = data;
-            
-            const pkg = await pool.query('SELECT * FROM package_config WHERE package_name = $1', [package]);
-            const pkgData = pkg.rows[0];
+            const customData = JSON.parse(capture.result.purchase_units[0].payments.captures[0].custom_id);
+            const { package, billingCycle, features } = customData;
             
             const hash = await bcrypt.hash(password, 10);
-            const platforms = getPlatformsList(package, pkgData?.platforms_limit || 3);
+            const postsMap = { 'starter': 30, 'growth': 75, 'professional': 999999, 'custom': features?.posts || 50 };
             
             const result = await pool.query(
                 `INSERT INTO users (email, password_hash, package, billing_cycle, posts_remaining, platforms, paypal_order_id)
                  VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-                [email, hash, package, billingCycle, pkgData?.posts_limit || 50, platforms, orderId]
+                [email, hash, package, billingCycle, postsMap[package] || 50, getPlatforms(package, features), orderId]
             );
             
             await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, 
-                ['purchase', { email, package, method: 'paypal' }]);
+                ['purchase', { email, package, amount: capture.result.purchase_units[0].payments.captures[0].amount.value, method: 'paypal' }]);
             
+            console.log('User created successfully:', email);
             res.json({ success: true, userId: result.rows[0].id });
+        } else {
+            res.status(400).json({ error: 'Payment not completed' });
         }
     } catch (error) {
+        console.error('PayPal capture error:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -552,23 +313,21 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
     
     if (event.type === 'payment_intent.succeeded') {
         const payment = event.data.object;
-        const { package, billingCycle, customer_email, posts_limit, platforms_limit } = payment.metadata;
+        const { package, billingCycle, customer_email, posts_limit } = payment.metadata;
         
         const tempPass = Math.random().toString(36).slice(-8);
         const hash = await bcrypt.hash(tempPass, 10);
-        const platforms = getPlatformsList(package, parseInt(platforms_limit) || 3);
         
         try {
             await pool.query(
-                `INSERT INTO users (email, password_hash, package, billing_cycle, posts_remaining, platforms, stripe_customer_id, force_password_change)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, true)`,
-                [customer_email, hash, package, billingCycle, parseInt(posts_limit) || 30, platforms, payment.customer]
+                `INSERT INTO users (email, password_hash, package, billing_cycle, posts_remaining, platforms, stripe_customer_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                [customer_email, hash, package, billingCycle, parseInt(posts_limit), getPlatforms(package), payment.customer]
             );
-            
-            console.log(`New user: ${customer_email}, Temp Password: ${tempPass}`);
+            console.log(`New user: ${customer_email}, Password: ${tempPass}`);
             
             await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, 
-                ['purchase', { email: customer_email, package, method: 'stripe', tempPass }]);
+                ['purchase', { email: customer_email, package, method: 'stripe' }]);
         } catch (e) {
             console.error(e);
         }
@@ -576,40 +335,24 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
     res.json({received: true});
 });
 
-function getPlatformsList(pkg, limit) {
-    const allPlatforms = ['instagram', 'facebook', 'twitter', 'tiktok', 'linkedin', 'youtube', 'pinterest', 'threads'];
-    const defaultPlatforms = {
+function getPlatforms(pkg, features = null) {
+    const map = {
         'starter': ['instagram', 'facebook', 'twitter'],
         'growth': ['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube'],
-        'professional': allPlatforms,
-        'custom': ['instagram', 'facebook', 'twitter'],
-        'free': ['instagram', 'facebook']
+        'professional': ['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube', 'pinterest', 'threads'],
+        'custom': features?.platforms || ['instagram', 'facebook', 'twitter']
     };
-    return defaultPlatforms[pkg] || allPlatforms.slice(0, limit);
+    return map[pkg] || map['starter'];
 }
 
 // ==================== USER DASHBOARD ====================
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
-        const user = await pool.query(
-            'SELECT id, email, package, posts_remaining, posts_used, posts_published, platforms, created_at, is_demo FROM users WHERE id = $1', 
-            [req.user.userId]
-        );
-        const posts = await pool.query(
-            'SELECT * FROM scheduled_posts WHERE user_id = $1 ORDER BY scheduled_time DESC', 
-            [req.user.userId]
-        );
-        const accounts = await pool.query(
-            'SELECT * FROM social_accounts WHERE user_id = $1 AND is_active = true', 
-            [req.user.userId]
-        );
+        const user = await pool.query('SELECT id, email, package, posts_remaining, posts_used, posts_published, platforms, created_at FROM users WHERE id = $1', [req.user.userId]);
+        const posts = await pool.query('SELECT * FROM scheduled_posts WHERE user_id = $1 ORDER BY scheduled_time DESC', [req.user.userId]);
+        const accounts = await pool.query('SELECT * FROM social_accounts WHERE user_id = $1 AND is_active = true', [req.user.userId]);
         
-        res.json({ 
-            profile: user.rows[0], 
-            posts: posts.rows, 
-            accounts: accounts.rows,
-            isImpersonating: !!req.user.impersonatedBy
-        });
+        res.json({ profile: user.rows[0], posts: posts.rows, accounts: accounts.rows });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -677,23 +420,10 @@ app.post('/api/schedule-post', authenticateToken, async (req, res) => {
     const { content, platforms, mediaUrls, scheduledTime } = req.body;
     
     try {
-        const user = await pool.query('SELECT posts_remaining, package FROM users WHERE id = $1', [req.user.userId]);
+        const user = await pool.query('SELECT posts_remaining FROM users WHERE id = $1', [req.user.userId]);
         
         if (user.rows[0].posts_remaining <= 0) {
             return res.status(403).json({ error: 'Post limit reached. Upgrade your package.' });
-        }
-        
-        // Check platform limit for free/demo users
-        const userPlatforms = await pool.query(
-            'SELECT COUNT(*) as count FROM social_accounts WHERE user_id = $1 AND is_active = true',
-            [req.user.userId]
-        );
-        
-        const pkg = await pool.query('SELECT platforms_limit FROM package_config WHERE package_name = $1', [user.rows[0].package]);
-        const platformLimit = pkg.rows[0]?.platforms_limit || 3;
-        
-        if (userPlatforms.rows[0].count >= platformLimit && user.rows[0].package !== 'professional') {
-            return res.status(403).json({ error: `Platform limit reached (${platformLimit}). Upgrade to connect more.` });
         }
         
         const result = await pool.query(
@@ -774,9 +504,8 @@ app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) =>
                 COUNT(*) as total_users,
                 COUNT(CASE WHEN package = 'starter' THEN 1 END) as starter_users,
                 COUNT(CASE WHEN package = 'growth' THEN 1 END) as growth_users,
-                COUNT(CASE WHEN package = 'professional' THEN 1 END) as pro_users,
+                COUNT(CASE WHEN package = 'professional' THEN 1 END) as professional_users,
                 COUNT(CASE WHEN package = 'custom' THEN 1 END) as custom_users,
-                COUNT(CASE WHEN package = 'free' THEN 1 END) as free_users,
                 SUM(posts_used) as total_posts,
                 SUM(posts_published) as published_posts,
                 COUNT(CASE WHEN last_login > NOW() - INTERVAL '7 days' THEN 1 END) as active_week
@@ -785,19 +514,16 @@ app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) =>
         
         const revenue = await pool.query(`
             SELECT 
-                COUNT(CASE WHEN paypal_order_id IS NOT NULL THEN 1 END) as paypal_count,
-                COUNT(CASE WHEN stripe_customer_id IS NOT NULL THEN 1 END) as stripe_count
-            FROM users WHERE role = 'customer' AND package != 'free'
+                COUNT(CASE WHEN paypal_order_id IS NOT NULL THEN 1 END) as paypal_revenue,
+                COUNT(CASE WHEN stripe_customer_id IS NOT NULL THEN 1 END) as stripe_revenue
+            FROM users WHERE role = 'customer'
         `);
         
         const activity = await pool.query('SELECT * FROM admin_logs ORDER BY created_at DESC LIMIT 20');
         
         res.json({
             users: stats.rows[0],
-            revenue: { 
-                paypal: revenue.rows[0].paypal_count, 
-                stripe: revenue.rows[0].stripe_count 
-            },
+            revenue: revenue.rows[0],
             recentActivity: activity.rows
         });
     } catch (error) {
@@ -849,4 +575,3 @@ const PORT = process.env.PORT || 3000;
 initDatabase().then(() => {
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 });
-
