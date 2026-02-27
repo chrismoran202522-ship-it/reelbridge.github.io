@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reel Bridge - Automated Social Media Management</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=AdJIUkTjZ2NfPN69w87QZU8Ylw9R1_ByaRnZLn5JavjKx3NREjoH8srOYFv0ZvoFqZO2RcE_FEaugLEt&currency=USD&intent=capture"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --bg: #f0f4f8;
+            --card: #ffffff;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--primary);
+            line-height: 1.5;
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .mobile-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--primary);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .logo { font-size: 20px; font-weight: 700; }
+        
+        .header-login {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .header-login input {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 120px;
+        }
+        
+        .header-login button {
+            padding: 8px 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .create-account-btn {
+            background: var(--success) !important;
+            font-weight: 600;
+        }
+        
+        .hero {
+            margin-top: 60px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .hero h1 { font-size: 28px; margin-bottom: 12px; }
+        .hero p { font-size: 16px; opacity: 0.9; margin-bottom: 20px; }
+        
+        .cta-btn {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .section {
+            padding: 32px 16px;
+            background: var(--card);
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            border-left: 4px solid var(--accent);
+            padding-left: 12px;
+        }
+        
+        .package-card {
+            background: var(--card);
+            border: 2px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .package-card.featured { border-color: var(--accent); background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%); }
+        .package-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .package-name { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        .package-price { font-size: 36px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        .package-price span { font-size: 16px; font-weight: 400; color: #666; }
+        .savings { color: var(--success); font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+        
+        .features-list { list-style: none; margin: 16px 0; }
+        .features-list li { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .features-list li:before { content: "✓"; color: var(--success); font-weight: 700; }
+        
+        .select-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        
+        .custom-builder {
+            background: linear-gradient(135deg, #fff 0%, #f0fff4 100%);
+            border: 2px solid var(--success);
+        }
+        
+        .addon-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .addon-price { color: var(--success); font-weight: 700; }
+        
+        .total-price {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--success);
+            text-align: center;
+            margin: 20px 0;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid var(--success);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1001;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-height: 90vh;
+            border-radius: 20px 20px 0 0;
+            padding: 24px;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+        }
+        
+        .payment-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .payment-tab {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .payment-tab.active {
+            border-color: var(--accent);
+            background: #f0f7ff;
+        }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        #card-element { padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; background: white; }
+        
+        .pay-btn {
+            width: 100%;
+            padding: 18px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .pay-btn:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .dashboard-header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            margin: -32px -16px 20px -16px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-value { font-size: 28px; font-weight: 700; color: var(--accent); }
+        .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
+        
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .platform-btn {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            background: white;
+            transition: all 0.3s;
+        }
+        
+        .platform-btn.connected { 
+            border-color: var(--success); 
+            background: #f0fff4; 
+            position: relative;
+        }
+        
+        .platform-btn.connected::after {
+            content: "✓";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--success);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .platform-btn:hover { border-color: var(--accent); }
+        
+        .platform-btn.connecting {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .admin-table th, .admin-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .admin-table th { background: #f8f9fa; font-weight: 600; }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-active { background: #d4edda; color: #155724; }
+        .status-suspended { background: #f8d7da; color: #721c24; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        
+        .btn-suspend { background: var(--warning); color: white; }
+        .btn-activate { background: var(--success); color: white; }
+        .btn-delete { background: var(--danger); color: white; }
+        .btn-edit { background: var(--accent); color: white; }
+        
+        .password-change-notice {
+            background: #fff3cd;
+            border: 2px solid var(--warning);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .hidden { display: none !important; }
+        
+        /* Admin Edit Modal Styles */
+        .edit-modal-content {
+            max-height: 95vh;
+        }
+        
+        .feature-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .feature-toggle.enabled {
+            background: #d4edda;
+            border: 1px solid var(--success);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #ccc;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background: var(--success);
+        }
+        
+        .toggle-switch::after {
+            content: "";
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+        
+        .danger-zone {
+            border: 2px solid var(--danger);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .danger-zone h4 {
+            color: var(--danger);
+            margin-bottom: 16px;
+        }
+        
+        .oauth-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 2000;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .oauth-popup h3 {
+            margin-bottom: 16px;
+        }
+        
+        .oauth-popup input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        
+        .oauth-popup button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .oauth-popup .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .oauth-popup .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with Login -->
+    <header class="mobile-header">
+        <div class="logo">REEL BRIDGE</div>
+        <div class="header-login" id="headerLogin">
+            <input type="email" id="loginEmail" placeholder="Email">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button onclick="login()">Login</button>
+            <button onclick="showCreateAccount()" class="create-account-btn">Create Account</button>
+        </div>
+        <div class="header-login hidden" id="headerUser">
+            <span id="userName"></span>
+            <button onclick="logout()" style="background: var(--danger);">Logout</button>
+        </div>
+    </header>
+    
+    <!-- Main Content (shown when NOT logged in) -->
+    <div id="mainContent">
+        <!-- Hero -->
+        <section class="hero">
+            <h1>Automated Social Media</h1>
+            <p>AI-powered management for your business</p>
+            <a href="#packages" class="cta-btn">View Packages</a>
+        </section>
+        
+        <!-- Packages Section - HARDCODED PACKAGES -->
+        <section class="section" id="packages">
+            <h2 class="section-title">Choose Your Plan</h2>
+            
+            <!-- Starter -->
+            <div class="package-card">
+                <div class="package-name">Starter</div>
+                <div class="package-price">$254<span>/mo</span></div>
+                <div class="savings">Save 15% with quarterly</div>
+                <ul class="features-list">
+                    <li>3 Social Platforms</li>
+                    <li>30 Posts/Month</li>
+                    <li>AI Content Generation</li>
+                    <li>Basic Analytics</li>
+                </ul>
+                <button class="select-btn" onclick="openPayment('starter', 254)">Get Started</button>
+            </div>
+            
+            <!-- Growth -->
+            <div class="package-card featured">
+                <div class="package-badge">MOST POPULAR</div>
+                <div class="package-name">Growth</div>
+                <div class="package-price">$509<span>/mo</span></div>
+                <div class="savings">Save 15% with quarterly</div>
+                <ul class="features-list">
+                    <li>6 Social Platforms</li>
+                    <li>75 Posts/Month</li>
+                    <li>AI Video Generation</li>
+                    <li>Auto-Engagement</li>
+                    <li>Priority Support</li>
+                </ul>
+                <button class="select-btn" onclick="openPayment('growth', 509)">Get Started</button>
+            </div>
+            
+            <!-- Professional -->
+            <div class="package-card">
+                <div class="package-name">Professional</div>
+                <div class="package-price">$849<span>/mo</span></div>
+                <div class="savings">Save 15% with quarterly</div>
+                <ul class="features-list">
+                    <li>10 Platforms</li>
+                    <li>Unlimited Posts</li>
+                    <li>AI Video & Image Gen</li>
+                    <li>Dedicated Account Manager</li>
+                </ul>
+                <button class="select-btn" onclick="openPayment('professional', 849)">Get Started</button>
+            </div>
+            
+            <!-- Custom Package Builder -->
+            <div class="package-card custom-builder">
+                <div class="package-name">Custom Package</div>
+                <div class="package-price">$99<span> base</span></div>
+                <div class="savings">Build your perfect plan</div>
+                
+                <div style="margin: 16px 0;">
+                    <h4 style="margin-bottom: 12px;">Select Add-ons:</h4>
+                    
+                    <div class="addon-item">
+                        <div>
+                            <div style="font-weight: 600;">Extra Platforms</div>
+                            <div style="font-size: 12px; color: #666;">+$25 per platform</div>
+                        </div>
+                        <select id="addonPlatforms" onchange="calculateCustomPrice()">
+                            <option value="0">0</option>
+                            <option value="1">1 (+$25)</option>
+                            <option value="2">2 (+$50)</option>
+                            <option value="3">3 (+$75)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="addon-item">
+                        <div>
+                            <div style="font-weight: 600;">Extra Posts</div>
+                            <div style="font-size: 12px; color: #666;">+$15 per 10 posts</div>
+                        </div>
+                        <select id="addonPosts" onchange="calculateCustomPrice()">
+                            <option value="0">0</option>
+                            <option value="10">10 (+$15)</option>
+                            <option value="20">20 (+$30)</option>
+                            <option value="50">50 (+$75)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="addon-item">
+                        <div>
+                            <div style="font-weight: 600;">AI Video Generation</div>
+                            <div style="font-size: 12px; color: #666;">Auto-create videos</div>
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="addonVideo" onchange="calculateCustomPrice()">
+                            <span class="addon-price">+$50</span>
+                        </label>
+                    </div>
+                    
+                    <div class="addon-item">
+                        <div>
+                            <div style="font-weight: 600;">Priority Support</div>
+                            <div style="font-size: 12px; color: #666;">24/7 chat support</div>
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="addonSupport" onchange="calculateCustomPrice()">
+                            <span class="addon-price">+$30</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="total-price" id="customTotalPrice">$99/mo</div>
+                
+                <button class="select-btn" onclick="openPayment('custom', 99)" style="background: var(--success);">
+                    Build My Package
+                </button>
+            </div>
+        </section>
+        
+        <!-- Features -->
+        <section class="section" id="features">
+            <h2 class="section-title">Key Features</h2>
+            <div style="display: grid; gap: 12px;">
+                <div class="package-card" style="margin: 0;">
+                    <h4>🤖 AI Content Generation</h4>
+                    <p style="color: #666; font-size: 14px;">Auto-create posts, captions, and hashtags</p>
+                </div>
+                <div class="package-card" style="margin: 0;">
+                    <h4>📅 Smart Scheduling</h4>
+                    <p style="color: #666; font-size: 14px;">Post at optimal times automatically</p>
+                </div>
+                <div class="package-card" style="margin: 0;">
+                    <h4>📊 Real-time Analytics</h4>
+                    <p style="color: #666; font-size: 14px;">Track engagement and growth</p>
+                </div>
+                <div class="package-card" style="margin: 0;">
+                    <h4>💬 Auto-Engagement</h4>
+                    <p style="color: #666; font-size: 14px;">Auto-respond to comments and DMs</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Footer -->
+        <footer class="section" style="background: var(--primary); color: white; text-align: center; margin-bottom: 0;">
+            <p>📞 <a href="tel:506-271-7605" style="color: var(--accent);">506-271-7605</a></p>
+            <p style="margin-top: 8px;">✉️ <a href="mailto:contact@reelbridge.site" style="color: var(--accent);">contact@reelbridge.site</a></p>
+            <p style="margin-top: 16px; opacity: 0.7; font-size: 14px;">© 2024 Reel Bridge</p>
+        </footer>
+    </div>
+    
+    <!-- Customer Dashboard (shown when logged in as customer) -->
+    <div id="customerDashboard" class="hidden" style="margin-top: 60px;">
+        <div class="section">
+            <!-- Password Change Notice -->
+            <div class="password-change-notice hidden" id="passwordChangeNotice">
+                <strong>⚠️ Security Notice:</strong> Please change your temporary password
+                <button onclick="showPasswordChange()" style="margin-left: 12px; padding: 8px 16px; background: var(--warning); color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    Change Now
+                </button>
+            </div>
+            
+            <div class="dashboard-header">
+                <h2 style="font-size: 24px;">My Dashboard</h2>
+                <p id="dashboardEmail" style="opacity: 0.9; margin-top: 4px;"></p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statRemaining">0</div>
+                    <div class="stat-label">Posts Remaining</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statUsed">0</div>
+                    <div class="stat-label">Posts Used</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statPackage">-</div>
+                    <div class="stat-label">Package</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statConnected">0</div>
+                    <div class="stat-label">Accounts Connected</div>
+                </div>
+            </div>
+            
+            <!-- Connect Accounts -->
+            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Connect Social Accounts</h3>
+            <p style="color: #666; font-size: 14px; margin-bottom: 12px;">Click a platform to link your account to ReelBridge</p>
+            <div class="platform-grid" id="platformGrid">
+                <button class="platform-btn" onclick="connectPlatform('instagram')" data-platform="instagram">
+                    📸 Instagram
+                </button>
+                <button class="platform-btn" onclick="connectPlatform('tiktok')" data-platform="tiktok">
+                    🎵 TikTok
+                </button>
+                <button class="platform-btn" onclick="connectPlatform('twitter')" data-platform="twitter">
+                    🐦 Twitter
+                </button>
+                <button class="platform-btn" onclick="connectPlatform('facebook')" data-platform="facebook">
+                    👥 Facebook
+                </button>
+                <button class="platform-btn" onclick="connectPlatform('linkedin')" data-platform="linkedin">
+                    💼 LinkedIn
+                </button>
+                <button class="platform-btn" onclick="connectPlatform('youtube')" data-platform="youtube">
+                    📺 YouTube
+                </button>
+            </div>
+            
+            <!-- Create Post -->
+            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Create New Post</h3>
+            <div class="package-card">
+                <textarea id="postContent" rows="4" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; resize: vertical;" placeholder="What's on your mind?"></textarea>
+                <div style="text-align: right; font-size: 12px; color: #666; margin-top: 4px;">
+                    <span id="charCount">0</span> chars
+                </div>
+                
+                <div style="margin: 16px 0;">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Platforms:</label>
+                    <div id="postPlatforms" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Schedule Time</label>
+                    <input type="datetime-local" id="scheduleTime">
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button class="select-btn" onclick="generateAIContent()" style="flex: 1; background: #9b59b6;">
+                        ✨ AI Generate
+                    </button>
+                    <button class="select-btn" onclick="schedulePost()" style="flex: 2;">
+                        Schedule Post
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Scheduled Posts -->
+            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Scheduled Posts</h3>
+            <div id="scheduledPostsList">
+                <div style="text-align: center; color: #666; padding: 40px;">
+                    No posts scheduled yet
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Admin Dashboard (shown when logged in as admin) -->
+    <div id="adminDashboard" class="hidden" style="margin-top: 60px;">
+        <div class="section">
+            <div class="dashboard-header">
+                <h2 style="font-size: 24px;">Admin Dashboard</h2>
+                <p style="opacity: 0.9; margin-top: 4px;">Manage all accounts and view analytics</p>
+            </div>
+            
+            <!-- Admin Stats -->
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-value" id="adminTotalUsers">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="adminRevenue">$0</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="adminActiveWeek">0</div>
+                    <div class="stat-label">Active This Week</div>
+                </div>
+            </div>
+            
+            <!-- Package Breakdown -->
+            <div class="package-card" style="margin-top: 20px;">
+                <h4 style="margin-bottom: 16px;">Package Distribution</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminStarter">0</div>
+                        <div class="stat-label">Starter</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminGrowth">0</div>
+                        <div class="stat-label">Growth</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminPro">0</div>
+                        <div class="stat-label">Professional</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminCustom">0</div>
+                        <div class="stat-label">Custom</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- All Users Table -->
+            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">All Customers</h3>
+            <div style="overflow-x: auto;">
+                <table class="admin-table" id="adminUsersTable">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Business</th>
+                            <th>Package</th>
+                            <th>Posts</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUsersBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Recent Activity -->
+            <h3 style="margin: 24px 0 12px 0; font-size: 18px;">Recent Activity</h3>
+            <div id="adminActivity" style="max-height: 300px; overflow-y: auto;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Account Modal -->
+    <div class="modal" id="createAccountModal">
+        <div class="modal-content edit-modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Create New Account</div>
+                <button class="close-modal" onclick="closeCreateAccount()">×</button>
+            </div>
+            
+            <div style="max-height: 70vh; overflow-y: auto;">
+                <h4 style="margin: 20px 0 12px; color: var(--accent);">Account Information</h4>
+                
+                <div class="form-group">
+                    <label>Email Address *</label>
+                    <input type="email" id="newUserEmail" placeholder="your@email.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Password * (min 8 characters)</label>
+                    <input type="password" id="newUserPassword" placeholder="Create a secure password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Confirm Password *</label>
+                    <input type="password" id="newUserPasswordConfirm" placeholder="Confirm your password" required>
+                </div>
+                
+                <h4 style="margin: 24px 0 12px; color: var(--accent);">Business Information</h4>
+                
+                <div class="form-group">
+                    <label>Business Name *</label>
+                    <input type="text" id="newUserBusinessName" placeholder="Your Business LLC" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Contact Name *</label>
+                    <input type="text" id="newUserContactName" placeholder="John Doe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="newUserPhone" placeholder="(555) 123-4567" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Business Website (Optional)</label>
+                    <input type="url" id="newUserWebsite" placeholder="https://yourbusiness.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Industry *</label>
+                    <select id="newUserIndustry" required>
+                        <option value="">Select Industry</option>
+                        <option value="retail">Retail & E-commerce</option>
+                        <option value="food">Food & Beverage</option>
+                        <option value="health">Health & Wellness</option>
+                        <option value="tech">Technology</option>
+                        <option value="finance">Finance & Insurance</option>
+                        <option value="education">Education</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="realestate">Real Estate</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <h4 style="margin: 24px 0 12px; color: var(--accent);">Mailing Address</h4>
+                
+                <div class="form-group">
+                    <label>Street Address *</label>
+                    <input type="text" id="newUserAddress" placeholder="123 Business Street" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>City *</label>
+                        <input type="text" id="newUserCity" placeholder="City" required>
+                    </div>
+                    <div class="form-group">
+                        <label>State/Province *</label>
+                        <input type="text" id="newUserState" placeholder="State" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ZIP/Postal Code *</label>
+                        <input type="text" id="newUserZip" placeholder="ZIP Code" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Country *</label>
+                        <select id="newUserCountry" required>
+                            <option value="US">United States</option>
+                            <option value="CA">Canada</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="AU">Australia</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h4 style="margin: 24px 0 12px; color: var(--accent);">Additional Information</h4>
+                
+                <div class="form-group">
+                    <label>Tax ID / EIN (Optional)</label>
+                    <input type="text" id="newUserTaxId" placeholder="XX-XXXXXXX">
+                </div>
+                
+                <div class="form-group">
+                    <label>How did you hear about us?</label>
+                    <select id="newUserReferral">
+                        <option value="">Select...</option>
+                        <option value="search">Google Search</option>
+                        <option value="social">Social Media</option>
+                        <option value="referral">Friend/Colleague Referral</option>
+                        <option value="advertisement">Advertisement</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: flex-start; gap: 8px; font-weight: normal;">
+                        <input type="checkbox" id="newUserTerms" required style="width: auto; margin-top: 4px;">
+                        <span>I agree to the <a href="#" style="color: var(--accent);">Terms of Service</a> and <a href="#" style="color: var(--accent);">Privacy Policy</a> *</span>
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: flex-start; gap: 8px; font-weight: normal;">
+                        <input type="checkbox" id="newUserMarketing" style="width: auto; margin-top: 4px;">
+                        <span>I agree to receive marketing emails about new features and promotions</span>
+                    </label>
+                </div>
+            </div>
+            
+            <button class="pay-btn" onclick="submitCreateAccount()" style="margin-top: 20px;">
+                Create Account
+            </button>
+            
+            <p style="text-align: center; margin-top: 16px; color: #666; font-size: 14px;">
+                Already have an account? <a href="#" onclick="closeCreateAccount(); return false;" style="color: var(--accent);">Login here</a>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Payment Modal -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Complete Purchase</div>
+                <button class="close-modal" onclick="closePayment()">×</button>
+            </div>
+            
+            <div id="packageSummary" style="margin-bottom: 20px; padding: 16px; background: #f0f7ff; border-radius: 10px;">
+                <strong>Package:</strong> <span id="selectedPackage">-</span><br>
+                <strong>Price:</strong> $<span id="selectedPrice">-</span>/mo
+            </div>
+            
+            <!-- Account Creation -->
+            <div class="form-group">
+                <label>Create Your Account</label>
+                <input type="email" id="newAccountEmail" placeholder="your@email.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="newAccountPassword" placeholder="Min 8 characters" required>
+            </div>
+            
+            <!-- Payment Method Tabs -->
+            <div class="payment-tabs">
+                <div class="payment-tab active" onclick="switchPaymentMethod('stripe')">💳 Card</div>
+                <div class="payment-tab" onclick="switchPaymentMethod('paypal')">🅿️ PayPal</div>
+            </div>
+            
+            <!-- Stripe Form -->
+            <div id="stripeForm">
+                <div class="form-group">
+                    <label>Card Details</label>
+                    <div id="card-element"></div>
+                </div>
+                <button class="pay-btn" id="stripePayBtn" onclick="processStripePayment()">
+                    Pay $<span id="stripePayAmount">0</span>
+                </button>
+            </div>
+            
+            <!-- PayPal Form - FIXED -->
+            <div id="paypalForm" style="display: none;">
+                <div style="text-align: center; padding: 20px; background: #f0f7ff; border-radius: 10px; margin-top: 20px;">
+                    <p style="margin-bottom: 16px; color: #666;">Click the PayPal button below to complete payment</p>
+                    <div id="paypal-button-container"></div>
+                    <p style="margin-top: 12px; font-size: 12px; color: #999;">You'll be redirected to PayPal to complete payment securely</p>
+                </div>
+            </div>
+            
+            <div class="secure-badge" style="text-align: center; margin-top: 12px; font-size: 12px; color: #666;">
+                🔒 Secured by Stripe & PayPal
+            </div>
+            
+            <div id="paymentResult" style="display: none; margin-top: 20px; padding: 16px; border-radius: 10px; text-align: center;"></div>
+        </div>
+    </div>
+    
+    <!-- Password Change Modal -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Change Password</div>
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="newPassword" placeholder="Enter new password">
+            </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="confirmPassword" placeholder="Confirm new password">
+            </div>
+            <button class="pay-btn" onclick="changePassword()">Update Password</button>
+        </div>
+    </div>
+    
+    <!-- Admin Edit User Modal -->
+    <div class="modal" id="adminEditModal">
+        <div class="modal-content edit-modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Edit User Account</div>
+                <button class="close-modal" onclick="closeAdminEdit()">×</button>
+            </div>
+            
+            <div id="adminEditContent" style="max-height: 80vh; overflow-y: auto;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- OAuth Popup for Social Connection -->
+    <div id="oauthPopup" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 3000; display: none;">
+        <div class="overlay" onclick="closeOAuthPopup()"></div>
+        <div class="oauth-popup">
+            <h3 id="oauthPlatformName">Connect Account</h3>
+            <p style="color: #666; margin-bottom: 16px;">Enter your username for <span id="oauthPlatformDisplay"></span></p>
+            
+            <input type="text" id="oauthUsername" placeholder="@username or profile URL">
+            <input type="text" id="oauthProfileUrl" placeholder="Profile URL (optional)">
+            
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button class="btn-secondary" onclick="closeOAuthPopup()" style="flex: 1;">Cancel</button>
+                <button class="btn-primary" onclick="submitOAuthConnection()" style="flex: 2;">Connect Account</button>
+            </div>
+            
+            <p style="font-size: 12px; color: #999; margin-top: 16px;">
+                You'll be redirected to authorize ReelBridge to access your account.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== API CONFIGURATION ====================
+        const API_URL = 'https://reelbridge-api.onrender.com';
+        
+        // ==================== GLOBAL STATE ====================
+        let currentUser = null;
+        let currentPackage = '';
+        let currentPrice = 0;
+        let stripe = null;
+        let cardElement = null;
+        let customFeatures = {};
+        let currentOAuthPlatform = null;
+        let editingUserId = null;
+        
+        // ==================== AUTHENTICATION ====================
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (!response.ok) throw new Error('Login failed');
+                
+                const data = await response.json();
+                currentUser = data.user;
+                localStorage.setItem('token', data.token);
+                
+                // Update UI
+                document.getElementById('headerLogin').classList.add('hidden');
+                document.getElementById('headerUser').classList.remove('hidden');
+                document.getElementById('userName').textContent = currentUser.email;
+                
+                // Show appropriate dashboard
+                document.getElementById('mainContent').classList.add('hidden');
+                
+                if (currentUser.role === 'admin') {
+                    document.getElementById('adminDashboard').classList.remove('hidden');
+                    loadAdminData();
+                } else {
+                    document.getElementById('customerDashboard').classList.remove('hidden');
+                    if (currentUser.forcePasswordChange) {
+                        document.getElementById('passwordChangeNotice').classList.remove('hidden');
+                    }
+                    loadCustomerData();
+                }
+                
+            } catch (error) {
+                alert('Invalid credentials');
+            }
+        }
+        
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('token');
+            location.reload();
+        }
+        
+        // ==================== CREATE ACCOUNT MODAL ====================
+        function showCreateAccount() {
+            document.getElementById('createAccountModal').classList.add('active');
+        }
+        
+        function closeCreateAccount() {
+            document.getElementById('createAccountModal').classList.remove('active');
+            // Clear form
+            document.querySelectorAll('#createAccountModal input').forEach(input => {
+                if (input.type !== 'checkbox') input.value = '';
+            });
+            document.querySelectorAll('#createAccountModal select').forEach(select => select.selectedIndex = 0);
+            document.querySelectorAll('#createAccountModal input[type="checkbox"]').forEach(cb => cb.checked = false);
+        }
+        
+        async function submitCreateAccount() {
+            // Validate required fields
+            const requiredFields = [
+                'newUserEmail', 'newUserPassword', 'newUserPasswordConfirm',
+                'newUserBusinessName', 'newUserContactName', 'newUserPhone',
+                'newUserAddress', 'newUserCity', 'newUserState', 'newUserZip'
+            ];
+            
+            for (const fieldId of requiredFields) {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    alert('Please fill in all required fields');
+                    field.focus();
+                    return;
+                }
+            }
+            
+            // Validate password match
+            const password = document.getElementById('newUserPassword').value;
+            const confirmPassword = document.getElementById('newUserPasswordConfirm').value;
+            
+            if (password.length < 8) {
+                alert('Password must be at least 8 characters');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            // Validate terms
+            if (!document.getElementById('newUserTerms').checked) {
+                alert('You must agree to the Terms of Service');
+                return;
+            }
+            
+            const userData = {
+                email: document.getElementById('newUserEmail').value,
+                password: password,
+                businessName: document.getElementById('newUserBusinessName').value,
+                contactName: document.getElementById('newUserContactName').value,
+                phone: document.getElementById('newUserPhone').value,
+                website: document.getElementById('newUserWebsite').value,
+                industry: document.getElementById('newUserIndustry').value,
+                address: {
+                    street: document.getElementById('newUserAddress').value,
+                    city: document.getElementById('newUserCity').value,
+                    state: document.getElementById('newUserState').value,
+                    zip: document.getElementById('newUserZip').value,
+                    country: document.getElementById('newUserCountry').value
+                },
+                taxId: document.getElementById('newUserTaxId').value,
+                referral: document.getElementById('newUserReferral').value,
+                marketingConsent: document.getElementById('newUserMarketing').checked
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Registration failed');
+                }
+                
+                alert('Account created successfully! Please login.');
+                closeCreateAccount();
+                
+                // Pre-fill login email
+                document.getElementById('loginEmail').value = userData.email;
+                document.getElementById('loginPassword').focus();
+                
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+        
+        // ==================== CUSTOM PACKAGE CALCULATOR ====================
+        function calculateCustomPrice() {
+            let base = 99;
+            const platforms = parseInt(document.getElementById('addonPlatforms').value);
+            const posts = parseInt(document.getElementById('addonPosts').value);
+            const video = document.getElementById('addonVideo').checked;
+            const support = document.getElementById('addonSupport').checked;
+            
+            let total = base + (platforms * 25) + (posts * 1.5);
+            if (video) total += 50;
+            if (support) total += 30;
+            
+            document.getElementById('customTotalPrice').textContent = `$${Math.round(total)}/mo`;
+            
+            customFeatures = {
+                platforms: 3 + platforms,
+                posts: 30 + posts,
+                videoGen: video,
+                prioritySupport: support
+            };
+            
+            return Math.round(total);
+        }
+        
+        // ==================== PAYMENT HANDLING ====================
+        function openPayment(pkg, price) {
+            currentPackage = pkg;
+            currentPrice = pkg === 'custom' ? calculateCustomPrice() : price;
+            
+            document.getElementById('selectedPackage').textContent = 
+                pkg.charAt(0).toUpperCase() + pkg.slice(1) + (pkg === 'custom' ? ' (Build Your Own)' : '');
+            document.getElementById('selectedPrice').textContent = currentPrice;
+            document.getElementById('stripePayAmount').textContent = currentPrice;
+            
+            document.getElementById('paymentModal').classList.add('active');
+            
+            // Initialize Stripe
+            if (!stripe) {
+                stripe = Stripe('pk_live_YOUR_STRIPE_KEY');
+                const elements = stripe.elements();
+                cardElement = elements.create('card', {
+                    style: { base: { fontSize: '16px', color: '#2c3e50' } }
+                });
+            }
+            setTimeout(() => cardElement.mount('#card-element'), 100);
+            
+            // Reset PayPal container
+            document.getElementById('paypal-button-container').innerHTML = 
+                '<p style="color: #666; text-align: center; padding: 20px;">Click the PayPal tab to see payment button</p>';
+        }
+        
+        function closePayment() {
+            document.getElementById('paymentModal').classList.remove('active');
+            if (cardElement) cardElement.unmount();
+        }
+        
+        function switchPaymentMethod(method) {
+            // Update tabs
+            document.querySelectorAll('.payment-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide forms
+            document.getElementById('stripeForm').style.display = method === 'stripe' ? 'block' : 'none';
+            document.getElementById('paypalForm').style.display = method === 'paypal' ? 'block' : 'none';
+            
+            // Initialize PayPal if selected
+            if (method === 'paypal') {
+                setTimeout(() => initPayPal(), 200);
+            }
+        }
+        
+        async function processStripePayment() {
+            const email = document.getElementById('newAccountEmail').value;
+            const password = document.getElementById('newAccountPassword').value;
+            const btn = document.getElementById('stripePayBtn');
+            
+            if (!email || !password || password.length < 8) {
+                alert('Please enter valid email and password (min 8 chars)');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            
+            try {
+                // Create payment intent
+                const intentRes = await fetch(`${API_URL}/api/create-stripe-intent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        package: currentPackage,
+                        amount: currentPrice,
+                        email: email,
+                        billingCycle: 'monthly',
+                        features: customFeatures
+                    })
+                });
+                
+                const { clientSecret } = await intentRes.json();
+                
+                // Confirm payment
+                const result = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: { email: email }
+                    }
+                });
+                
+                if (result.error) throw new Error(result.error.message);
+                
+                showPaymentResult('Payment successful! Check your email for login credentials.', 'success');
+                
+                setTimeout(() => {
+                    closePayment();
+                    alert('Account created! Please login with your email and password.');
+                }, 2000);
+                
+            } catch (error) {
+                showPaymentResult(error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = `Pay $${currentPrice}`;
+            }
+        }
+        
+        // FIXED PAYPAL FUNCTION
+        function initPayPal() {
+            const container = document.getElementById('paypal-button-container');
+            
+            // Clear any existing buttons
+            container.innerHTML = '';
+            
+            // Check if email and password are entered
+            const email = document.getElementById('newAccountEmail').value;
+            const password = document.getElementById('newAccountPassword').value;
+            
+            if (!email || !password || password.length < 8) {
+                container.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: var(--danger);">
+                        <p>⚠️ Please enter email and password (min 8 characters) first</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Show loading while PayPal initializes
+            container.innerHTML = '<p style="text-align: center; color: #666;">Loading PayPal...</p>';
+            
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                try {
+                    // Clear loading message
+                    container.innerHTML = '';
+                    
+                    paypal.Buttons({
+                        // Button style
+                        style: {
+                            layout: 'vertical',
+                            color: 'gold',
+                            shape: 'rect',
+                            label: 'paypal'
+                        },
+                        
+                        // Create the order
+                        createOrder: function(data, actions) {
+                            const email = document.getElementById('newAccountEmail').value;
+                            
+                            if (!email) {
+                                alert('Please enter your email first');
+                                return Promise.reject(new Error('Email required'));
+                            }
+                            
+                            console.log('Creating PayPal order...', {
+                                package: currentPackage,
+                                amount: currentPrice,
+                                email: email
+                            });
+                            
+                            return fetch(`${API_URL}/api/create-paypal-order`, {
+                                method: 'POST',
+                                headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    package: currentPackage,
+                                    amount: currentPrice,
+                                    billingCycle: 'monthly',
+                                    features: customFeatures
+                                })
+                            })
+                            .then(async res => {
+                                console.log('Response status:', res.status);
+                                if (!res.ok) {
+                                    const errorText = await res.text();
+                                    console.error('Server error response:', errorText);
+                                    throw new Error(`Server error: ${res.status} - ${errorText}`);
+                                }
+                                return res.json();
+                            })
+                            .then(data => {
+                                console.log('Order created:', data);
+                                if (!data.orderId) {
+                                    throw new Error('No order ID received from server');
+                                }
+                                return data.orderId;
+                            })
+                            .catch(err => {
+                                console.error('Order creation error:', err);
+                                alert('Error creating order: ' + err.message);
+                                throw err;
+                            });
+                        },
+                        
+                        // Handle approval/payment completion
+                        onApprove: function(data, actions) {
+                            const email = document.getElementById('newAccountEmail').value;
+                            const password = document.getElementById('newAccountPassword').value;
+                            
+                            // Show processing state
+                            container.innerHTML = `
+                                <div style="padding: 20px; text-align: center;">
+                                    <p style="color: var(--success);">✅ Payment approved! Creating your account...</p>
+                                </div>
+                            `;
+                            
+                            return fetch(`${API_URL}/api/capture-paypal-order`, {
+                                method: 'POST',
+                                headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    orderId: data.orderID,
+                                    email: email,
+                                    password: password
+                                })
+                            })
+                            .then(async res => {
+                                if (!res.ok) {
+                                    const errorText = await res.text();
+                                    throw new Error(`Server error: ${res.status} - ${errorText}`);
+                                }
+                                return res.json();
+                            })
+                            .then(result => {
+                                if (result.success) {
+                                    showPaymentResult(
+                                        '✅ Payment successful! Your account has been created.<br><br>' +
+                                        'Email: ' + email + '<br>' +
+                                        'You can now login with your password.', 
+                                        'success'
+                                    );
+                                    
+                                    // Clear forms
+                                    document.getElementById('newAccountEmail').value = '';
+                                    document.getElementById('newAccountPassword').value = '';
+                                    
+                                    setTimeout(() => {
+                                        closePayment();
+                                        alert('Account created! Please login.');
+                                    }, 3000);
+                                } else {
+                                    throw new Error(result.error || 'Payment processing failed');
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Payment capture error:', err);
+                                showPaymentResult('❌ Error: ' + err.message, 'error');
+                                setTimeout(() => initPayPal(), 3000);
+                            });
+                        },
+                        
+                        // Handle cancellation
+                        onCancel: function(data) {
+                            console.log('Payment cancelled by user');
+                            container.innerHTML = `
+                                <div style="padding: 20px; text-align: center; color: var(--warning);">
+                                    <p>Payment cancelled. You can try again.</p>
+                                </div>
+                            `;
+                            setTimeout(() => initPayPal(), 2000);
+                        },
+                        
+                        // Handle errors
+                        onError: function(err) {
+                            console.error('PayPal error:', err);
+                            container.innerHTML = `
+                                <div style="padding: 20px; text-align: center; color: var(--danger);">
+                                    <p>❌ PayPal error. Please try again or use credit card.</p>
+                                    <p style="font-size: 12px; margin-top: 8px;">${err.message || 'Unknown error'}</p>
+                                </div>
+                            `;
+                            setTimeout(() => initPayPal(), 5000);
+                        }
+                    }).render('#paypal-button-container');
+                    
+                } catch (error) {
+                    console.error('Failed to render PayPal buttons:', error);
+                    container.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: var(--danger);">
+                            <p>❌ PayPal button failed to load.</p>
+                            <p style="font-size: 12px;">${error.message}</p>
+                        </div>
+                    `;
+                }
+            }, 100);
+        }
+        
+        function showPaymentResult(message, type) {
+            const resultDiv = document.getElementById('paymentResult');
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+            resultDiv.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
+            resultDiv.style.color = type === 'success' ? '#155724' : '#721c24';
+        }
+        
+        // ==================== CUSTOMER DASHBOARD ====================
+        async function loadCustomerData() {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/user/profile`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                const profile = data.profile;
+                
+                // Update stats
+                document.getElementById('statRemaining').textContent = profile.posts_remaining;
+                document.getElementById('statUsed').textContent = profile.posts_used;
+                document.getElementById('statPackage').textContent = profile.package;
+                document.getElementById('statConnected').textContent = data.accounts.length;
+                document.getElementById('dashboardEmail').textContent = profile.email;
+                
+                // Update platform buttons
+                document.querySelectorAll('.platform-btn').forEach(btn => {
+                    btn.classList.remove('connected');
+                    const platform = btn.dataset.platform;
+                    const account = data.accounts.find(a => a.platform === platform);
+                    if (account) {
+                        btn.classList.add('connected');
+                        btn.innerHTML = `${getPlatformIcon(platform)} ${getPlatformName(platform)}`;
+                    }
+                });
+                
+                // Populate post platforms
+                const platformsContainer = document.getElementById('postPlatforms');
+                platformsContainer.innerHTML = data.accounts.map(acc => `
+                    <label style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;">
+                        <input type="checkbox" value="${acc.platform}" checked>
+                        <span>${getPlatformIcon(acc.platform)} ${getPlatformName(acc.platform)}</span>
+                    </label>
+                `).join('');
+                
+                // Render posts
+                renderScheduledPosts(data.posts);
+                
+            } catch (error) {
+                console.error('Failed to load customer data:', error);
+            }
+        }
+        
+        function getPlatformIcon(platform) {
+            const icons = {
+                instagram: '📸', tiktok: '🎵', twitter: '🐦',
+                facebook: '👥', linkedin: '💼', youtube: '📺'
+            };
+            return icons[platform] || '🔗';
+        }
+        
+        function getPlatformName(platform) {
+            const names = {
+                instagram: 'Instagram', tiktok: 'TikTok', twitter: 'Twitter',
+                facebook: 'Facebook', linkedin: 'LinkedIn', youtube: 'YouTube'
+            };
+            return names[platform] || platform;
+        }
+        
+        function renderScheduledPosts(posts) {
+            const container = document.getElementById('scheduledPostsList');
+            if (!posts.length) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No posts scheduled yet</div>';
+                return;
+            }
+            
+            container.innerHTML = posts.map(post => `
+                <div class="package-card" style="margin-bottom: 12px;">
+                    <div style="font-weight: 600; margin-bottom: 8px;">${post.content.substring(0, 60)}...</div>
+                    <div style="font-size: 12px; color: #666;">
+                        ${new Date(post.scheduled_time).toLocaleString()} | 
+                        ${post.platforms.join(', ')} | 
+                        <span style="color: ${post.status === 'published' ? 'var(--success)' : post.status === 'pending' ? 'var(--warning)' : 'var(--danger)'}">
+                            ${post.status}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showPasswordChange() {
+            document.getElementById('passwordModal').classList.add('active');
+        }
+        
+        async function changePassword() {
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            
+            if (newPass !== confirmPass || newPass.length < 8) {
+                alert('Passwords must match and be at least 8 characters');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/api/change-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ newPassword: newPass })
+                });
+                
+                if (response.ok) {
+                    alert('Password updated successfully!');
+                    document.getElementById('passwordModal').classList.remove('active');
+                    document.getElementById('passwordChangeNotice').classList.add('hidden');
+                }
+            } catch (error) {
+                alert('Failed to update password');
+            }
+        }
+        
+        // ==================== SOCIAL MEDIA CONNECTION ====================
+        function connectPlatform(platform) {
+            currentOAuthPlatform = platform;
+            const platformNames = {
+                instagram: 'Instagram', tiktok: 'TikTok', twitter: 'Twitter',
+                facebook: 'Facebook', linkedin: 'LinkedIn', youtube: 'YouTube'
+            };
+            
+            document.getElementById('oauthPlatformName').textContent = `Connect ${platformNames[platform]}`;
+            document.getElementById('oauthPlatformDisplay').textContent = platformNames[platform];
+            document.getElementById('oauthUsername').value = '';
+            document.getElementById('oauthProfileUrl').value = '';
+            
+            document.getElementById('oauthPopup').style.display = 'block';
+        }
+        
+        function closeOAuthPopup() {
+            document.getElementById('oauthPopup').style.display = 'none';
+            currentOAuthPlatform = null;
+        }
+        
+        async function submitOAuthConnection() {
+            const username = document.getElementById('oauthUsername').value.trim();
+            const profileUrl = document.getElementById('oauthProfileUrl').value.trim();
+            
+            if (!username) {
+                alert('Please enter your username');
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            const btn = document.querySelector('#oauthPopup .btn-primary');
+            btn.disabled = true;
+            btn.textContent = 'Connecting...';
+            
+            try {
+                // Simulate OAuth flow - in production, this would open actual OAuth
+                const response = await fetch(`${API_URL}/api/connect-account`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        platform: currentOAuthPlatform,
+                        accountUsername: username,
+                        profileUrl: profileUrl
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`${getPlatformName(currentOAuthPlatform)} connected successfully!`);
+                    closeOAuthPopup();
+                    loadCustomerData(); // Refresh dashboard
+                } else {
+                    throw new Error(data.error || 'Connection failed');
+                }
+                
+            } catch (error) {
+                alert('Failed to connect: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Connect Account';
+            }
+        }
+        
+        // ==================== ADMIN DASHBOARD ====================
+        async function loadAdminData() {
+            const token = localStorage.getItem('token');
+            
+            try {
+                // Load stats
+                const statsRes = await fetch(`${API_URL}/api/admin/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const stats = await statsRes.json();
+                
+                document.getElementById('adminTotalUsers').textContent = stats.users.total_users;
+                document.getElementById('adminRevenue').textContent = 
+                    '$' + (parseInt(stats.revenue.paypal_revenue) + parseInt(stats.revenue.stripe_revenue)).toLocaleString();
+                document.getElementById('adminActiveWeek').textContent = stats.users.active_this_week;
+                document.getElementById('adminStarter').textContent = stats.users.starter_users;
+                document.getElementById('adminGrowth').textContent = stats.users.growth_users;
+                document.getElementById('adminPro').textContent = stats.users.pro_users;
+                document.getElementById('adminCustom').textContent = stats.users.custom_users;
+                
+                // Load users
+                const usersRes = await fetch(`${API_URL}/api/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const users = await usersRes.json();
+                
+                const tbody = document.getElementById('adminUsersBody');
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.email}</td>
+                        <td>${user.business_name || '-'}</td>
+                        <td>${user.package}</td>
+                        <td>${user.posts_used}/${user.posts_used + user.posts_remaining}</td>
+                        <td>
+                            <span class="status-badge ${user.is_active ? 'status-active' : user.status === 'pending' ? 'status-pending' : 'status-suspended'}">
+                                ${user.is_active ? 'Active' : user.status === 'pending' ? 'Pending' : 'Suspended'}
+                            </span>
+                        </td>
+                        <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="action-btn btn-edit" onclick="openAdminEdit(${user.id})">
+                                Edit
+                            </button>
+                            <button class="action-btn ${user.is_active ? 'btn-suspend' : 'btn-activate'}" 
+                                    onclick="toggleUserStatus(${user.id}, ${!user.is_active})">
+                                ${user.is_active ? 'Suspend' : 'Activate'}
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // Load activity
+                const activityDiv = document.getElementById('adminActivity');
+                activityDiv.innerHTML = stats.recentActivity.map(log => `
+                    <div style="padding:
+
