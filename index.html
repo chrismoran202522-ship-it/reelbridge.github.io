@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Reel Bridge - Automated Social Media Management</title>
     <script src="https://js.stripe.com/v3/"></script>
-    <!-- PAYPAL LIVE CLIENT ID INSERTED HERE -->
+    <!-- PAYPAL LIVE CLIENT ID -->
     <script src="https://www.paypal.com/sdk/js?client-id=AdJIUkTjZ2NfPN69w87QZU8Ylw9R1_ByaRnZLn5JavjKx3NREjoH8srOYFv0ZvoFqZO2RcE_FEaugLEt&currency=USD&intent=capture"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,7 +29,6 @@
             -webkit-font-smoothing: antialiased;
         }
         
-        /* Header with Login */
         .mobile-header {
             position: fixed;
             top: 0;
@@ -71,7 +70,6 @@
             cursor: pointer;
         }
         
-        /* Hero */
         .hero {
             margin-top: 60px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
@@ -98,7 +96,6 @@
             max-width: 300px;
         }
         
-        /* Sections */
         .section {
             padding: 32px 16px;
             background: var(--card);
@@ -113,7 +110,6 @@
             padding-left: 12px;
         }
         
-        /* Package Cards */
         .package-card {
             background: var(--card);
             border: 2px solid #e0e0e0;
@@ -148,7 +144,6 @@
             margin-top: 16px;
         }
         
-        /* Custom Package Builder */
         .custom-builder {
             background: linear-gradient(135deg, #fff 0%, #f0fff4 100%);
             border: 2px solid var(--success);
@@ -178,7 +173,6 @@
             border: 2px solid var(--success);
         }
         
-        /* Payment Modal */
         .modal {
             display: none;
             position: fixed;
@@ -271,7 +265,6 @@
         
         .pay-btn:disabled { background: #ccc; cursor: not-allowed; }
         
-        /* Dashboard Styles */
         .dashboard-header {
             background: var(--primary);
             color: white;
@@ -316,7 +309,6 @@
         .platform-btn.connected { border-color: var(--success); background: #f0fff4; }
         .platform-btn:hover { border-color: var(--accent); }
         
-        /* Admin Styles */
         .admin-table {
             width: 100%;
             border-collapse: collapse;
@@ -390,7 +382,7 @@
             <a href="#packages" class="cta-btn">View Packages</a>
         </section>
         
-        <!-- Packages Section -->
+        <!-- Packages Section - HARDCODED PACKAGES -->
         <section class="section" id="packages">
             <h2 class="section-title">Choose Your Plan</h2>
             
@@ -901,7 +893,7 @@
             return Math.round(total);
         }
         
-        // ==================== PAYMENT HANDLING - FIXED ====================
+        // ==================== PAYMENT HANDLING ====================
         function openPayment(pkg, price) {
             currentPackage = pkg;
             currentPrice = pkg === 'custom' ? calculateCustomPrice() : price;
@@ -1048,9 +1040,18 @@
                                 return Promise.reject(new Error('Email required'));
                             }
                             
+                            console.log('Creating PayPal order...', {
+                                package: currentPackage,
+                                amount: currentPrice,
+                                email: email
+                            });
+                            
                             return fetch(`${API_URL}/api/create-paypal-order`, {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
                                 body: JSON.stringify({
                                     package: currentPackage,
                                     amount: currentPrice,
@@ -1058,13 +1059,17 @@
                                     features: customFeatures
                                 })
                             })
-                            .then(res => {
+                            .then(async res => {
+                                console.log('Response status:', res.status);
                                 if (!res.ok) {
-                                    return res.json().then(err => { throw new Error(err.error || 'Failed to create order'); });
+                                    const errorText = await res.text();
+                                    console.error('Server error response:', errorText);
+                                    throw new Error(`Server error: ${res.status} - ${errorText}`);
                                 }
                                 return res.json();
                             })
                             .then(data => {
+                                console.log('Order created:', data);
                                 if (!data.orderId) {
                                     throw new Error('No order ID received from server');
                                 }
@@ -1072,7 +1077,7 @@
                             })
                             .catch(err => {
                                 console.error('Order creation error:', err);
-                                alert('Error: ' + err.message);
+                                alert('Error creating order: ' + err.message);
                                 throw err;
                             });
                         },
@@ -1091,14 +1096,23 @@
                             
                             return fetch(`${API_URL}/api/capture-paypal-order`, {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
                                 body: JSON.stringify({
                                     orderId: data.orderID,
                                     email: email,
                                     password: password
                                 })
                             })
-                            .then(res => res.json())
+                            .then(async res => {
+                                if (!res.ok) {
+                                    const errorText = await res.text();
+                                    throw new Error(`Server error: ${res.status} - ${errorText}`);
+                                }
+                                return res.json();
+                            })
                             .then(result => {
                                 if (result.success) {
                                     showPaymentResult(
@@ -1123,7 +1137,6 @@
                             .catch(err => {
                                 console.error('Payment capture error:', err);
                                 showPaymentResult('❌ Error: ' + err.message, 'error');
-                                // Reset PayPal button
                                 setTimeout(() => initPayPal(), 3000);
                             });
                         },
@@ -1145,7 +1158,7 @@
                             container.innerHTML = `
                                 <div style="padding: 20px; text-align: center; color: var(--danger);">
                                     <p>❌ PayPal error. Please try again or use credit card.</p>
-                                    <p style="font-size: 12px; margin-top: 8px;">Error: ${err.message || 'Unknown error'}</p>
+                                    <p style="font-size: 12px; margin-top: 8px;">${err.message || 'Unknown error'}</p>
                                 </div>
                             `;
                             setTimeout(() => initPayPal(), 5000);
@@ -1157,7 +1170,7 @@
                     container.innerHTML = `
                         <div style="padding: 20px; text-align: center; color: var(--danger);">
                             <p>❌ PayPal button failed to load.</p>
-                            <p style="font-size: 12px;">Please use credit card option or refresh the page.</p>
+                            <p style="font-size: 12px;">${error.message}</p>
                         </div>
                     `;
                 }
