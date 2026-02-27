@@ -372,6 +372,209 @@ app.post('/api/connect-account', authenticateToken, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// ==================== USER REGISTRATION ====================
+app.post('/api/register', async (req, res) => {
+    const {
+        email,
+        password,
+        businessName,
+        contactName,
+        phone,
+        website,
+        industry,
+        address,
+        taxId,
+        referral,
+        marketingConsent
+    } = req.body;
+
+    try {
+        // Check if user exists
+        const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+        if (existing.rows.length > 0) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        const hash = await bcrypt.hash(password, 10);
+        
+        const result = await pool.query(
+            `INSERT INTO users (
+                email, password_hash, role, package, status,
+                business_name, contact_name, phone, website, industry,
+                address_street, address_city, address_state, address_zip, address_country,
+                tax_id, referral_source, marketing_consent,
+                posts_remaining, posts_used, posts_published,
+                features, is_active, force_password_change, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW())
+            RETURNING id`,
+            [
+                email, hash, 'customer', 'starter', 'pending',
+                businessName, contactName, phone, website, industry,
+                address.street, address.city, address.state, address.zip, address.country,
+                taxId, referral, marketingConsent,
+                0, 0, 0,
+                JSON.stringify({ basic_dashboard: true }),
+                false, true
+            ]
+        );
+
+        // Log the registration
+        await pool.query(
+            `INSERT INTO admin_logs (action, user_id, details) VALUES ($1, $2, $3)`,
+            ['user_registered', result.rows[0].id, { email, businessName, industry }]
+        );
+
+        res.status(201).json({ 
+            success: true, 
+            message: 'Account created successfully. Please wait for admin approval.',
+            userId: result.rows[0].id 
+        });
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==================== ADMIN USER MANAGEMENT ====================
+app.get('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT u.*, 
+                array_agg(DISTINCT sa.platform) as connected_platforms
+             FROM users u
+             LEFT JOIN social_accounts sa ON u.id = sa.user_id AND sa.is_active = true
+             WHERE u.id = $1 AND u.role = 'customer'
+             GROUP BY u.id`,
+            [req.params.id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.patch('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, res) => {
+    const {
+        businessName,
+        contactName,
+        phone,
+        package: pkg,
+        postsRemaining,
+        status,
+        forcePasswordChange,
+        features
+    } = req.body;
+
+    try {
+        const updates = [];
+        const values = [];
+        let paramCount = 1;
+
+        if (businessName !== undefined) {
+            updates.push(`business_name = $${paramCount++}`);
+            values.push(businessName);
+        }
+        if (contactName !== undefined) {
+            updates.push(`contact_name = $${paramCount++}`);
+            values.push(contactName);
+        }
+        if (phone !== undefined) {
+            updates.push(`phone = $${paramCount++}`);
+            values.push(phone);
+        }
+        if (pkg !== undefined) {
+            updates.push(`package = $${paramCount++}`);
+            values.push(pkg);
+        }
+        if (postsRemaining !== undefined) {
+            updates.push(`posts_remaining = $${paramCount++}`);
+            values.push(postsRemaining);
+        }
+        if (status !== undefined) {
+            updates.push(`status = $${paramCount++}`);
+            updates.push(`is_active = $${paramCount++}`);
+            values.push(status);
+            values.push(status === 'active');
+        }
+        if (forcePasswordChange !== undefined) {
+            updates.push(`force_password_change = $${paramCount++}`);
+            values.push(forcePasswordChange);
+        }
+        if (features !== undefined) {
+            updates.push(`features = $${paramCount++}`);
+            values.push(JSON.stringify(features));
+        }
+
+        values.push(req.params.id);
+
+        const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
+        const result = await pool.query(query, values);
+
+        // Log the update
+        await pool.query(
+            `INSERT INTO admin_logs (action, user_id, details) VALUES ($1, $2, $3)`,
+            ['user_updated', req.params.id, { updatedBy: req.user.userId, changes: Object.keys(req.body) }]
+        );
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        // Delete related records first
+        await pool.query('DELETE FROM scheduled_posts WHERE user_id = $1', [req.params.id]);
+        await pool.query('DELETE FROM social_accounts WHERE user_id = $1', [req.params.id]);
+        await pool.query('DELETE FROM ai_generated_content WHERE user_id = $1', [req.params.id]);
+        
+        // Delete user
+        await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+        
+        // Log deletion
+        await pool.query(
+            `INSERT INTO admin_logs (action, details) VALUES ($1, $2)`,
+            ['user_deleted', { deletedUserId: req.params.id, deletedBy: req.user.userId }]
+        );
+
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/admin/reset-password', authenticateToken, requireAdmin, async (req, res) => {
+    const { userId } = req.body;
+    
+    try {
+        const tempPassword = Math.random().toString(36).slice(-10);
+        const hash = await bcrypt.hash(tempPassword, 10);
+        
+        await pool.query(
+            'UPDATE users SET password_hash = $1, force_password_change = true WHERE id = $2',
+            [hash, userId]
+        );
+        
+        // In production, send email here
+        console.log(`Password reset for user ${userId}: ${tempPassword}`);
+        
+        await pool.query(
+            `INSERT INTO admin_logs (action, user_id, details) VALUES ($1, $2, $3)`,
+            ['password_reset', userId, { resetBy: req.user.userId }]
+        );
+        
+        res.json({ success: true, tempPassword }); // Remove tempPassword in production
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // ==================== AI CONTENT GENERATION ====================
 app.post('/api/generate-content', authenticateToken, async (req, res) => {
