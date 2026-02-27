@@ -1828,5 +1828,375 @@
                 // Load activity
                 const activityDiv = document.getElementById('adminActivity');
                 activityDiv.innerHTML = stats.recentActivity.map(log => `
-                    <div style="padding:
+                                        <div style="padding: 12px; border-bottom: 1px solid #eee; font-size: 14px;">
+                        <strong>${log.action}</strong> - ${new Date(log.created_at).toLocaleString()}<br>
+                        <span style="color: #666; font-size: 12px;">${JSON.stringify(log.details)}</span>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load admin data:', error);
+            }
+        }
+        
+        // ==================== ADMIN USER EDIT ====================
+        async function openAdminEdit(userId) {
+            editingUserId = userId;
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/admin/user/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const user = await response.json();
+                
+                const content = document.getElementById('adminEditContent');
+                content.innerHTML = `
+                    <div style="padding: 20px;">
+                        <h4 style="margin-bottom: 16px; color: var(--accent);">Account Information</h4>
+                        
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="editEmail" value="${user.email}" disabled style="background: #f0f0f0;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Business Name</label>
+                            <input type="text" id="editBusinessName" value="${user.business_name || ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Contact Name</label>
+                            <input type="text" id="editContactName" value="${user.contact_name || ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" id="editPhone" value="${user.phone || ''}">
+                        </div>
+                        
+                        <h4 style="margin: 24px 0 12px; color: var(--accent);">Package & Limits</h4>
+                        
+                        <div class="form-group">
+                            <label>Package</label>
+                            <select id="editPackage">
+                                <option value="starter" ${user.package === 'starter' ? 'selected' : ''}>Starter</option>
+                                <option value="growth" ${user.package === 'growth' ? 'selected' : ''}>Growth</option>
+                                <option value="professional" ${user.package === 'professional' ? 'selected' : ''}>Professional</option>
+                                <option value="custom" ${user.package === 'custom' ? 'selected' : ''}>Custom</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Posts Remaining</label>
+                                <input type="number" id="editPostsRemaining" value="${user.posts_remaining}">
+                            </div>
+                            <div class="form-group">
+                                <label>Posts Used</label>
+                                <input type="number" id="editPostsUsed" value="${user.posts_used}" disabled style="background: #f0f0f0;">
+                            </div>
+                        </div>
+                        
+                        <h4 style="margin: 24px 0 12px; color: var(--accent);">Features</h4>
+                        
+                        ${renderFeatureToggles(user.features || {})}
+                        
+                        <h4 style="margin: 24px 0 12px; color: var(--accent);">Account Status</h4>
+                        
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="editStatus">
+                                <option value="active" ${user.is_active ? 'selected' : ''}>Active</option>
+                                <option value="suspended" ${!user.is_active && user.status !== 'pending' ? 'selected' : ''}>Suspended</option>
+                                <option value="pending" ${user.status === 'pending' ? 'selected' : ''}>Pending Approval</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="editForcePasswordChange" ${user.force_password_change ? 'checked' : ''}>
+                                Force Password Change on Next Login
+                            </label>
+                        </div>
+                        
+                        <div class="danger-zone">
+                            <h4>⚠️ Danger Zone</h4>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <button class="action-btn" onclick="resetUserPassword(${userId})" style="background: var(--warning); color: white;">
+                                    Reset Password
+                                </button>
+                                <span style="font-size: 12px; color: #666; margin-left: 8px;">Send password reset email</span>
+                            </div>
+                            
+                            <div>
+                                <button class="action-btn btn-delete" onclick="deleteUserAccount(${userId})">
+                                    Delete Account
+                                </button>
+                                <span style="font-size: 12px; color: #666; margin-left: 8px;">Permanently delete this account</span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; margin-top: 24px;">
+                            <button class="pay-btn" onclick="closeAdminEdit()" style="flex: 1; background: #666;">Cancel</button>
+                            <button class="pay-btn" onclick="saveAdminEdit()" style="flex: 2;">Save Changes</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('adminEditModal').classList.add('active');
+                
+            } catch (error) {
+                alert('Failed to load user details');
+            }
+        }
+        
+        function renderFeatureToggles(features) {
+            const availableFeatures = [
+                { id: 'basic_dashboard', name: 'Basic Dashboard', description: 'Standard client access' },
+                { id: 'ai_content', name: 'AI Content Generation', description: 'Auto-create posts and captions' },
+                { id: 'ai_video', name: 'AI Video Generation', description: 'Auto-create videos' },
+                { id: 'analytics_advanced', name: 'Advanced Analytics', description: 'Detailed metrics and reports' },
+                { id: 'content_scheduler', name: 'Content Scheduler', description: 'Schedule posts across platforms' },
+                { id: 'multi_account', name: 'Multi-Account Management', description: 'Manage multiple social accounts' },
+                { id: 'auto_engagement', name: 'Auto-Engagement', description: 'Auto-respond to comments' },
+                { id: 'priority_support', name: 'Priority Support', description: '24/7 priority customer support' },
+                { id: 'api_access', name: 'API Access', description: 'Developer API integration' },
+                { id: 'white_label', name: 'White Label', description: 'Custom branding options' }
+            ];
+            
+            return availableFeatures.map(feature => {
+                const isEnabled = features[feature.id] || false;
+                return `
+                    <div class="feature-toggle ${isEnabled ? 'enabled' : ''}" onclick="toggleFeature('${feature.id}')">
+                        <div>
+                            <div style="font-weight: 600;">${feature.name}</div>
+                            <div style="font-size: 12px; color: #666;">${feature.description}</div>
+                        </div>
+                        <div class="toggle-switch ${isEnabled ? 'active' : ''}" data-feature="${feature.id}"></div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function toggleFeature(featureId) {
+            const toggle = document.querySelector(`.toggle-switch[data-feature="${featureId}"]`);
+            toggle.classList.toggle('active');
+            toggle.closest('.feature-toggle').classList.toggle('enabled');
+        }
+        
+        function closeAdminEdit() {
+            document.getElementById('adminEditModal').classList.remove('active');
+            editingUserId = null;
+        }
+        
+        async function saveAdminEdit() {
+            const token = localStorage.getItem('token');
+            
+            // Collect feature toggles
+            const features = {};
+            document.querySelectorAll('.toggle-switch').forEach(toggle => {
+                const featureId = toggle.dataset.feature;
+                features[featureId] = toggle.classList.contains('active');
+            });
+            
+            const updates = {
+                businessName: document.getElementById('editBusinessName').value,
+                contactName: document.getElementById('editContactName').value,
+                phone: document.getElementById('editPhone').value,
+                package: document.getElementById('editPackage').value,
+                postsRemaining: parseInt(document.getElementById('editPostsRemaining').value),
+                status: document.getElementById('editStatus').value,
+                forcePasswordChange: document.getElementById('editForcePasswordChange').checked,
+                features: features
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/api/admin/user/${editingUserId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updates)
+                });
+                
+                if (response.ok) {
+                    alert('User updated successfully!');
+                    closeAdminEdit();
+                    loadAdminData();
+                } else {
+                    throw new Error('Update failed');
+                }
+            } catch (error) {
+                alert('Failed to save changes: ' + error.message);
+            }
+        }
+        
+        async function resetUserPassword(userId) {
+            if (!confirm('Send password reset email to this user?')) return;
+            
+            const token = localStorage.getItem('token');
+            
+            try {
+                await fetch(`${API_URL}/api/admin/reset-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                
+                alert('Password reset email sent!');
+            } catch (error) {
+                alert('Failed to reset password');
+            }
+        }
+        
+        async function deleteUserAccount(userId) {
+            if (!confirm('⚠️ WARNING: This will permanently delete this account and all associated data. This action cannot be undone. Continue?')) {
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/admin/user/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    alert('Account deleted successfully');
+                    closeAdminEdit();
+                    loadAdminData();
+                } else {
+                    throw new Error('Delete failed');
+                }
+            } catch (error) {
+                alert('Failed to delete account: ' + error.message);
+            }
+        }
+        
+        async function toggleUserStatus(userId, isActive) {
+            const token = localStorage.getItem('token');
+            
+            try {
+                await fetch(`${API_URL}/api/admin/user-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ userId, isActive })
+                });
+                
+                loadAdminData();
+            } catch (error) {
+                alert('Failed to update user status');
+            }
+        }
+        
+        // ==================== POST MANAGEMENT ====================
+        async function generateAIContent() {
+            const content = document.getElementById('postContent').value;
+            const platforms = Array.from(document.querySelectorAll('#postPlatforms input:checked')).map(cb => cb.value);
+            
+            if (!platforms.length) {
+                alert('Please select at least one platform');
+                return;
+            }
+            
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/generate-content`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        topic: content || 'social media marketing',
+                        platforms: platforms,
+                        tone: 'professional'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('postContent').value = data.content;
+                updateCharCount();
+                
+            } catch (error) {
+                alert('AI generation failed');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '✨ AI Generate';
+        }
+        
+        async function schedulePost() {
+            const content = document.getElementById('postContent').value;
+            const platforms = Array.from(document.querySelectorAll('#postPlatforms input:checked')).map(cb => cb.value);
+            const scheduledTime = document.getElementById('scheduleTime').value;
+            
+            if (!content || !platforms.length || !scheduledTime) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/schedule-post`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        content,
+                        platforms,
+                        mediaUrls: [],
+                        scheduledTime: new Date(scheduledTime).toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Post scheduled successfully!');
+                    document.getElementById('postContent').value = '';
+                    loadCustomerData();
+                } else {
+                    alert(data.error || 'Failed to schedule');
+                }
+                
+            } catch (error) {
+                alert('Network error');
+            }
+        }
+        
+        function updateCharCount() {
+            document.getElementById('charCount').textContent = document.getElementById('postContent').value.length;
+        }
+        
+        document.getElementById('postContent').addEventListener('input', updateCharCount);
+        
+        // Set default schedule time to now + 1 hour
+        window.addEventListener('load', () => {
+            const now = new Date();
+            now.setHours(now.getHours() + 1);
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('scheduleTime').value = now.toISOString().slice(0, 16);
+        });
+    </script>
+</body>
+</html>
+
 
