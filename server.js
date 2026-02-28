@@ -16,7 +16,7 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-// PayPal setup - FIXED: Use LiveEnvironment for production
+// PayPal setup
 const Environment = process.env.NODE_ENV === 'production' 
     ? paypal.core.LiveEnvironment 
     : paypal.core.SandboxEnvironment;
@@ -55,7 +55,6 @@ async function runSchemaUpdates() {
     try {
         console.log('🔧 Running database schema updates...');
         
-        // Check if columns exist and add them if they don't
         const checkColumn = async (table, column) => {
             const result = await client.query(`
                 SELECT column_name 
@@ -65,7 +64,6 @@ async function runSchemaUpdates() {
             return result.rows.length > 0;
         };
         
-        // Add business information columns
         const columnsToAdd = [
             { name: 'business_name', type: 'VARCHAR(255)' },
             { name: 'contact_name', type: 'VARCHAR(255)' },
@@ -91,15 +89,9 @@ async function runSchemaUpdates() {
             }
         }
         
-        // Update status check constraint
         try {
-            await client.query(`
-                ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check
-            `);
-            await client.query(`
-                ALTER TABLE users ADD CONSTRAINT users_status_check 
-                CHECK (status IN ('pending', 'active', 'suspended', 'cancelled'))
-            `);
+            await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check`);
+            await client.query(`ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('pending', 'active', 'suspended', 'cancelled'))`);
             console.log('✅ Updated status constraint');
         } catch (e) {
             console.log('⚠️ Status constraint may already exist');
@@ -108,7 +100,6 @@ async function runSchemaUpdates() {
         console.log('✅ Schema updates complete');
     } catch (error) {
         console.error('❌ Schema update error:', error);
-        throw error;
     } finally {
         client.release();
     }
@@ -116,12 +107,10 @@ async function runSchemaUpdates() {
 
 // ==================== DATABASE INITIALIZATION ====================
 async function initDatabase() {
-    // Run schema updates first
     await runSchemaUpdates();
     
     const client = await pool.connect();
     try {
-        // Create tables if they don't exist
         await client.query(`
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -213,24 +202,16 @@ async function initDatabase() {
             );
         `);
         
-        // Create admin if not exists
         const admin = await client.query('SELECT * FROM users WHERE role = $1', ['admin']);
         if (admin.rows.length === 0) {
             const hash = await bcrypt.hash('123456', 10);
             await client.query(
-                `INSERT INTO users (
-                    email, password_hash, role, force_password_change, is_active, status,
-                    business_name, contact_name, phone, address_street, address_city, address_state, address_zip
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-                [
-                    'cmoran@reelbridge.site', hash, 'admin', true, true, 'active',
-                    'ReelBridge Admin', 'Admin User', '506-271-7605', '123 Admin St', 'Admin City', 'Admin State', '00000'
-                ]
+                `INSERT INTO users (email, password_hash, role, force_password_change, is_active, status, business_name, contact_name, phone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                ['cmoran@reelbridge.site', hash, 'admin', true, true, 'active', 'ReelBridge Admin', 'Admin User', '506-271-7605']
             );
-            console.log('✅ Admin created: cmoran@reelbridge.site / 123456');
+            console.log('✅ Admin created');
         }
         
-        // Initialize default packages if not exists
         const packages = await client.query('SELECT * FROM package_config');
         if (packages.rows.length === 0) {
             await client.query(`
@@ -271,13 +252,7 @@ app.post('/api/login', async (req, res) => {
         await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
         
         const token = jwt.sign(
-            { 
-                userId: user.id, 
-                email: user.email, 
-                role: user.role, 
-                package: user.package, 
-                forcePasswordChange: user.force_password_change 
-            },
+            { userId: user.id, email: user.email, role: user.role, package: user.package, forcePasswordChange: user.force_password_change },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -314,22 +289,9 @@ app.post('/api/change-password', authenticateToken, async (req, res) => {
 
 // ==================== USER REGISTRATION ====================
 app.post('/api/register', async (req, res) => {
-    const {
-        email,
-        password,
-        businessName,
-        contactName,
-        phone,
-        website,
-        industry,
-        address,
-        taxId,
-        referral,
-        marketingConsent
-    } = req.body;
+    const { email, password, businessName, contactName, phone, website, industry, address, taxId, referral, marketingConsent } = req.body;
 
     try {
-        // Check if user exists
         const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
         if (existing.rows.length > 0) {
             return res.status(400).json({ error: 'Email already registered' });
@@ -338,38 +300,13 @@ app.post('/api/register', async (req, res) => {
         const hash = await bcrypt.hash(password, 10);
         
         const result = await pool.query(
-            `INSERT INTO users (
-                email, password_hash, role, package, status,
-                business_name, contact_name, phone, website, industry,
-                address_street, address_city, address_state, address_zip, address_country,
-                tax_id, referral_source, marketing_consent,
-                posts_remaining, posts_used, posts_published,
-                features, is_active, force_password_change, created_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW())
-            RETURNING id`,
-            [
-                email, hash, 'customer', 'starter', 'pending',
-                businessName, contactName, phone, website, industry,
-                address.street, address.city, address.state, address.zip, address.country,
-                taxId, referral, marketingConsent,
-                0, 0, 0,
-                JSON.stringify({ basic_dashboard: true }),
-                false, false
-            ]
+            `INSERT INTO users (email, password_hash, role, package, status, business_name, contact_name, phone, website, industry, address_street, address_city, address_state, address_zip, address_country, tax_id, referral_source, marketing_consent, posts_remaining, posts_used, posts_published, features, is_active, force_password_change, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW()) RETURNING id`,
+            [email, hash, 'customer', 'starter', 'pending', businessName, contactName, phone, website, industry, address.street, address.city, address.state, address.zip, address.country, taxId, referral, marketingConsent, 0, 0, 0, JSON.stringify({ basic_dashboard: true }), false, false]
         );
 
-        // Log the registration
-        await pool.query(
-            `INSERT INTO admin_logs (action, user_id, details) VALUES ($1, $2, $3)`,
-            ['user_registered', result.rows[0].id, { email, businessName, industry }]
-        );
+        await pool.query(`INSERT INTO admin_logs (action, user_id, details) VALUES ($1, $2, $3)`, ['user_registered', result.rows[0].id, { email, businessName, industry }]);
 
-        res.status(201).json({ 
-            success: true, 
-            message: 'Account created successfully. Please wait for admin approval.',
-            userId: result.rows[0].id 
-        });
-
+        res.status(201).json({ success: true, message: 'Account created. Please wait for admin approval.', userId: result.rows[0].id });
     } catch (error) {
         console.error('Registration error:', error);
         res.status(500).json({ error: error.message });
@@ -407,16 +344,11 @@ app.post('/api/create-stripe-intent', async (req, res) => {
 app.post('/api/create-paypal-order', async (req, res) => {
     const { package, amount, billingCycle, features } = req.body;
     
-    console.log('Creating PayPal order:', { package, amount, billingCycle });
-    
     const request = new paypal.orders.OrdersCreateRequest();
     request.requestBody({
         intent: 'CAPTURE',
         purchase_units: [{
-            amount: { 
-                currency_code: 'USD', 
-                value: amount.toString() 
-            },
+            amount: { currency_code: 'USD', value: amount.toString() },
             description: `Reel Bridge ${package}`,
             custom_id: JSON.stringify({ package, billingCycle, features })
         }]
@@ -424,24 +356,19 @@ app.post('/api/create-paypal-order', async (req, res) => {
     
     try {
         const order = await paypalClient.execute(request);
-        console.log('PayPal order created:', order.result.id);
         res.json({ orderId: order.result.id });
     } catch (error) {
-        console.error('PayPal order creation error:', error);
-        res.status(500).json({ error: error.message, details: error.statusCode });
+        res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/capture-paypal-order', async (req, res) => {
     const { orderId, email, password } = req.body;
     
-    console.log('Capturing PayPal order:', orderId);
-    
     const request = new paypal.orders.OrdersCaptureRequest(orderId);
     
     try {
         const capture = await paypalClient.execute(request);
-        console.log('PayPal capture status:', capture.result.status);
         
         if (capture.result.status === 'COMPLETED') {
             const customData = JSON.parse(capture.result.purchase_units[0].payments.captures[0].custom_id);
@@ -451,26 +378,17 @@ app.post('/api/capture-paypal-order', async (req, res) => {
             const postsMap = { 'starter': 30, 'growth': 75, 'professional': 999999, 'custom': features?.posts || 50 };
             
             const result = await pool.query(
-                `INSERT INTO users (
-                    email, password_hash, package, billing_cycle, posts_remaining, 
-                    platforms, paypal_order_id, status, is_active
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-                [
-                    email, hash, package, billingCycle, postsMap[package] || 50, 
-                    getPlatforms(package, features), orderId, 'active', true
-                ]
+                `INSERT INTO users (email, password_hash, package, billing_cycle, posts_remaining, platforms, paypal_order_id, status, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+                [email, hash, package, billingCycle, postsMap[package] || 50, getPlatforms(package, features), orderId, 'active', true]
             );
             
-            await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, 
-                ['purchase', { email, package, amount: capture.result.purchase_units[0].payments.captures[0].amount.value, method: 'paypal' }]);
+            await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, ['purchase', { email, package, amount: capture.result.purchase_units[0].payments.captures[0].amount.value, method: 'paypal' }]);
             
-            console.log('User created successfully:', email);
             res.json({ success: true, userId: result.rows[0].id });
         } else {
             res.status(400).json({ error: 'Payment not completed' });
         }
     } catch (error) {
-        console.error('PayPal capture error:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -493,19 +411,11 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
         
         try {
             await pool.query(
-                `INSERT INTO users (
-                    email, password_hash, package, billing_cycle, posts_remaining, 
-                    platforms, stripe_customer_id, status, is_active
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                [
-                    customer_email, hash, package, billingCycle, parseInt(posts_limit), 
-                    getPlatforms(package), payment.customer, 'active', true
-                ]
+                `INSERT INTO users (email, password_hash, package, billing_cycle, posts_remaining, platforms, stripe_customer_id, status, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                [customer_email, hash, package, billingCycle, parseInt(posts_limit), getPlatforms(package), payment.customer, 'active', true]
             );
-            console.log(`New user: ${customer_email}, Password: ${tempPass}`);
             
-            await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, 
-                ['purchase', { email: customer_email, package, method: 'stripe' }]);
+            await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, ['purchase', { email: customer_email, package, method: 'stripe' }]);
         } catch (e) {
             console.error(e);
         }
@@ -518,9 +428,7 @@ function getPlatforms(pkg, features = null) {
         'starter': ['instagram', 'facebook', 'twitter'],
         'growth': ['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube'],
         'professional': ['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube', 'pinterest', 'threads'],
-        'custom': features?.platforms ? 
-            ['instagram', 'facebook', 'twitter'].slice(0, features.platforms) : 
-            ['instagram', 'facebook', 'twitter']
+        'custom': features?.platforms ? ['instagram', 'facebook', 'twitter'].slice(0, features.platforms) : ['instagram', 'facebook', 'twitter']
     };
     return map[pkg] || map['starter'];
 }
@@ -528,32 +436,11 @@ function getPlatforms(pkg, features = null) {
 // ==================== USER DASHBOARD ====================
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
-        const user = await pool.query(
-            `SELECT id, email, package, posts_remaining, posts_used, posts_published, 
-                    platforms, created_at, business_name, features, status
-             FROM users WHERE id = $1`, 
-            [req.user.userId]
-        );
-        const posts = await pool.query(
-            'SELECT * FROM scheduled_posts WHERE user_id = $1 ORDER BY scheduled_time DESC', 
-            [req.user.userId]
-        );
-        const accounts = await pool.query(
-            'SELECT * FROM social_accounts WHERE user_id = $1 AND is_active = true', 
-            [req.user.userId]
-        );
+        const user = await pool.query(`SELECT id, email, package, posts_remaining, posts_used, posts_published, platforms, created_at, business_name, features, status FROM users WHERE id = $1`, [req.user.userId]);
+        const posts = await pool.query('SELECT * FROM scheduled_posts WHERE user_id = $1 ORDER BY scheduled_time DESC', [req.user.userId]);
+        const accounts = await pool.query('SELECT * FROM social_accounts WHERE user_id = $1 AND is_active = true', [req.user.userId]);
         
-        res.json({ 
-            profile: {
-                ...user.rows[0],
-                email: user.rows[0].email,
-                package: user.rows[0].package,
-                posts_remaining: user.rows[0].posts_remaining,
-                posts_used: user.rows[0].posts_used
-            }, 
-            posts: posts.rows, 
-            accounts: accounts.rows 
-        });
+        res.json({ profile: user.rows[0], posts: posts.rows, accounts: accounts.rows });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -563,14 +450,7 @@ app.post('/api/connect-account', authenticateToken, async (req, res) => {
     const { platform, accountUsername, profileUrl } = req.body;
     try {
         await pool.query(
-            `INSERT INTO social_accounts (user_id, platform, account_username, profile_url, access_token, is_active)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             ON CONFLICT (user_id, platform) DO UPDATE SET 
-                account_username = $3, 
-                profile_url = $4,
-                access_token = $5, 
-                is_active = $6,
-                connected_at = NOW()`,
+            `INSERT INTO social_accounts (user_id, platform, account_username, profile_url, access_token, is_active) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (user_id, platform) DO UPDATE SET account_username = $3, profile_url = $4, access_token = $5, is_active = $6, connected_at = NOW()`,
             [req.user.userId, platform, accountUsername, profileUrl, 'connected_' + Date.now(), true]
         );
         res.json({ success: true, message: `${platform} connected` });
@@ -579,49 +459,29 @@ app.post('/api/connect-account', authenticateToken, async (req, res) => {
     }
 });
 
-// ==================== AI CONTENT GENERATION ====================
+// ==================== AI CONTENT ====================
 app.post('/api/generate-content', authenticateToken, async (req, res) => {
     const { topic, platforms, tone = 'professional' } = req.body;
     
     const templates = {
-        professional: [
-            `Excited to share insights about ${topic}! 🚀 What are your thoughts? #${topic.replace(/\s+/g, '')}`,
-            `Just published new content about ${topic}. Check it out! 👆 #BusinessGrowth`,
-            `${topic} is changing the game. Here's what you need to know... 💡`
-        ],
-        casual: [
-            `Obsessed with ${topic} right now! 🔥 Who else?`,
-            `Quick tip about ${topic}... thank me later 😎`,
-            `Can we talk about ${topic}? 👀`
-        ],
-        promotional: [
-            `🚨 Limited time: Master ${topic} with our proven system! Link in bio 👆`,
-            `Stop struggling with ${topic}. We found the solution 🎯`,
-            `Double your ${topic} results in 30 days. Guaranteed. 💪`
-        ]
+        professional: [`Excited to share insights about ${topic}! 🚀 #${topic.replace(/\s+/g, '')}`, `Just published new content about ${topic}. Check it out! 👆`, `${topic} is changing the game. Here's what you need to know... 💡`],
+        casual: [`Obsessed with ${topic} right now! 🔥`, `Quick tip about ${topic}... 😎`, `Can we talk about ${topic}? 👀`],
+        promotional: [`🚨 Limited time: Master ${topic}! Link in bio 👆`, `Stop struggling with ${topic}. We found the solution 🎯`, `Double your ${topic} results in 30 days. 💪`]
     };
     
     const selected = templates[tone] || templates.professional;
     const content = selected[Math.floor(Math.random() * selected.length)];
     
     try {
-        await pool.query(
-            `INSERT INTO ai_generated_content (user_id, topic, content, platforms) VALUES ($1, $2, $3, $4)`,
-            [req.user.userId, topic, content, platforms]
-        );
+        await pool.query(`INSERT INTO ai_generated_content (user_id, topic, content, platforms) VALUES ($1, $2, $3, $4)`, [req.user.userId, topic, content, platforms]);
     } catch (e) {
         console.error(e);
     }
     
-    res.json({ 
-        success: true, 
-        content,
-        hashtags: [`#${topic.replace(/\s+/g, '')}`, '#Trending', '#Business'],
-        bestTimes: ['9:00 AM', '12:00 PM', '6:00 PM']
-    });
+    res.json({ success: true, content, hashtags: [`#${topic.replace(/\s+/g, '')}`, '#Trending'], bestTimes: ['9:00 AM', '12:00 PM', '6:00 PM'] });
 });
 
-// ==================== POST SCHEDULING & AUTO-PUBLISHING ====================
+// ==================== POST SCHEDULING ====================
 app.post('/api/schedule-post', authenticateToken, async (req, res) => {
     const { content, platforms, mediaUrls, scheduledTime } = req.body;
     
@@ -633,66 +493,41 @@ app.post('/api/schedule-post', authenticateToken, async (req, res) => {
         }
         
         const result = await pool.query(
-            `INSERT INTO scheduled_posts (user_id, content, platforms, media_urls, scheduled_time)
-             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            `INSERT INTO scheduled_posts (user_id, content, platforms, media_urls, scheduled_time) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
             [req.user.userId, content, platforms, mediaUrls || [], scheduledTime]
         );
         
-        await pool.query(
-            'UPDATE users SET posts_remaining = posts_remaining - 1, posts_used = posts_used + 1 WHERE id = $1',
-            [req.user.userId]
-        );
+        await pool.query('UPDATE users SET posts_remaining = posts_remaining - 1, posts_used = posts_used + 1 WHERE id = $1', [req.user.userId]);
         
-        res.json({ success: true, postId: result.rows[0].id, message: 'Post scheduled! Will auto-publish.' });
+        res.json({ success: true, postId: result.rows[0].id, message: 'Post scheduled!' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// ==================== AUTO-PUBLISH CRON JOB ====================
+// ==================== AUTO-PUBLISH CRON ====================
 cron.schedule('*/5 * * * *', async () => {
-    console.log('🤖 Auto-publishing posts...');
+    console.log('🤖 Auto-publishing...');
     
     try {
         const pending = await pool.query(`
-            SELECT sp.*, u.email, u.package 
-            FROM scheduled_posts sp
+            SELECT sp.*, u.email, u.package FROM scheduled_posts sp
             JOIN users u ON sp.user_id = u.id
-            WHERE sp.status = 'pending' 
-            AND sp.scheduled_time <= NOW()
-            AND u.is_active = true
-            AND u.status = 'active'
+            WHERE sp.status = 'pending' AND sp.scheduled_time <= NOW() AND u.is_active = true AND u.status = 'active'
         `);
         
         for (const post of pending.rows) {
             try {
-                const accounts = await pool.query(
-                    'SELECT platform FROM social_accounts WHERE user_id = $1 AND is_active = true',
-                    [post.user_id]
-                );
-                
+                const accounts = await pool.query('SELECT platform FROM social_accounts WHERE user_id = $1 AND is_active = true', [post.user_id]);
                 const connectedPlatforms = accounts.rows.map(a => a.platform);
                 const postPlatforms = post.platforms.filter(p => connectedPlatforms.includes(p));
                 
-                if (postPlatforms.length === 0) {
-                    console.log(`No connected accounts for post ${post.id}`);
-                    continue;
-                }
+                if (postPlatforms.length === 0) continue;
                 
-                console.log(`📤 Publishing to ${postPlatforms.join(', ')} for user ${post.user_id}`);
-                
-                await pool.query(
-                    'UPDATE scheduled_posts SET status = $1, published_at = NOW() WHERE id = $2',
-                    ['published', post.id]
-                );
-                
-                await pool.query(
-                    'UPDATE users SET posts_published = posts_published + 1 WHERE id = $1',
-                    [post.user_id]
-                );
+                await pool.query('UPDATE scheduled_posts SET status = $1, published_at = NOW() WHERE id = $2', ['published', post.id]);
+                await pool.query('UPDATE users SET posts_published = posts_published + 1 WHERE id = $1', [post.user_id]);
                 
                 console.log(`✅ Published post ${post.id}`);
-                
             } catch (err) {
                 await pool.query('UPDATE scheduled_posts SET status = $1 WHERE id = $2', ['failed', post.id]);
                 console.error(`❌ Failed post ${post.id}:`, err.message);
@@ -707,5 +542,129 @@ cron.schedule('*/5 * * * *', async () => {
 app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const stats = await pool.query(`
-            SELECT 
-                COUNT(*) as total_users,
+            SELECT COUNT(*) as total_users, COUNT(CASE WHEN package = 'starter' THEN 1 END) as starter_users, COUNT(CASE WHEN package = 'growth' THEN 1 END) as growth_users, COUNT(CASE WHEN package = 'professional' THEN 1 END) as professional_users, COUNT(CASE WHEN package = 'custom' THEN 1 END) as custom_users, SUM(posts_used) as total_posts, SUM(posts_published) as published_posts, COUNT(CASE WHEN last_login > NOW() - INTERVAL '7 days' THEN 1 END) as active_week FROM users WHERE role = 'customer'
+        `);
+        
+        const revenue = await pool.query(`SELECT COUNT(CASE WHEN paypal_order_id IS NOT NULL THEN 1 END) as paypal_revenue, COUNT(CASE WHEN stripe_customer_id IS NOT NULL THEN 1 END) as stripe_revenue FROM users WHERE role = 'customer'`);
+        
+        const activity = await pool.query('SELECT * FROM admin_logs ORDER BY created_at DESC LIMIT 20');
+        
+        res.json({ users: stats.rows[0], revenue: revenue.rows[0], recentActivity: activity.rows });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const users = await pool.query(`
+            SELECT u.*, COUNT(p.id) as total_posts, array_agg(DISTINCT sa.platform) as connected_platforms FROM users u LEFT JOIN scheduled_posts p ON u.id = p.user_id LEFT JOIN social_accounts sa ON u.id = sa.user_id AND sa.is_active = true WHERE u.role = 'customer' GROUP BY u.id ORDER BY u.created_at DESC
+        `);
+        res.json(users.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(`SELECT u.*, array_agg(DISTINCT sa.platform) as connected_platforms FROM users u LEFT JOIN social_accounts sa ON u.id = sa.user_id AND sa.is_active = true WHERE u.id = $1 AND u.role = 'customer' GROUP BY u.id`, [req.params.id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.patch('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, res) => {
+    const { businessName, contactName, phone, package: pkg, postsRemaining, status, forcePasswordChange, features } = req.body;
+
+    try {
+        const updates = [];
+        const values = [];
+        let paramCount = 1;
+
+        if (businessName !== undefined) { updates.push(`business_name = $${paramCount++}`); values.push(businessName); }
+        if (contactName !== undefined) { updates.push(`contact_name = $${paramCount++}`); values.push(contactName); }
+        if (phone !== undefined) { updates.push(`phone = $${paramCount++}`); values.push(phone); }
+        if (pkg !== undefined) { updates.push(`package = $${paramCount++}`); values.push(pkg); }
+        if (postsRemaining !== undefined) { updates.push(`posts_remaining = $${paramCount++}`); values.push(postsRemaining); }
+        if (status !== undefined) { updates.push(`status = $${paramCount++}`); updates.push(`is_active = $${paramCount++}`); values.push(status); values.push(status === 'active'); }
+        if (forcePasswordChange !== undefined) { updates.push(`force_password_change = $${paramCount++}`); values.push(forcePasswordChange); }
+        if (features !== undefined) { updates.push(`features = $${paramCount++}`); values.push(JSON.stringify(features)); }
+
+        values.push(req.params.id);
+
+        const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
+        const result = await pool.query(query, values);
+
+        await pool.query(`INSERT INTO admin_logs (action, user_id, details) VALUES ($1, $2, $3)`, ['user_updated', req.params.id, { updatedBy: req.user.userId, changes: Object.keys(req.body) }]);
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM scheduled_posts WHERE user_id = $1', [req.params.id]);
+        await pool.query('DELETE FROM social_accounts WHERE user_id = $1', [req.params.id]);
+        await pool.query('DELETE FROM ai_generated_content WHERE user_id = $1', [req.params.id]);
+        await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+        
+        await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, ['user_deleted', { deletedUserId: req.params.id, deletedBy: req.user.userId }]);
+
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/admin/reset-password', authenticateToken, requireAdmin, async (req, res) => {
+    const { userId } = req.body;
+    
+    try {
+        const tempPassword = Math.random().toString(36).slice(-10);
+        const hash = await bcrypt.hash(tempPassword, 10);
+        
+        await pool.query('UPDATE users SET password_hash = $1, force_password_change = true WHERE id = $2', [hash, userId]);
+        
+        await pool.query(`INSERT INTO admin_logs (action, user_id, details) VALUES ($1, $2, $3)`, ['password_reset', userId, { resetBy: req.user.userId }]);
+        
+        res.json({ success: true, tempPassword });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/admin/user-status', authenticateToken, requireAdmin, async (req, res) => {
+    const { userId, isActive } = req.body;
+    try {
+        await pool.query('UPDATE users SET is_active = $1, status = $2 WHERE id = $3', [isActive, isActive ? 'active' : 'suspended', userId]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/admin/add-posts', authenticateToken, requireAdmin, async (req, res) => {
+    const { userId, postsToAdd } = req.body;
+    try {
+        await pool.query('UPDATE users SET posts_remaining = posts_remaining + $1 WHERE id = $2', [postsToAdd, userId]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==================== START ====================
+const PORT = process.env.PORT || 3000;
+initDatabase().then(() => {
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+});
+
