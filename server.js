@@ -29,7 +29,8 @@ const paypalClient = new paypal.core.PayPalHttpClient(paypalEnvironment);
 
 // Middleware
 app.use(cors({ origin: '*' }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // JWT middleware
 const authenticateToken = (req, res, next) => {
@@ -57,8 +58,7 @@ async function runSchemaUpdates() {
         
         const checkColumn = async (table, column) => {
             const result = await client.query(`
-                SELECT column_name 
-                FROM information_schema.columns 
+                SELECT column_name FROM information_schema.columns 
                 WHERE table_name = $1 AND column_name = $2
             `, [table, column]);
             return result.rows.length > 0;
@@ -78,7 +78,8 @@ async function runSchemaUpdates() {
             { name: 'address_state', type: 'VARCHAR(100)' },
             { name: 'address_zip', type: 'VARCHAR(20)' },
             { name: 'address_country', type: 'VARCHAR(100) DEFAULT \'US\'' },
-            { name: 'features', type: 'JSONB DEFAULT \'{}\'' }
+            { name: 'features', type: 'JSONB DEFAULT \'{}\'' },
+            { name: 'language', type: 'VARCHAR(10) DEFAULT \'en\'' }
         ];
         
         for (const col of columnsToAdd) {
@@ -89,13 +90,37 @@ async function runSchemaUpdates() {
             }
         }
         
+        // Create messages table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY,
+                sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                recipient_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                subject VARCHAR(255),
+                content TEXT NOT NULL,
+                is_read BOOLEAN DEFAULT false,
+                parent_id INTEGER REFERENCES messages(id) ON DELETE SET NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
+        // Create media uploads table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS media_uploads (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                filename VARCHAR(255),
+                file_url TEXT,
+                file_type VARCHAR(50),
+                file_size INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
         try {
             await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check`);
             await client.query(`ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('pending', 'active', 'suspended', 'cancelled'))`);
-            console.log('✅ Updated status constraint');
-        } catch (e) {
-            console.log('⚠️ Status constraint may already exist');
-        }
+        } catch (e) {}
         
         console.log('✅ Schema updates complete');
     } catch (error) {
@@ -123,6 +148,7 @@ async function initDatabase() {
                 posts_used INTEGER DEFAULT 0,
                 posts_published INTEGER DEFAULT 0,
                 platforms TEXT[],
+                platform_limit INTEGER DEFAULT 3,
                 is_active BOOLEAN DEFAULT true,
                 status VARCHAR(20) DEFAULT 'pending',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -143,7 +169,8 @@ async function initDatabase() {
                 address_state VARCHAR(100),
                 address_zip VARCHAR(20),
                 address_country VARCHAR(100) DEFAULT 'US',
-                features JSONB DEFAULT '{}'
+                features JSONB DEFAULT '{}',
+                language VARCHAR(10) DEFAULT 'en'
             );
             
             CREATE TABLE IF NOT EXISTS scheduled_posts (
@@ -152,6 +179,7 @@ async function initDatabase() {
                 content TEXT NOT NULL,
                 platforms TEXT[] NOT NULL,
                 media_urls TEXT[],
+                media_ids INTEGER[],
                 scheduled_time TIMESTAMP NOT NULL,
                 status VARCHAR(20) DEFAULT 'pending',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -167,8 +195,11 @@ async function initDatabase() {
                 profile_url TEXT,
                 access_token TEXT,
                 refresh_token TEXT,
+                page_id VARCHAR(255),
+                page_name VARCHAR(255),
                 is_active BOOLEAN DEFAULT true,
-                connected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                connected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, platform)
             );
             
             CREATE TABLE IF NOT EXISTS ai_generated_content (
@@ -195,7 +226,7 @@ async function initDatabase() {
                 price_monthly INTEGER NOT NULL,
                 price_quarterly INTEGER,
                 posts_limit INTEGER DEFAULT 0,
-                platforms_limit INTEGER DEFAULT 0,
+                platforms_limit INTEGER DEFAULT 3,
                 features JSONB DEFAULT '{}',
                 is_active BOOLEAN DEFAULT true,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -206,8 +237,8 @@ async function initDatabase() {
         if (admin.rows.length === 0) {
             const hash = await bcrypt.hash('123456', 10);
             await client.query(
-                `INSERT INTO users (email, password_hash, role, force_password_change, is_active, status, business_name, contact_name, phone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                ['cmoran@reelbridge.site', hash, 'admin', true, true, 'active', 'ReelBridge Admin', 'Admin User', '506-271-7605']
+                `INSERT INTO users (email, password_hash, role, force_password_change, is_active, status, business_name, contact_name, phone, platform_limit) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                ['cmoran@reelbridge.site', hash, 'admin', true, true, 'active', 'ReelBridge Admin', 'Admin User', '506-271-7605', 99]
             );
             console.log('✅ Admin created');
         }
@@ -234,7 +265,8 @@ async function initDatabase() {
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
-        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        // Case-insensitive email lookup
+        const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
         const user = result.rows[0];
         
         if (!user || !await bcrypt.compare(password, user.password_hash)) {
@@ -252,7 +284,7 @@ app.post('/api/login', async (req, res) => {
         await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
         
         const token = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role, package: user.package, forcePasswordChange: user.force_password_change },
+            { userId: user.id, email: user.email, role: user.role, package: user.package, forcePasswordChange: user.force_password_change, language: user.language },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -267,8 +299,10 @@ app.post('/api/login', async (req, res) => {
                 postsRemaining: user.posts_remaining,
                 postsUsed: user.posts_used,
                 platforms: user.platforms,
+                platformLimit: user.platform_limit,
                 forcePasswordChange: user.force_password_change,
-                features: user.features
+                features: user.features,
+                language: user.language
             }
         });
     } catch (error) {
@@ -287,12 +321,22 @@ app.post('/api/change-password', authenticateToken, async (req, res) => {
     }
 });
 
+app.post('/api/update-language', authenticateToken, async (req, res) => {
+    const { language } = req.body;
+    try {
+        await pool.query('UPDATE users SET language = $1 WHERE id = $2', [language, req.user.userId]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ==================== USER REGISTRATION ====================
 app.post('/api/register', async (req, res) => {
-    const { email, password, businessName, contactName, phone, website, industry, address, taxId, referral, marketingConsent } = req.body;
+    const { email, password, businessName, contactName, phone, website, industry, address, taxId, referral, marketingConsent, language } = req.body;
 
     try {
-        const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+        const existing = await pool.query('SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [email]);
         if (existing.rows.length > 0) {
             return res.status(400).json({ error: 'Email already registered' });
         }
@@ -300,8 +344,8 @@ app.post('/api/register', async (req, res) => {
         const hash = await bcrypt.hash(password, 10);
         
         const result = await pool.query(
-            `INSERT INTO users (email, password_hash, role, package, status, business_name, contact_name, phone, website, industry, address_street, address_city, address_state, address_zip, address_country, tax_id, referral_source, marketing_consent, posts_remaining, posts_used, posts_published, features, is_active, force_password_change, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW()) RETURNING id`,
-            [email, hash, 'customer', 'starter', 'pending', businessName, contactName, phone, website, industry, address.street, address.city, address.state, address.zip, address.country, taxId, referral, marketingConsent, 0, 0, 0, JSON.stringify({ basic_dashboard: true }), false, false]
+            `INSERT INTO users (email, password_hash, role, package, status, business_name, contact_name, phone, website, industry, address_street, address_city, address_state, address_zip, address_country, tax_id, referral_source, marketing_consent, posts_remaining, posts_used, posts_published, features, is_active, force_password_change, language, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, NOW()) RETURNING id`,
+            [email.toLowerCase(), hash, 'customer', 'starter', 'pending', businessName, contactName, phone, website, industry, address.street, address.city, address.state, address.zip, address.country, taxId, referral, marketingConsent, 0, 0, 0, JSON.stringify({ basic_dashboard: true }), false, false, language || 'en']
         );
 
         await pool.query(`INSERT INTO admin_logs (action, user_id, details) VALUES ($1, $2, $3)`, ['user_registered', result.rows[0].id, { email, businessName, industry }]);
@@ -327,13 +371,14 @@ app.get('/api/packages', async (req, res) => {
 app.post('/api/create-stripe-intent', async (req, res) => {
     const { package, amount, email, billingCycle, features } = req.body;
     const postsMap = { 'starter': 30, 'growth': 75, 'professional': 999999, 'custom': features?.posts || 50 };
+    const platformMap = { 'starter': 3, 'growth': 6, 'professional': 10, 'custom': features?.platforms || 3 };
     
     try {
         const intent = await stripe.paymentIntents.create({
             amount: amount * 100,
             currency: 'usd',
             receipt_email: email,
-            metadata: { package, billingCycle, customer_email: email, posts_limit: postsMap[package] || 50 }
+            metadata: { package, billingCycle, customer_email: email, posts_limit: postsMap[package] || 50, platform_limit: platformMap[package] || 3 }
         });
         res.json({ clientSecret: intent.client_secret });
     } catch (error) {
@@ -376,10 +421,11 @@ app.post('/api/capture-paypal-order', async (req, res) => {
             
             const hash = await bcrypt.hash(password, 10);
             const postsMap = { 'starter': 30, 'growth': 75, 'professional': 999999, 'custom': features?.posts || 50 };
+            const platformMap = { 'starter': 3, 'growth': 6, 'professional': 10, 'custom': features?.platforms || 3 };
             
             const result = await pool.query(
-                `INSERT INTO users (email, password_hash, package, billing_cycle, posts_remaining, platforms, paypal_order_id, status, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-                [email, hash, package, billingCycle, postsMap[package] || 50, getPlatforms(package, features), orderId, 'active', true]
+                `INSERT INTO users (email, password_hash, package, billing_cycle, posts_remaining, platform_limit, platforms, paypal_order_id, status, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+                [email.toLowerCase(), hash, package, billingCycle, postsMap[package] || 50, platformMap[package] || 3, getPlatforms(package, features), orderId, 'active', true]
             );
             
             await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, ['purchase', { email, package, amount: capture.result.purchase_units[0].payments.captures[0].amount.value, method: 'paypal' }]);
@@ -404,15 +450,15 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
     
     if (event.type === 'payment_intent.succeeded') {
         const payment = event.data.object;
-        const { package, billingCycle, customer_email, posts_limit } = payment.metadata;
+        const { package, billingCycle, customer_email, posts_limit, platform_limit } = payment.metadata;
         
         const tempPass = Math.random().toString(36).slice(-8);
         const hash = await bcrypt.hash(tempPass, 10);
         
         try {
             await pool.query(
-                `INSERT INTO users (email, password_hash, package, billing_cycle, posts_remaining, platforms, stripe_customer_id, status, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                [customer_email, hash, package, billingCycle, parseInt(posts_limit), getPlatforms(package), payment.customer, 'active', true]
+                `INSERT INTO users (email, password_hash, package, billing_cycle, posts_remaining, platform_limit, platforms, stripe_customer_id, status, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                [customer_email.toLowerCase(), hash, package, billingCycle, parseInt(posts_limit), parseInt(platform_limit) || 3, getPlatforms(package), payment.customer, 'active', true]
             );
             
             await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, ['purchase', { email: customer_email, package, method: 'stripe' }]);
@@ -427,8 +473,8 @@ function getPlatforms(pkg, features = null) {
     const map = {
         'starter': ['instagram', 'facebook', 'twitter'],
         'growth': ['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube'],
-        'professional': ['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube', 'pinterest', 'threads'],
-        'custom': features?.platforms ? ['instagram', 'facebook', 'twitter'].slice(0, features.platforms) : ['instagram', 'facebook', 'twitter']
+        'professional': ['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube', 'pinterest', 'threads', 'snapchat', 'twitch'],
+        'custom': features?.platforms ? ['instagram', 'facebook', 'twitter', 'tiktok', 'linkedin', 'youtube', 'pinterest', 'threads', 'snapchat', 'twitch'].slice(0, features.platforms) : ['instagram', 'facebook', 'twitter']
     };
     return map[pkg] || map['starter'];
 }
@@ -436,24 +482,144 @@ function getPlatforms(pkg, features = null) {
 // ==================== USER DASHBOARD ====================
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
-        const user = await pool.query(`SELECT id, email, package, posts_remaining, posts_used, posts_published, platforms, created_at, business_name, features, status FROM users WHERE id = $1`, [req.user.userId]);
+        const user = await pool.query(`SELECT id, email, package, posts_remaining, posts_used, posts_published, platforms, platform_limit, created_at, business_name, contact_name, phone, features, status, language FROM users WHERE id = $1`, [req.user.userId]);
         const posts = await pool.query('SELECT * FROM scheduled_posts WHERE user_id = $1 ORDER BY scheduled_time DESC', [req.user.userId]);
         const accounts = await pool.query('SELECT * FROM social_accounts WHERE user_id = $1 AND is_active = true', [req.user.userId]);
+        const unreadMessages = await pool.query('SELECT COUNT(*) FROM messages WHERE recipient_id = $1 AND is_read = false', [req.user.userId]);
         
-        res.json({ profile: user.rows[0], posts: posts.rows, accounts: accounts.rows });
+        res.json({ 
+            profile: user.rows[0], 
+            posts: posts.rows, 
+            accounts: accounts.rows,
+            unreadMessages: parseInt(unreadMessages.rows[0].count)
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-app.post('/api/connect-account', authenticateToken, async (req, res) => {
-    const { platform, accountUsername, profileUrl } = req.body;
+// ==================== SOCIAL MEDIA OAUTH ====================
+app.get('/api/oauth/:platform/url', authenticateToken, async (req, res) => {
+    const { platform } = req.params;
+    const userId = req.user.userId;
+    
+    const oauthUrls = {
+        instagram: `https://api.instagram.com/oauth/authorize?client_id=${process.env.INSTAGRAM_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/instagram&scope=user_profile,user_media&response_type=code&state=${userId}`,
+        facebook: `https://www.facebook.com/v18.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/facebook&scope=pages_manage_posts,pages_read_engagement&state=${userId}`,
+        twitter: `https://twitter.com/i/oauth2/authorize?client_id=${process.env.TWITTER_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/twitter&scope=tweet.read tweet.write users.read&response_type=code&state=${userId}&code_challenge=challenge&code_challenge_method=plain`,
+        linkedin: `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${process.env.LINKEDIN_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/linkedin&scope=r_liteprofile r_basicprofile w_member_social&state=${userId}`,
+        youtube: `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/youtube&scope=https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly&response_type=code&state=${userId}&access_type=offline`,
+        tiktok: `https://www.tiktok.com/auth/authorize?client_key=${process.env.TIKTOK_CLIENT_KEY}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/tiktok&scope=user.info.basic,video.upload&response_type=code&state=${userId}`,
+        pinterest: `https://www.pinterest.com/oauth/?client_id=${process.env.PINTEREST_APP_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/pinterest&scope=boards:read,pins:read,pins:write&response_type=code&state=${userId}`,
+        threads: `https://threads.net/oauth/authorize?client_id=${process.env.THREADS_APP_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/threads&scope=threads_basic,threads_content_publish&response_type=code&state=${userId}`,
+        snapchat: `https://accounts.snapchat.com/accounts/oauth2/authorize?client_id=${process.env.SNAPCHAT_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/snapchat&scope=snapchat-marketing-api&response_type=code&state=${userId}`,
+        twitch: `https://id.twitch.tv/oauth2/authorize?client_id=${process.env.TWITCH_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/twitch&scope=channel:manage:broadcast user:read:email&response_type=code&state=${userId}`
+    };
+    
+    res.json({ url: oauthUrls[platform] || null });
+});
+
+app.post('/api/oauth/:platform/callback', async (req, res) => {
+    const { platform } = req.params;
+    const { code, state: userId } = req.body;
+    
     try {
+        // Exchange code for access token (implementation varies by platform)
+        const tokenResponse = await exchangeCodeForToken(platform, code);
+        
+        // Get account info
+        const accountInfo = await getAccountInfo(platform, tokenResponse.access_token);
+        
+        // Store in database
         await pool.query(
-            `INSERT INTO social_accounts (user_id, platform, account_username, profile_url, access_token, is_active) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (user_id, platform) DO UPDATE SET account_username = $3, profile_url = $4, access_token = $5, is_active = $6, connected_at = NOW()`,
-            [req.user.userId, platform, accountUsername, profileUrl, 'connected_' + Date.now(), true]
+            `INSERT INTO social_accounts (user_id, platform, account_username, profile_url, access_token, refresh_token, page_id, page_name, is_active) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             ON CONFLICT (user_id, platform) DO UPDATE SET 
+                account_username = $3, profile_url = $4, access_token = $5, refresh_token = $6, 
+                page_id = $7, page_name = $8, is_active = true, connected_at = NOW()`,
+            [userId, platform, accountInfo.username, accountInfo.profileUrl, tokenResponse.access_token, tokenResponse.refresh_token, accountInfo.pageId, accountInfo.pageName, true]
+        );
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('OAuth callback error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+async function exchangeCodeForToken(platform, code) {
+    // Platform-specific token exchange implementations
+    // This is a simplified version - each platform has different requirements
+    const tokenUrls = {
+        instagram: 'https://api.instagram.com/oauth/access_token',
+        facebook: 'https://graph.facebook.com/v18.0/oauth/access_token',
+        twitter: 'https://api.twitter.com/2/oauth2/token',
+        linkedin: 'https://www.linkedin.com/oauth/v2/accessToken',
+        youtube: 'https://oauth2.googleapis.com/token',
+        tiktok: 'https://open-api.tiktok.com/oauth/access_token/',
+        pinterest: 'https://api.pinterest.com/v5/oauth/token',
+        threads: 'https://graph.threads.net/oauth/access_token',
+        snapchat: 'https://accounts.snapchat.com/accounts/oauth2/token',
+        twitch: 'https://id.twitch.tv/oauth2/token'
+    };
+    
+    // Implementation would use axios to make the actual token exchange
+    // Return mock for now - implement per platform as needed
+    return { access_token: 'mock_token_' + Date.now(), refresh_token: 'mock_refresh_' + Date.now() };
+}
+
+async function getAccountInfo(platform, accessToken) {
+    // Platform-specific API calls to get account info
+    return { username: 'user_' + Date.now(), profileUrl: `https://${platform}.com/user`, pageId: 'page_' + Date.now(), pageName: 'My Page' };
+}
+
+app.post('/api/connect-account', authenticateToken, async (req, res) => {
+    const { platform, accountUsername, profileUrl, pageId, pageName } = req.body;
+    try {
+        // Check platform limit
+        const user = await pool.query('SELECT platform_limit, (SELECT COUNT(*) FROM social_accounts WHERE user_id = $1 AND is_active = true) as connected_count FROM users WHERE id = $1', [req.user.userId]);
+        
+        if (parseInt(user.rows[0].connected_count) >= user.rows[0].platform_limit) {
+            return res.status(403).json({ error: 'Platform limit reached. Upgrade your package to connect more accounts.' });
+        }
+        
+        await pool.query(
+            `INSERT INTO social_accounts (user_id, platform, account_username, profile_url, page_id, page_name, access_token, is_active) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (user_id, platform) DO UPDATE SET 
+                account_username = $3, profile_url = $4, page_id = $5, page_name = $6, access_token = $7, is_active = true, connected_at = NOW()`,
+            [req.user.userId, platform, accountUsername, profileUrl, pageId, pageName, 'connected_' + Date.now(), true]
         );
         res.json({ success: true, message: `${platform} connected` });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==================== MEDIA UPLOADS ====================
+app.post('/api/upload-media', authenticateToken, async (req, res) => {
+    const { filename, fileData, fileType } = req.body;
+    
+    try {
+        // In production, upload to S3 or similar storage
+        // For now, store base64 or save to filesystem
+        const fileUrl = `/uploads/${Date.now()}_${filename}`;
+        
+        const result = await pool.query(
+            `INSERT INTO media_uploads (user_id, filename, file_url, file_type, file_size) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            [req.user.userId, filename, fileUrl, fileType, Buffer.byteLength(fileData, 'base64')]
+        );
+        
+        res.json({ success: true, mediaId: result.rows[0].id, fileUrl });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/user/media', authenticateToken, async (req, res) => {
+    try {
+        const media = await pool.query('SELECT * FROM media_uploads WHERE user_id = $1 ORDER BY created_at DESC', [req.user.userId]);
+        res.json(media.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -483,7 +649,7 @@ app.post('/api/generate-content', authenticateToken, async (req, res) => {
 
 // ==================== POST SCHEDULING ====================
 app.post('/api/schedule-post', authenticateToken, async (req, res) => {
-    const { content, platforms, mediaUrls, scheduledTime } = req.body;
+    const { content, platforms, mediaUrls, mediaIds, scheduledTime } = req.body;
     
     try {
         const user = await pool.query('SELECT posts_remaining FROM users WHERE id = $1', [req.user.userId]);
@@ -493,13 +659,76 @@ app.post('/api/schedule-post', authenticateToken, async (req, res) => {
         }
         
         const result = await pool.query(
-            `INSERT INTO scheduled_posts (user_id, content, platforms, media_urls, scheduled_time) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-            [req.user.userId, content, platforms, mediaUrls || [], scheduledTime]
+            `INSERT INTO scheduled_posts (user_id, content, platforms, media_urls, media_ids, scheduled_time) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+            [req.user.userId, content, platforms, mediaUrls || [], mediaIds || [], scheduledTime]
         );
         
         await pool.query('UPDATE users SET posts_remaining = posts_remaining - 1, posts_used = posts_used + 1 WHERE id = $1', [req.user.userId]);
         
         res.json({ success: true, postId: result.rows[0].id, message: 'Post scheduled!' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==================== MESSAGING SYSTEM ====================
+app.get('/api/messages', authenticateToken, async (req, res) => {
+    try {
+        const messages = await pool.query(`
+            SELECT m.*, 
+                sender.email as sender_email, sender.business_name as sender_business,
+                recipient.email as recipient_email, recipient.business_name as recipient_business
+            FROM messages m
+            JOIN users sender ON m.sender_id = sender.id
+            JOIN users recipient ON m.recipient_id = recipient.id
+            WHERE m.sender_id = $1 OR m.recipient_id = $1
+            ORDER BY m.created_at DESC
+        `, [req.user.userId]);
+        
+        res.json(messages.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/messages/conversation/:userId', authenticateToken, async (req, res) => {
+    try {
+        const messages = await pool.query(`
+            SELECT m.*, sender.email as sender_email, sender.role as sender_role
+            FROM messages m
+            JOIN users sender ON m.sender_id = sender.id
+            WHERE (m.sender_id = $1 AND m.recipient_id = $2) OR (m.sender_id = $2 AND m.recipient_id = $1)
+            ORDER BY m.created_at ASC
+        `, [req.user.userId, req.params.userId]);
+        
+        // Mark as read
+        await pool.query('UPDATE messages SET is_read = true WHERE recipient_id = $1 AND sender_id = $2', [req.user.userId, req.params.userId]);
+        
+        res.json(messages.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/messages/send', authenticateToken, async (req, res) => {
+    const { recipientId, subject, content, parentId } = req.body;
+    
+    try {
+        const result = await pool.query(
+            `INSERT INTO messages (sender_id, recipient_id, subject, content, parent_id) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [req.user.userId, recipientId, subject, content, parentId || null]
+        );
+        
+        res.json({ success: true, message: result.rows[0] });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/admin/clients', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const clients = await pool.query(`SELECT id, email, business_name, contact_name FROM users WHERE role = 'customer' ORDER BY business_name`);
+        res.json(clients.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -518,11 +747,13 @@ cron.schedule('*/5 * * * *', async () => {
         
         for (const post of pending.rows) {
             try {
-                const accounts = await pool.query('SELECT platform FROM social_accounts WHERE user_id = $1 AND is_active = true', [post.user_id]);
-                const connectedPlatforms = accounts.rows.map(a => a.platform);
-                const postPlatforms = post.platforms.filter(p => connectedPlatforms.includes(p));
+                const accounts = await pool.query('SELECT platform, access_token, page_id FROM social_accounts WHERE user_id = $1 AND is_active = true', [post.user_id]);
                 
-                if (postPlatforms.length === 0) continue;
+                for (const account of accounts.rows) {
+                    if (post.platforms.includes(account.platform)) {
+                        await publishToPlatform(account.platform, account.access_token, account.page_id, post.content, post.media_urls);
+                    }
+                }
                 
                 await pool.query('UPDATE scheduled_posts SET status = $1, published_at = NOW() WHERE id = $2', ['published', post.id]);
                 await pool.query('UPDATE users SET posts_published = posts_published + 1 WHERE id = $1', [post.user_id]);
@@ -537,6 +768,12 @@ cron.schedule('*/5 * * * *', async () => {
         console.error('Cron error:', error);
     }
 });
+
+async function publishToPlatform(platform, accessToken, pageId, content, mediaUrls) {
+    // Platform-specific publishing implementations
+    console.log(`Publishing to ${platform}...`);
+    // Implementation would use platform APIs (Facebook Graph API, Twitter API, etc.)
+}
 
 // ==================== ADMIN ROUTES ====================
 app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) => {
@@ -558,7 +795,14 @@ app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) =>
 app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const users = await pool.query(`
-            SELECT u.*, COUNT(p.id) as total_posts, array_agg(DISTINCT sa.platform) as connected_platforms FROM users u LEFT JOIN scheduled_posts p ON u.id = p.user_id LEFT JOIN social_accounts sa ON u.id = sa.user_id AND sa.is_active = true WHERE u.role = 'customer' GROUP BY u.id ORDER BY u.created_at DESC
+            SELECT u.*, COUNT(p.id) as total_posts, array_agg(DISTINCT sa.platform) as connected_platforms,
+                (SELECT COUNT(*) FROM messages WHERE recipient_id = u.id AND is_read = false) as unread_messages
+            FROM users u 
+            LEFT JOIN scheduled_posts p ON u.id = p.user_id 
+            LEFT JOIN social_accounts sa ON u.id = sa.user_id AND sa.is_active = true 
+            WHERE u.role = 'customer' 
+            GROUP BY u.id 
+            ORDER BY u.created_at DESC
         `);
         res.json(users.rows);
     } catch (error) {
@@ -568,20 +812,39 @@ app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) =>
 
 app.get('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const result = await pool.query(`SELECT u.*, array_agg(DISTINCT sa.platform) as connected_platforms FROM users u LEFT JOIN social_accounts sa ON u.id = sa.user_id AND sa.is_active = true WHERE u.id = $1 AND u.role = 'customer' GROUP BY u.id`, [req.params.id]);
+        const result = await pool.query(`
+            SELECT u.*, array_agg(DISTINCT sa.platform) as connected_platforms,
+                array_agg(DISTINCT jsonb_build_object('id', sa.id, 'platform', sa.platform, 'username', sa.account_username, 'page_name', sa.page_name)) as accounts
+            FROM users u 
+            LEFT JOIN social_accounts sa ON u.id = sa.user_id AND sa.is_active = true 
+            WHERE u.id = $1 AND u.role = 'customer' 
+            GROUP BY u.id
+        `, [req.params.id]);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        res.json(result.rows[0]);
+        // Get user's posts
+        const posts = await pool.query('SELECT * FROM scheduled_posts WHERE user_id = $1 ORDER BY scheduled_time DESC LIMIT 10', [req.params.id]);
+        
+        // Get user's messages
+        const messages = await pool.query(`
+            SELECT m.*, sender.email as sender_email
+            FROM messages m
+            JOIN users sender ON m.sender_id = sender.id
+            WHERE m.sender_id = $1 OR m.recipient_id = $1
+            ORDER BY m.created_at DESC LIMIT 20
+        `, [req.params.id]);
+        
+        res.json({ ...result.rows[0], posts: posts.rows, messages: messages.rows });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
 app.patch('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, res) => {
-    const { businessName, contactName, phone, package: pkg, postsRemaining, status, forcePasswordChange, features } = req.body;
+    const { businessName, contactName, phone, email, package: pkg, postsRemaining, platformLimit, status, forcePasswordChange, features, notes } = req.body;
 
     try {
         const updates = [];
@@ -591,11 +854,14 @@ app.patch('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, re
         if (businessName !== undefined) { updates.push(`business_name = $${paramCount++}`); values.push(businessName); }
         if (contactName !== undefined) { updates.push(`contact_name = $${paramCount++}`); values.push(contactName); }
         if (phone !== undefined) { updates.push(`phone = $${paramCount++}`); values.push(phone); }
+        if (email !== undefined) { updates.push(`email = $${paramCount++}`); values.push(email.toLowerCase()); }
         if (pkg !== undefined) { updates.push(`package = $${paramCount++}`); values.push(pkg); }
         if (postsRemaining !== undefined) { updates.push(`posts_remaining = $${paramCount++}`); values.push(postsRemaining); }
+        if (platformLimit !== undefined) { updates.push(`platform_limit = $${paramCount++}`); values.push(platformLimit); }
         if (status !== undefined) { updates.push(`status = $${paramCount++}`); updates.push(`is_active = $${paramCount++}`); values.push(status); values.push(status === 'active'); }
         if (forcePasswordChange !== undefined) { updates.push(`force_password_change = $${paramCount++}`); values.push(forcePasswordChange); }
         if (features !== undefined) { updates.push(`features = $${paramCount++}`); values.push(JSON.stringify(features)); }
+        if (notes !== undefined) { updates.push(`admin_notes = $${paramCount++}`); values.push(notes); }
 
         values.push(req.params.id);
 
@@ -615,6 +881,8 @@ app.delete('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, r
         await pool.query('DELETE FROM scheduled_posts WHERE user_id = $1', [req.params.id]);
         await pool.query('DELETE FROM social_accounts WHERE user_id = $1', [req.params.id]);
         await pool.query('DELETE FROM ai_generated_content WHERE user_id = $1', [req.params.id]);
+        await pool.query('DELETE FROM messages WHERE sender_id = $1 OR recipient_id = $1', [req.params.id]);
+        await pool.query('DELETE FROM media_uploads WHERE user_id = $1', [req.params.id]);
         await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
         
         await pool.query(`INSERT INTO admin_logs (action, details) VALUES ($1, $2)`, ['user_deleted', { deletedUserId: req.params.id, deletedBy: req.user.userId }]);
