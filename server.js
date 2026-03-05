@@ -1643,4 +1643,3 @@ const PORT = process.env.PORT || 3000;
 initDatabase().then(() => {
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 });
-⁵
