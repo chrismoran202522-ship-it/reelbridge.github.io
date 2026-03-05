@@ -834,14 +834,14 @@
             font-size: 12px;
         }
         
-        /* OAuth Popup */
+        /* OAuth Popup - FIXED FOR 16 PLATFORMS */
         .oauth-window {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
             max-height: 90vh;
             background: white;
             border-radius: 20px;
@@ -865,15 +865,24 @@
             padding: 30px;
         }
         
+        /* FIXED: 4x4 grid for 16 platforms */
         .oauth-platforms {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 15px;
             margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 500px) {
+            .oauth-platforms {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
         
         .oauth-platform-btn {
-            padding: 20px;
+            padding: 15px 10px;
             border: 2px solid #e0e0e0;
             border-radius: 12px;
             text-align: center;
@@ -889,9 +898,14 @@
         }
         
         .oauth-platform-btn .icon {
-            font-size: 32px;
+            font-size: 28px;
             display: block;
             margin-bottom: 8px;
+        }
+        
+        .oauth-platform-btn div {
+            font-size: 12px;
+            font-weight: 500;
         }
         
         .oauth-status {
@@ -950,7 +964,6 @@
             cursor: pointer;
             margin-right: 4px;
         }
-        
         
         .btn-suspend { background: var(--warning); color: white; }
         .btn-activate { background: var(--success); color: white; }
@@ -1052,9 +1065,103 @@
             color: var(--accent);
         }
         
-        /* ==================== NEW ENHANCED STYLES ==================== */
+        /* ==================== ENHANCED PLATFORM TOGGLE STYLES ==================== */
+        
+        /* Platform Toggle for Scheduling - NEW */
+        .platform-toggle-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .platform-toggle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .platform-toggle-item:hover {
+            background: #f0f7ff;
+        }
+        
+        .platform-toggle-item.selected {
+            border-color: var(--success);
+            background: #f0fff4;
+        }
+        
+        .platform-toggle-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f0f0f0;
+        }
+        
+        .platform-toggle-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .platform-toggle-icon {
+            font-size: 24px;
+            width: 32px;
+            text-align: center;
+        }
+        
+        .platform-toggle-name {
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+        
+        .platform-toggle-status {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .platform-toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #ccc;
+            border-radius: 13px;
+            transition: background 0.3s;
+            flex-shrink: 0;
+        }
+        
+        .platform-toggle-switch.active {
+            background: var(--success);
+        }
+        
+        .platform-toggle-switch::after {
+            content: "";
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        
+        .platform-toggle-switch.active::after {
+            transform: translateX(24px);
+        }
         
         /* Post Type Tabs */
+        .post-type-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        
         .post-type-tab {
             padding: 10px 20px;
             border: 2px solid #e0e0e0;
@@ -1071,33 +1178,6 @@
             background: var(--accent);
             color: white;
             border-color: var(--accent);
-        }
-        
-        /* Platform Toggle */
-        .platform-toggle {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border: 2px solid transparent;
-            transition: all 0.3s;
-        }
-        
-        .platform-toggle.selected {
-            border-color: var(--success);
-            background: #f0fff4;
-        }
-        
-        .platform-toggle .platform-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .platform-toggle .platform-icon {
-            font-size: 24px;
         }
         
         /* View Buttons */
@@ -1117,16 +1197,56 @@
         }
         
         /* Calendar Styles */
+        .calendar-container {
+            margin-top: 16px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .calendar-nav-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+        
+        .calendar-nav-btn:hover {
+            background: #f0f7ff;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        
+        .calendar-day-header {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            padding: 8px;
+        }
+        
         .calendar-day {
             aspect-ratio: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             background: #f8f9fa;
             border-radius: 8px;
             font-size: 12px;
+            padding: 4px;
             position: relative;
+            min-height: 60px;
         }
         
         .calendar-day.has-posts {
@@ -1138,12 +1258,31 @@
             border: 2px solid var(--accent);
         }
         
-        .calendar-day .post-indicator {
+        .calendar-day-number {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .calendar-day-posts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            justify-content: center;
+        }
+        
+        .calendar-post-dot {
             width: 6px;
             height: 6px;
             background: var(--accent);
             border-radius: 50%;
-            margin-top: 2px;
+        }
+        
+        .calendar-post-dot.recurring {
+            background: var(--purple);
+        }
+        
+        .calendar-post-dot.recalled {
+            background: var(--danger);
         }
         
         /* Post Item */
@@ -1170,10 +1309,35 @@
             background: #f5f5f5;
         }
         
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        
+        .post-content {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .post-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+        }
+        
         .post-platforms {
             display: flex;
             gap: 6px;
-            margin-top: 8px;
             flex-wrap: wrap;
         }
         
@@ -1194,12 +1358,14 @@
             background: #f8d7da;
             color: #721c24;
             text-decoration: line-through;
+            opacity: 0.6;
         }
         
         .post-actions {
             display: flex;
             gap: 8px;
             margin-top: 12px;
+            flex-wrap: wrap;
         }
         
         .post-action-btn {
@@ -1208,6 +1374,11 @@
             border-radius: 6px;
             font-size: 12px;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .post-action-btn:hover {
+            transform: translateY(-1px);
         }
         
         .post-action-btn.recall {
@@ -1223,6 +1394,12 @@
         .post-action-btn.delete {
             background: var(--danger);
             color: white;
+        }
+        
+        .post-action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
         
         /* AI Generator Preview */
@@ -1241,6 +1418,8 @@
             cursor: pointer;
             border: 2px solid transparent;
             transition: all 0.2s;
+            font-size: 14px;
+            line-height: 1.5;
         }
         
         .ai-variation:hover {
@@ -1250,6 +1429,57 @@
         .ai-variation.selected {
             border-color: var(--accent);
             background: #f0f7ff;
+        }
+        
+        .ai-variation-number {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+        
+        /* Recurrence Options */
+        .recurrence-options {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 12px;
+        }
+        
+        /* Loading States */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+        
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
     </style>
 </head>
@@ -1293,7 +1523,7 @@
                     <div class="demo-step">
                         <div class="demo-step-number">1</div>
                         <h3 data-i18n="step1Title">Connect Your Accounts</h3>
-                        <p data-i18n="step1Text">Link all your social media profiles in one place. Instagram, Facebook, Twitter, LinkedIn, TikTok,8 YouTube, and more - all managed from a single dashboard.</p>
+                        <p data-i18n="step1Text">Link all your social media profiles in one place. Instagram, Facebook, Twitter, LinkedIn, TikTok, YouTube, and more - all managed from a single dashboard.</p>
                         <div class="demo-visual">
                             <h4>Your Connected Platforms</h4>
                             <div class="mock-interface">
@@ -1682,7 +1912,7 @@
                 </div>
                 
                 <!-- Post Type Tabs -->
-                <div style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;">
+                <div class="post-type-tabs" id="postTypeTabs">
                     <button class="post-type-tab active" data-type="promotional" onclick="selectPostType(this)">Promotional</button>
                     <button class="post-type-tab" data-type="educational" onclick="selectPostType(this)">Educational</button>
                     <button class="post-type-tab" data-type="engagement" onclick="selectPostType(this)">Engagement</button>
@@ -1740,7 +1970,7 @@
                     </div>
                 </div>
                 
-                <button class="select-btn" onclick="generateAIContent()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <button class="select-btn" onclick="generateAIContent()" id="aiGenerateBtn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     ✨ <span data-i18n="generateContent">Generate Content</span>
                 </button>
                 
@@ -1789,13 +2019,13 @@
                     <input type="file" id="mediaInput" multiple accept="image/*,video/*" style="display: none;" onchange="handleMediaSelect(event)">
                 </div>
                 
-                <!-- Platform Selection with Toggle -->
+                <!-- Platform Selection with Toggle - FIXED -->
                 <div class="form-group">
                     <label style="display: flex; justify-content: space-between; align-items: center;">
                         <span data-i18n="selectPlatforms">Select Platforms</span>
-                        <button onclick="toggleAllPlatforms(true)" style="font-size: 12px; background: none; border: none; color: var(--accent); cursor: pointer;">Select All</button>
+                        <button onclick="toggleAllSchedulePlatforms(true)" style="font-size: 12px; background: none; border: none; color: var(--accent); cursor: pointer;">Select All</button>
                     </label>
-                    <div id="schedulePlatformSelection" style="display: flex; flex-direction: column; gap: 8px;">
+                    <div id="schedulePlatformSelection" class="platform-toggle-container">
                         <!-- Populated dynamically with toggle switches -->
                     </div>
                 </div>
@@ -1820,7 +2050,7 @@
                     </label>
                 </div>
                 
-                <div id="recurrenceOptions" class="hidden">
+                <div id="recurrenceOptions" class="recurrence-options hidden">
                     <div class="form-group">
                         <label data-i18n="repeatEvery">Repeat</label>
                         <select id="recurrencePattern">
@@ -1836,7 +2066,7 @@
                     </div>
                 </div>
                 
-                <button class="select-btn" onclick="schedulePost()">
+                <button class="select-btn" onclick="schedulePost()" id="schedulePostBtn">
                     <span data-i18n="schedulePost">Schedule Post</span>
                 </button>
             </div>
@@ -1859,13 +2089,24 @@
                 </div>
                 
                 <div id="postsCalendarView" class="hidden">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <button onclick="changeMonth(-1)" style="background: none; border: none; font-size: 20px; cursor: pointer;">◀</button>
-                        <h5 id="calendarMonthYear" style="margin: 0;"></h5>
-                        <button onclick="changeMonth(1)" style="background: none; border: none; font-size: 20px; cursor: pointer;">▶</button>
-                    </div>
-                    <div id="postsCalendar" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
-                        <!-- Calendar populated dynamically -->
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button onclick="changeMonth(-1)" class="calendar-nav-btn">◀</button>
+                            <h5 id="calendarMonthYear" style="margin: 0;"></h5>
+                            <button onclick="changeMonth(1)" class="calendar-nav-btn">▶</button>
+                        </div>
+                        <div class="calendar-grid" id="calendarDaysHeader">
+                            <div class="calendar-day-header">Sun</div>
+                            <div class="calendar-day-header">Mon</div>
+                            <div class="calendar-day-header">Tue</div>
+                            <div class="calendar-day-header">Wed</div>
+                            <div class="calendar-day-header">Thu</div>
+                            <div class="calendar-day-header">Fri</div>
+                            <div class="calendar-day-header">Sat</div>
+                        </div>
+                        <div class="calendar-grid" id="postsCalendar" style="margin-top: 4px;">
+                            <!-- Calendar populated dynamically -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1912,8 +2153,7 @@
                     <div class="stat-label" data-i18n="totalRevenue">Total Revenue</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value"
-id="adminActiveWeek">0</div>
+                    <div class="stat-value" id="adminActiveWeek">0</div>
                     <div class="stat-label" data-i18n="activeThisWeek">Active This Week</div>
                 </div>
             </div>
@@ -2203,66 +2443,83 @@ id="adminActiveWeek">0</div>
         </div>
     </div>
     
-    <!-- OAuth Window Modal -->
+    <!-- OAuth Window Modal - FIXED WITH ALL 16 PLATFORMS -->
     <div class="modal" id="oauthModal">
-        <div class="modal-content" style="max-width: 500px; margin: auto; border-radius: 20px;">
+        <div class="modal-content" style="max-width: 600px; margin: auto; border-radius: 20px; max-height: 90vh; overflow-y: auto;">
             <div class="oauth-header">
                 <h3 id="oauthTitle">Connect Account</h3>
             </div>
             <div class="oauth-body">
                 <p id="oauthDescription" style="text-align: center; color: #666; margin-bottom: 20px;">Select a platform to connect</p>
                 
-             <div class="oauth-platforms" id="oauthPlatformSelection">
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('instagram')">
-        <span class="icon">📸</span><div>Instagram</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('tiktok')">
-        <span class="icon">🎵</span><div>TikTok</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('twitter')">
-        <span class="icon">🐦</span><div>Twitter</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('facebook')">
-        <span class="icon">👥</span><div>Facebook</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('linkedin')">
-        <span class="icon">💼</span><div>LinkedIn</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('youtube')">
-        <span class="icon">📺</span><div>YouTube</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('pinterest')">
-        <span class="icon">📌</span><div>Pinterest</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('threads')">
-        <span class="icon">🧵</span><div>Threads</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('snapchat')">
-        <span class="icon">👻</span><div>Snapchat</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('twitch')">
-        <span class="icon">🎮</span><div>Twitch</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('reddit')">
-        <span class="icon">🔴</span><div>Reddit</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('tumblr')">
-        <span class="icon">🔵</span><div>Tumblr</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('medium')">
-        <span class="icon">📝</span><div>Medium</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('yelp')">
-        <span class="icon">⭐</span><div>Yelp</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('google_business')">
-        <span class="icon">🏢</span><div>Google Business</div>
-    </button>
-    <button class="oauth-platform-btn" onclick="startOAuthFlow('whatsapp')">
-        <span class="icon">💬</span><div>WhatsApp</div>
-    </button>
-</div>
-           
+                <!-- FIXED: All 16 platforms in 4x4 grid -->
+                <div class="oauth-platforms" id="oauthPlatformSelection">
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('instagram')">
+                        <span class="icon">📸</span>
+                        <div>Instagram</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('tiktok')">
+                        <span class="icon">🎵</span>
+                        <div>TikTok</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('twitter')">
+                        <span class="icon">🐦</span>
+                        <div>Twitter</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('facebook')">
+                        <span class="icon">👥</span>
+                        <div>Facebook</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('linkedin')">
+                        <span class="icon">💼</span>
+                        <div>LinkedIn</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('youtube')">
+                        <span class="icon">📺</span>
+                        <div>YouTube</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('pinterest')">
+                        <span class="icon">📌</span>
+                        <div>Pinterest</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('threads')">
+                        <span class="icon">🧵</span>
+                        <div>Threads</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('snapchat')">
+                        <span class="icon">👻</span>
+                        <div>Snapchat</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('twitch')">
+                        <span class="icon">🎮</span>
+                        <div>Twitch</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('reddit')">
+                        <span class="icon">🔴</span>
+                        <div>Reddit</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('tumblr')">
+                        <span class="icon">🔵</span>
+                        <div>Tumblr</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('medium')">
+                        <span class="icon">📝</span>
+                        <div>Medium</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('yelp')">
+                        <span class="icon">⭐</span>
+                        <div>Yelp</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('google_business')">
+                        <span class="icon">🏢</span>
+                        <div>Google Business</div>
+                    </button>
+                    <button class="oauth-platform-btn" onclick="startOAuthFlow('whatsapp')">
+                        <span class="icon">💬</span>
+                        <div>WhatsApp</div>
+                    </button>
+                </div>
+                
                 <div id="oauthStatus" class="oauth-status hidden"></div>
                 
                 <div style="margin-top: 20px; text-align: center;">
@@ -2309,6 +2566,85 @@ id="adminActiveWeek">0</div>
         let selectedMedia = [];
         let currentOAuthPlatform = null;
         let replyingToClientId = null;
+        let connectedPlatforms = [];
+        let platformLimit = 3;
+        let selectedPostType = 'promotional';
+        let currentCalendarDate = new Date();
+        let scheduledPostsData = [];
+        
+        // Platform configuration
+        const PLATFORM_CONFIG = {
+            instagram: { icon: '📸', name: 'Instagram' },
+            tiktok: { icon: '🎵', name: 'TikTok' },
+            twitter: { icon: '🐦', name: 'Twitter' },
+            facebook: { icon: '👥', name: 'Facebook' },
+            linkedin: { icon: '💼', name: 'LinkedIn' },
+            youtube: { icon: '📺', name: 'YouTube' },
+            pinterest: { icon: '📌', name: 'Pinterest' },
+            threads: { icon: '🧵', name: 'Threads' },
+            snapchat: { icon: '👻', name: 'Snapchat' },
+            twitch: { icon: '🎮', name: 'Twitch' },
+            reddit: { icon: '🔴', name: 'Reddit' },
+            tumblr: { icon: '🔵', name: 'Tumblr' },
+            medium: { icon: '📝', name: 'Medium' },
+            yelp: { icon: '⭐', name: 'Yelp' },
+            google_business: { icon: '🏢', name: 'Google Business' },
+            whatsapp: { icon: '💬', name: 'WhatsApp' }
+        };
+        
+        // Post types by industry
+        const INDUSTRY_POST_TYPES = {
+            general: ['promotional', 'educational', 'engagement', 'seasonal', 'motivational'],
+            automotive: ['promotional', 'educational', 'engagement', 'seasonal', 'trust'],
+            realestate: ['promotional', 'educational', 'engagement', 'seasonal', 'trust'],
+            medical: ['promotional', 'educational', 'engagement', 'trust', 'seasonal'],
+            restaurant: ['promotional', 'educational', 'engagement', 'behindScenes', 'seasonal'],
+            fitness: ['promotional', 'educational', 'motivational', 'engagement', 'community'],
+            legal: ['promotional', 'educational', 'trust', 'engagement', 'seasonal'],
+            salon: ['promotional', 'educational', 'engagement', 'showcase', 'seasonal'],
+            retail: ['promotional', 'educational', 'engagement', 'showcase', 'seasonal'],
+            technology: ['promotional', 'educational', 'thoughtLeadership', 'engagement', 'seasonal']
+        };
+        
+        // ==================== TRANSLATIONS ====================
+        const translations = {
+            en: {
+                heroTitle: "Automated Social Media",
+                heroSubtitle: "AI-powered management for your business",
+                seeDemo: "See How It Works",
+                demoTitle: "See ReelBridge in Action",
+                step1Title: "Connect Your Accounts",
+                step1Text: "Link all your social media profiles in one place. Instagram, Facebook, Twitter, LinkedIn, TikTok, YouTube, and more - all managed from a single dashboard.",
+                step2Title: "AI Creates Your Content",
+                step2Text: "Our AI generates unique, engaging posts tailored to your brand voice. No more writer's block - just describe your topic and watch the magic happen.",
+                step3Title: "Schedule & Auto-Post",
+                step3Text: "Set your posting schedule and let ReelBridge '💼', name: 'LinkedIn' },
+            youtube: { icon: '📺', name: 'YouTube' },
+            pinterest: { icon: '📌', name: 'Pinterest' },
+            threads: { icon: '🧵', name: 'Threads' },
+            snapchat: { icon: '👻', name: 'Snapchat' },
+            twitch: { icon: '🎮', name: 'Twitch' },
+            reddit: { icon: '🔴', name: 'Reddit' },
+            tumblr: { icon: '🔵', name: 'Tumblr' },
+            medium: { icon: '📝', name: 'Medium' },
+            yelp: { icon: '⭐', name: 'Yelp' },
+            google_business: { icon: '🏢', name: 'Google Business' },
+            whatsapp: { icon: '💬', name: 'WhatsApp' }
+        };
+        
+        // Post types by industry
+        const INDUSTRY_POST_TYPES = {
+            general: ['promotional', 'educational', 'engagement', 'seasonal', 'motivational'],
+            automotive: ['promotional', 'educational', 'engagement', 'seasonal', 'trust'],
+            realestate: ['promotional', 'educational', 'engagement', 'seasonal', 'trust'],
+            medical: ['promotional', 'educational', 'engagement', 'trust', 'seasonal'],
+            restaurant: ['promotional', 'educational', 'engagement', 'behindScenes', 'seasonal'],
+            fitness: ['promotional', 'educational', 'motivational', 'engagement', 'community'],
+            legal: ['promotional', 'educational', 'trust', 'engagement', 'seasonal'],
+            salon: ['promotional', 'educational', 'engagement', 'showcase', 'seasonal'],
+            retail: ['promotional', 'educational', 'engagement', 'showcase', 'seasonal'],
+            technology: ['promotional', 'educational', 'thoughtLeadership', 'engagement', 'seasonal']
+        };
         
         // ==================== TRANSLATIONS ====================
         const translations = {
@@ -2351,11 +2687,11 @@ id="adminActiveWeek">0</div>
                 growthFeat5: "Priority Support",
                 platformLimit6: "Connect up to 6 platforms from our available options",
                 proName: "Professional",
-                proFeat1: "10 Social Platforms",
+                proFeat1: "16 Social Platforms",
                 proFeat2: "Unlimited Posts",
                 proFeat3: "AI Video & Image Gen",
                 proFeat4: "Dedicated Account Manager",
-                platformLimit10: "Connect up to 10 platforms - our full suite of options",
+                platformLimit16: "Connect up to 16 platforms - our complete suite",
                 customName: "Custom Package",
                 basePrice: " base",
                 buildPerfect: "Build your perfect plan",
@@ -2388,17 +2724,29 @@ id="adminActiveWeek">0</div>
                 accountsConnected: "Accounts Connected",
                 connectSocial: "Connect Social Accounts",
                 clickToLink: "Click a platform to link your account to ReelBridge",
-                createPost: "Create New Post",
-                postPlaceholder: "What's on your mind?",
-                chars: "chars",
-                addMedia: "Add Photos or Videos",
-                dragDrop: "Click to upload or drag and drop",
-                selectPlatforms: "Select Platforms:",
-                scheduleTime: "Schedule Time",
-                aiGenerate: "AI Generate",
+                aiContentGenerator: "AI Content Generator",
+                selectIndustry: "Select Your Industry",
+                toneOfVoice: "Tone of Voice",
+                topicOrFocus: "Topic or Focus",
+                targetAudience: "Target Audience (Optional)",
+                callToAction: "Call to Action (Optional)",
+                includeHashtags: "Include Hashtags",
+                includeEmoji: "Include Emoji",
+                platformsForAi: "Platforms for This Post",
+                generateContent: "Generate Content",
+                useThisContent: "Use This Content",
+                regenerate: "Regenerate",
+                scheduleNewPost: "Schedule New Post",
+                postContent: "Post Content",
+                selectPlatforms: "Select Platforms",
+                scheduleDate: "Date",
+                scheduleTime: "Time",
+                makeRecurring: "Make this a recurring post",
+                repeatEvery: "Repeat",
+                endDate: "End Date (Optional)",
                 schedulePost: "Schedule Post",
-                scheduledPosts: "Scheduled Posts",
-                noPosts: "No posts scheduled yet",
+                upcomingPosts: "Upcoming Posts",
+                postHistory: "Post History",
                 messages: "Messages",
                 subjectPlaceholder: "Subject",
                 messagePlaceholder: "Type your message to ReelBridge support...",
@@ -2505,11 +2853,11 @@ id="adminActiveWeek">0</div>
                 growthFeat5: "Support Prioritaire",
                 platformLimit6: "Connectez jusqu'à 6 plateformes parmi nos options disponibles",
                 proName: "Professionnel",
-                proFeat1: "10 Plateformes Sociales",
+                proFeat1: "16 Plateformes Sociales",
                 proFeat2: "Publications Illimitées",
                 proFeat3: "Génération Vidéo & Image IA",
                 proFeat4: "Gestionnaire de Compte Dédié",
-                platformLimit10: "Connectez jusqu'à 10 plateformes - notre suite complète",
+                platformLimit16: "Connectez jusqu'à 16 plateformes - notre suite complète",
                 customName: "Forfait Personnalisé",
                 basePrice: " base",
                 buildPerfect: "Construisez votre forfait parfait",
@@ -2542,17 +2890,29 @@ id="adminActiveWeek">0</div>
                 accountsConnected: "Comptes Connectés",
                 connectSocial: "Connecter les Comptes Sociaux",
                 clickToLink: "Cliquez sur une plateforme pour lier votre compte à ReelBridge",
-                createPost: "Créer une Nouvelle Publication",
-                postPlaceholder: "Qu'avez-vous en tête?",
-                chars: "caractères",
-                addMedia: "Ajouter Photos ou Vidéos",
-                dragDrop: "Cliquez pour télécharger ou glisser-déposer",
-                selectPlatforms: "Sélectionner les Plateformes:",
-                scheduleTime: "Heure de Publication",
-                aiGenerate: "Générer IA",
+                aiContentGenerator: "Générateur de Contenu IA",
+                selectIndustry: "Sélectionnez Votre Industrie",
+                toneOfVoice: "Ton de Voix",
+                topicOrFocus: "Sujet ou Focus",
+                targetAudience: "Public Cible (Optionnel)",
+                callToAction: "Appel à l'Action (Optionnel)",
+                includeHashtags: "Inclure les Hashtags",
+                includeEmoji: "Inclure les Emoji",
+                platformsForAi: "Plateformes pour Cette Publication",
+                generateContent: "Générer le Contenu",
+                useThisContent: "Utiliser ce Contenu",
+                regenerate: "Régénérer",
+                scheduleNewPost: "Programmer une Nouvelle Publication",
+                postContent: "Contenu de la Publication",
+                selectPlatforms: "Sélectionner les Plateformes",
+                scheduleDate: "Date",
+                scheduleTime: "Heure",
+                makeRecurring: "Faire de cette publication une publication récurrente",
+                repeatEvery: "Répéter",
+                endDate: "Date de Fin (Optionnelle)",
                 schedulePost: "Programmer la Publication",
-                scheduledPosts: "Publications Programmées",
-                noPosts: "Aucune publication programmée",
+                upcomingPosts: "Publications à Venir",
+                postHistory: "Historique des Publications",
                 messages: "Messages",
                 subjectPlaceholder: "Sujet",
                 messagePlaceholder: "Tapez votre message au support ReelBridge...",
@@ -2661,12 +3021,6 @@ id="adminActiveWeek">0</div>
             
             localStorage.setItem('preferredLanguage', lang);
         }
-        
-        // Load saved language
-        window.addEventListener('load', () => {
-            const saved = localStorage.getItem('preferredLanguage');
-            if (saved) setLanguage(saved);
-        });
         
         // ==================== AUTHENTICATION ====================
         async function login() {
@@ -2992,6 +3346,10 @@ id="adminActiveWeek">0</div>
                 
                 const data = await response.json();
                 
+                // Store for global use
+                connectedPlatforms = data.accounts.map(a => a.platform);
+                platformLimit = data.profile.platform_limit;
+                
                 document.getElementById('statRemaining').textContent = data.profile.posts_remaining;
                 document.getElementById('statUsed').textContent = data.profile.posts_used;
                 document.getElementById('statPackage').textContent = data.profile.package;
@@ -3003,35 +3361,16 @@ id="adminActiveWeek">0</div>
                     `You can connect up to ${data.profile.platform_limit} platforms (currently connected: ${data.accounts.length})`;
                 
                 // Update platform buttons
-                const connectedPlatforms = data.accounts.map(a => a.platform);
-                document.querySelectorAll('.platform-btn').forEach(btn => {
-                    const platform = btn.dataset.platform;
-                    if (connectedPlatforms.includes(platform)) {
-                        btn.classList.add('connected');
-                        btn.disabled = false;
-                    } else if (connectedPlatforms.length >= data.profile.platform_limit) {
-                        btn.disabled = true;
-                        btn.classList.add('locked');
-                    } else {
-                        btn.disabled = false;
-                    }
-                });
+                updatePlatformButtons(data.accounts, data.profile.platform_limit);
                 
-                // Update post platforms selection
-                const postPlatformsDiv = document.getElementById('postPlatforms');
-                postPlatformsDiv.innerHTML = '';
-                connectedPlatforms.forEach(platform => {
-                    const label = document.createElement('label');
-                    label.style.cssText = 'display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;';
-                    label.innerHTML = `
-                        <input type="checkbox" value="${platform}" checked style="width: auto;">
-                        <span style="text-transform: capitalize;">${platform}</span>
-                    `;
-                    postPlatformsDiv.appendChild(label);
-                });
+                // Initialize AI platform selection
+                updateAIPlatformSelection();
+                
+                // Initialize scheduling platform toggles
+                updateSchedulePlatformToggles();
                 
                 // Load scheduled posts
-                loadScheduledPosts(data.posts);
+                await loadScheduledPosts();
                 
                 // Load messages
                 loadMessages(data.unreadMessages);
@@ -3041,38 +3380,593 @@ id="adminActiveWeek">0</div>
             }
         }
         
-        function loadScheduledPosts(posts) {
-            const container = document.getElementById('scheduledPostsList');
+        function updatePlatformButtons(accounts, limit) {
+            const connectedPlatforms = accounts.map(a => a.platform);
             
-            if (posts.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No posts scheduled yet</div>';
+            document.querySelectorAll('.platform-btn').forEach(btn => {
+                const platform = btn.dataset.platform;
+                btn.classList.remove('connected', 'locked');
+                btn.disabled = false;
+                
+                if (connectedPlatforms.includes(platform)) {
+                    btn.classList.add('connected');
+                } else if (connectedPlatforms.length >= limit) {
+                    btn.disabled = true;
+                    btn.classList.add('locked');
+                }
+            });
+        }
+        
+        // ==================== AI CONTENT GENERATOR ====================
+        function updatePostTypes() {
+            const industry = document.getElementById('aiIndustry').value;
+            const postTypes = INDUSTRY_POST_TYPES[industry] || INDUSTRY_POST_TYPES.general;
+            const container = document.getElementById('postTypeTabs');
+            
+            container.innerHTML = postTypes.map((type, index) => `
+                <button class="post-type-tab ${index === 0 ? 'active' : ''}" 
+                        data-type="${type}" 
+                        onclick="selectPostType(this)">
+                    ${type.charAt(0).toUpperCase() + type.slice(1)}
+                </button>
+            `).join('');
+            
+            selectedPostType = postTypes[0];
+        }
+        
+        function selectPostType(btn) {
+            document.querySelectorAll('.post-type-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            selectedPostType = btn.dataset.type;
+        }
+        
+        function updateAIPlatformSelection() {
+            const container = document.getElementById('aiPlatformSelection');
+            container.innerHTML = '';
+            
+            connectedPlatforms.forEach(platform => {
+                const config = PLATFORM_CONFIG[platform];
+                const label = document.createElement('label');
+                label.style.cssText = 'display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f0f7ff; border-radius: 20px; cursor: pointer;';
+                label.innerHTML = `
+                    <input type="checkbox" value="${platform}" checked style="width: auto;">
+                    <span style="text-transform: capitalize;">${config?.name || platform}</span>
+                `;
+                container.appendChild(label);
+            });
+        }
+        
+        async function generateAIContent() {
+            const btn = document.getElementById('aiGenerateBtn');
+            btn.classList.add('btn-loading');
+            btn.disabled = true;
+            
+            const topic = document.getElementById('aiTopic').value || 'general business update';
+            const industry = document.getElementById('aiIndustry').value;
+            const tone = document.getElementById('aiTone').value;
+            const targetAudience = document.getElementById('aiTargetAudience').value;
+            const callToAction = document.getElementById('aiCallToAction').value;
+            const includeHashtags = document.getElementById('aiIncludeHashtags').checked;
+            const includeEmoji = document.getElementById('aiIncludeEmoji').checked;
+            const platforms = Array.from(document.querySelectorAll('#aiPlatformSelection input:checked')).map(cb => cb.value);
+            
+            try {
+                const response = await fetch(`${API_URL}/api/generate-content`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ 
+                        topic, 
+                        platforms,
+                        industry,
+                        postType: selectedPostType,
+                        tone,
+                        targetAudience,
+                        callToAction,
+                        includeHashtags,
+                        includeEmoji
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Display main content
+                document.getElementById('aiGeneratedText').textContent = data.content;
+                
+                // Display variations
+                const variationsContainer = document.getElementById('aiVariationsList');
+                variationsContainer.innerHTML = '';
+                
+                if (data.variations && data.variations.length > 0) {
+                    data.variations.forEach((variation, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'ai-variation';
+                        div.innerHTML = `
+                            <div class="ai-variation-number">Version ${index + 1}</div>
+                            <div>${variation}</div>
+                        `;
+                        div.onclick = () => selectVariation(div, variation);
+                        variationsContainer.appendChild(div);
+                    });
+                }
+                
+                document.getElementById('aiGeneratedPreview').classList.remove('hidden');
+                
+            } catch (error) {
+                alert('AI generation failed: ' + error.message);
+            } finally {
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+            }
+        }
+        
+        function selectVariation(element, content) {
+            document.querySelectorAll('.ai-variation').forEach(v => v.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('aiGeneratedText').textContent = content;
+        }
+        
+        function useGeneratedContent() {
+            const content = document.getElementById('aiGeneratedText').textContent;
+            document.getElementById('postContent').value = content;
+            document.getElementById('charCount').textContent = content.length;
+            document.getElementById('aiGeneratedPreview').classList.add('hidden');
+            
+            // Scroll to scheduler
+            document.getElementById('postContent').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function regenerateContent() {
+            generateAIContent();
+        }
+        
+        // ==================== PLATFORM TOGGLES FOR SCHEDULING - FIXED ====================
+        function updateSchedulePlatformToggles() {
+            const container = document.getElementById('schedulePlatformSelection');
+            container.innerHTML = '';
+            
+            // Get all 16 platforms, mark connected ones as available
+            Object.keys(PLATFORM_CONFIG).forEach(platform => {
+                const config = PLATFORM_CONFIG[platform];
+                const isConnected = connectedPlatforms.includes(platform);
+                
+                const div = document.createElement('div');
+                div.className = `platform-toggle-item ${isConnected ? 'selected' : 'disabled'}`;
+                div.dataset.platform = platform;
+                
+                if (isConnected) {
+                    div.onclick = () => toggleSchedulePlatform(platform);
+                }
+                
+                div.innerHTML = `
+                    <div class="platform-toggle-info">
+                        <span class="platform-toggle-icon">${config.icon}</span>
+                        <div>
+                            <div class="platform-toggle-name">${config.name}</div>
+                            <div class="platform-toggle-status">${isConnected ? 'Connected' : 'Not connected'}</div>
+                        </div>
+                    </div>
+                    <div class="platform-toggle-switch ${isConnected ? 'active' : ''}" id="toggle-schedule-${platform}"></div>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+        
+        function toggleSchedulePlatform(platform) {
+            const toggle = document.getElementById(`toggle-schedule-${platform}`);
+            const item = toggle.closest('.platform-toggle-item');
+            
+            toggle.classList.toggle('active');
+            item.classList.toggle('selected');
+        }
+        
+        function toggleAllSchedulePlatforms(select) {
+            connectedPlatforms.forEach(platform => {
+                const toggle = document.getElementById(`toggle-schedule-${platform}`);
+                const item = toggle.closest('.platform-toggle-item');
+                
+                if (select) {
+                    toggle.classList.add('active');
+                    item.classList.add('selected');
+                } else {
+                    toggle.classList.remove('active');
+                    item.classList.remove('selected');
+                }
+            });
+        }
+        
+        function getSelectedSchedulePlatforms() {
+            const platforms = [];
+            connectedPlatforms.forEach(platform => {
+                const toggle = document.getElementById(`toggle-schedule-${platform}`);
+                if (toggle && toggle.classList.contains('active')) {
+                    platforms.push(platform);
+                }
+            });
+            return platforms;
+        }
+        
+        function getSchedulePlatformsData() {
+            const data = {};
+            connectedPlatforms.forEach(platform => {
+                const toggle = document.getElementById(`toggle-schedule-${platform}`);
+                data[platform] = toggle && toggle.classList.contains('active');
+            });
+            return data;
+        }
+        
+        // ==================== RECURRENCE ====================
+        function toggleRecurrence() {
+            const isRecurring = document.getElementById('isRecurring').checked;
+            document.getElementById('recurrenceOptions').classList.toggle('hidden', !isRecurring);
+        }
+        
+        // ==================== POST SCHEDULING ====================
+        async function schedulePost() {
+            const content = document.getElementById('postContent').value;
+            const platforms = getSelectedSchedulePlatforms();
+            const platformsData = getSchedulePlatformsData();
+            const scheduledDate = document.getElementById('scheduleDate').value;
+            const scheduledTime = document.getElementById('scheduleTimeInput').value;
+            const isRecurring = document.getElementById('isRecurring').checked;
+            
+            if (!content) {
+                alert('Please enter post content');
                 return;
             }
             
-            container.innerHTML = posts.map(post => `
-                <div class="package-card" style="margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div style="flex: 1;">
-                            <p style="font-weight: 600; margin-bottom: 8px;">${post.content.substring(0, 100)}${post.content.length > 100 ? '...' : ''}</p>
-                            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                                ${post.platforms.map(p => `<span style="background: #e3f2fd; padding: 4px 12px; border-radius: 12px; font-size: 12px; text-transform: capitalize;">${p}</span>`).join('')}
-                            </div>
-                            <p style="font-size: 12px; color: #666;">
-                                ${new Date(post.scheduled_time).toLocaleString()} | 
-                                <span style="text-transform: capitalize; color: ${post.status === 'published' ? 'green' : 'orange'};">${post.status}</span>
-                            </p>
+            if (platforms.length === 0) {
+                alert('Please select at least one platform');
+                return;
+            }
+            
+            if (!scheduledDate || !scheduledTime) {
+                alert('Please select date and time');
+                return;
+            }
+            
+            const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
+            
+            const btn = document.getElementById('schedulePostBtn');
+            btn.classList.add('btn-loading');
+            btn.disabled = true;
+            
+            try {
+                // Upload media first if any
+                const mediaIds = selectedMedia.length > 0 ? await uploadMedia() : [];
+                
+                const requestBody = {
+                    content,
+                    platforms,
+                    platformsData,
+                    mediaUrls: [],
+                    mediaIds,
+                    scheduledTime: scheduledDateTime,
+                    industry: document.getElementById('aiIndustry').value,
+                    postType: selectedPostType,
+                    tone: document.getElementById('aiTone').value,
+                    targetAudience: document.getElementById('aiTargetAudience').value,
+                    callToAction: document.getElementById('aiCallToAction').value,
+                    isRecurring,
+                    recurrencePattern: isRecurring ? document.getElementById('recurrencePattern').value : null,
+                    recurrenceEndDate: isRecurring && document.getElementById('recurrenceEndDate').value 
+                        ? new Date(document.getElementById('recurrenceEndDate').value).toISOString() 
+                        : null
+                };
+                
+                const response = await fetch(`${API_URL}/api/schedule-post`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Post scheduled successfully!${data.isRecurring ? ` Created ${data.instancesCreated} recurring instances.` : ''}`);
+                    
+                    // Reset form
+                    document.getElementById('postContent').value = '';
+                    document.getElementById('charCount').textContent = '0';
+                    document.getElementById('scheduleDate').value = '';
+                    document.getElementById('scheduleTimeInput').value = '';
+                    document.getElementById('isRecurring').checked = false;
+                    document.getElementById('recurrenceOptions').classList.add('hidden');
+                    selectedMedia = [];
+                    document.getElementById('mediaPreviewGrid').innerHTML = '';
+                    document.getElementById('mediaPreviewGrid').classList.add('hidden');
+                    document.getElementById('mediaUploadArea').classList.remove('has-files');
+                    document.getElementById('uploadPrompt').classList.remove('hidden');
+                    
+                    // Reset platform toggles to all selected
+                    toggleAllSchedulePlatforms(true);
+                    
+                    // Refresh posts
+                    await loadScheduledPosts();
+                    loadCustomerDashboard();
+                }
+                
+            } catch (error) {
+                alert('Failed to schedule post: ' + error.message);
+            } finally {
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+            }
+        }
+        
+        // ==================== MEDIA UPLOAD ====================
+        function handleMediaSelect(event) {
+            const files = event.target.files;
+            selectedMedia = Array.from(files);
+            
+            const previewGrid = document.getElementById('mediaPreviewGrid');
+            const uploadArea = document.getElementById('mediaUploadArea');
+            
+            if (selectedMedia.length > 0) {
+                previewGrid.classList.remove('hidden');
+                uploadArea.classList.add('has-files');
+                document.getElementById('uploadPrompt').classList.add('hidden');
+                
+                previewGrid.innerHTML = selectedMedia.map((file, index) => `
+                    <div class="media-preview-item">
+                        ${file.type.startsWith('image/') 
+                            ? `<img src="${URL.createObjectURL(file)}" alt="Preview">`
+                            : `<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0;">🎥</div>`
+                        }
+                        <button class="remove-btn" onclick="removeMedia(${index})">×</button>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function removeMedia(index) {
+            selectedMedia.splice(index, 1);
+            if (selectedMedia.length === 0) {
+                document.getElementById('mediaPreviewGrid').classList.add('hidden');
+                document.getElementById('mediaUploadArea').classList.remove('has-files');
+                document.getElementById('uploadPrompt').classList.remove('hidden');
+                document.getElementById('mediaInput').value = '';
+            } else {
+                handleMediaSelect({ target: { files: selectedMedia } });
+            }
+        }
+        
+        async function uploadMedia() {
+            const mediaIds = [];
+            
+            for (const file of selectedMedia) {
+                const reader = new FileReader();
+                const base64 = await new Promise(resolve => {
+                    reader.onload = e => resolve(e.target.result.split(',')[1]);
+                    reader.readAsDataURL(file);
+                });
+                
+                const response = await fetch(`${API_URL}/api/upload-media`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        filename: file.name,
+                        fileData: base64,
+                        fileType: file.type
+                    })
+                });
+                
+                const data = await response.json();
+                mediaIds.push(data.mediaId);
+            }
+            
+            return mediaIds;
+        }
+        
+        // ==================== POSTS VIEW & CALENDAR ====================
+        async function loadScheduledPosts() {
+            try {
+                const response = await fetch(`${API_URL}/api/user/scheduled-posts`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                scheduledPostsData = await response.json();
+                
+                renderPostsList();
+                renderCalendar();
+                
+            } catch (error) {
+                console.error('Error loading posts:', error);
+            }
+        }
+        
+        function renderPostsList() {
+            const container = document.getElementById('scheduledPostsList');
+            
+            if (scheduledPostsData.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No upcoming posts</div>';
+                return;
+            }
+            
+            // Filter out recalled posts for upcoming view
+            const upcomingPosts = scheduledPostsData.filter(p => !p.is_recalled && p.status !== 'published');
+            
+            container.innerHTML = upcomingPosts.map(post => `
+                <div class="post-item ${post.is_recurring ? 'recurring' : ''}" data-post-id="${post.id}">
+                    <div class="post-header">
+                        <div class="post-meta">
+                            <span style="text-transform: capitalize; font-weight: 600; color: ${post.status === 'published' ? 'var(--success)' : 'var(--accent)'};">
+                                ${post.status}
+                            </span>
+                            ${post.is_recurring ? '<span style="color: var(--purple);">🔄 Recurring</span>' : ''}
                         </div>
-                        ${post.media_urls && post.media_urls.length > 0 ? `<div style="font-size: 24px;">📎</div>` : ''}
+                        <span style="font-size: 12px; color: #666;">
+                            ${new Date(post.scheduled_time).toLocaleString()}
+                        </span>
+                    </div>
+                    <div class="post-content">${post.content}</div>
+                    <div class="post-platforms">
+                        ${Object.entries(post.platforms_data || {}).map(([platform, included]) => {
+                            const config = PLATFORM_CONFIG[platform];
+                            if (!config) return '';
+                            return `<span class="post-platform-badge ${included ? 'included' : 'excluded'}">${config.icon} ${config.name}</span>`;
+                        }).join('')}
+                    </div>
+                    <div class="post-actions">
+                        ${post.status === 'pending' ? `
+                            <button class="post-action-btn edit" onclick="editPost(${post.id})">Edit</button>
+                            <button class="post-action-btn recall" onclick="recallPost(${post.id})">Cancel</button>
+                        ` : ''}
+                        ${post.status === 'published' && canRecall(post.published_at) ? `
+                            <button class="post-action-btn recall" onclick="recallPost(${post.id})">Recall (1hr)</button>
+                        ` : ''}
                     </div>
                 </div>
             `).join('');
         }
         
+        function canRecall(publishedAt) {
+            if (!publishedAt) return false;
+            const published = new Date(publishedAt);
+            const now = new Date();
+            const hoursDiff = (now - published) / (1000 * 60 * 60);
+            return hoursDiff <= 1;
+        }
+        
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            document.getElementById('calendarMonthYear').textContent = 
+                new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            
+            const calendar = document.getElementById('postsCalendar');
+            calendar.innerHTML = '';
+            
+            // Empty cells for days before month starts
+            for (let i = 0; i < firstDay; i++) {
+                calendar.appendChild(document.createElement('div'));
+            }
+            
+            // Days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-day';
+                
+                const dateStr = new Date(year, month, day).toDateString();
+                const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+                
+                if (isToday) cell.classList.add('today');
+                
+                // Find posts for this day
+                const dayPosts = scheduledPostsData.filter(post => {
+                    const postDate = new Date(post.scheduled_time);
+                    return postDate.getDate() === day && postDate.getMonth() === month && postDate.getFullYear() === year;
+                });
+                
+                if (dayPosts.length > 0) {
+                    cell.classList.add('has-posts');
+                    cell.onclick = () => showDayPosts(day, dayPosts);
+                }
+                
+                cell.innerHTML = `
+                    <div class="calendar-day-number">${day}</div>
+                    <div class="calendar-day-posts">
+                        ${dayPosts.map(post => `
+                            <div class="calendar-post-dot ${post.is_recurring ? 'recurring' : ''} ${post.is_recalled ? 'recalled' : ''}"></div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                calendar.appendChild(cell);
+            }
+        }
+        
+        function changeMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+        
+        function switchView(view) {
+            document.getElementById('viewListBtn').classList.toggle('active', view === 'list');
+            document.getElementById('viewCalendarBtn').classList.toggle('active', view === 'calendar');
+            document.getElementById('postsListView').classList.toggle('hidden', view !== 'list');
+            document.getElementById('postsCalendarView').classList.toggle('hidden', view !== 'calendar');
+        }
+        
+        function showDayPosts(day, posts) {
+            // Could show a modal with posts for this day
+            console.log('Posts for day', day, posts);
+        }
+        
+        async function recallPost(postId) {
+            if (!confirm('Are you sure you want to cancel/recall this post?')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/recall-post/${postId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ 
+                        reason: 'User requested',
+                        recallInstances: confirm('Also cancel future recurring instances?')
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Post recalled successfully');
+                    await loadScheduledPosts();
+                    loadCustomerDashboard();
+                }
+                
+            } catch (error) {
+                alert('Failed to recall post: ' + error.message);
+            }
+        }
+        
+        function editPost(postId) {
+            // Populate form with post data for editing
+            const post = scheduledPostsData.find(p => p.id === postId);
+            if (!post) return;
+            
+            document.getElementById('postContent').value = post.content;
+            document.getElementById('charCount').textContent = post.content.length;
+            
+            // Set platform toggles
+            Object.entries(post.platforms_data || {}).forEach(([platform, included]) => {
+                const toggle = document.getElementById(`toggle-schedule-${platform}`);
+                if (toggle) {
+                    if (included) {
+                        toggle.classList.add('active');
+                        toggle.closest('.platform-toggle-item').classList.add('selected');
+                    } else {
+                        toggle.classList.remove('active');
+                        toggle.closest('.platform-toggle-item').classList.remove('selected');
+                    }
+                }
+            });
+            
+            // Scroll to form
+            document.getElementById('postContent').scrollIntoView({ behavior: 'smooth' });
+        }
+        
         // ==================== OAUTH & PLATFORM CONNECTION ====================
         function initiateOAuth(platform) {
             currentOAuthPlatform = platform;
-            document.getElementById('oauthTitle').textContent = `Connect ${platform.charAt(0).toUpperCase() + platform.slice(1)}`;
-            document.getElementById('oauthDescription').textContent = `Click below to authorize ReelBridge to access your ${platform} account`;
+            document.getElementById('oauthTitle').textContent = `Connect ${PLATFORM_CONFIG[platform]?.name || platform}`;
+            document.getElementById('oauthDescription').textContent = `Click below to authorize ReelBridge to access your ${PLATFORM_CONFIG[platform]?.name || platform} account`;
             document.getElementById('oauthModal').classList.add('active');
         }
         
@@ -3083,7 +3977,6 @@ id="adminActiveWeek">0</div>
             statusDiv.textContent = 'Connecting... Please wait';
             
             try {
-                // Get OAuth URL from backend
                 const response = await fetch(`${API_URL}/api/oauth/${platform}/url`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 });
@@ -3098,7 +3991,6 @@ id="adminActiveWeek">0</div>
                     if (event.data.type === 'oauth-success') {
                         window.removeEventListener('message', handler);
                         
-                        // Save account connection
                         await savePlatformConnection(platform, event.data);
                         
                         statusDiv.className = 'oauth-status success';
@@ -3143,152 +4035,7 @@ id="adminActiveWeek">0</div>
             document.getElementById('oauthStatus').classList.add('hidden');
         }
         
-        // ==================== POST CREATION ====================
-        function handleMediaSelect(event) {
-            const files = event.target.files;
-            selectedMedia = Array.from(files);
-            
-            const previewGrid = document.getElementById('mediaPreviewGrid');
-            const uploadArea = document.getElementById('mediaUploadArea');
-            
-            if (selectedMedia.length > 0) {
-                previewGrid.classList.remove('hidden');
-                uploadArea.classList.add('has-files');
-                document.getElementById('uploadPrompt').classList.add('hidden');
-                
-                previewGrid.innerHTML = selectedMedia.map((file, index) => `
-                    <div class="media-preview-item">
-                        ${file.type.startsWith('image/') 
-                            ? `<img src="${URL.createObjectURL(file)}" alt="Preview">`
-                            : `<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0;">🎥</div>`
-                        }
-                        <button class="remove-btn" onclick="removeMedia(${index})">×</button>
-                    </div>
-                `).join('');
-            }
-        }
-        
-        function removeMedia(index) {
-            selectedMedia.splice(index, 1);
-            if (selectedMedia.length === 0) {
-                document.getElementById('mediaPreviewGrid').classList.add('hidden');
-                document.getElementById('mediaUploadArea').classList.remove('has-files');
-                document.getElementById('uploadPrompt').classList.remove('hidden');
-                document.getElementById('mediaInput').value = '';
-            } else {
-                // Refresh preview
-                handleMediaSelect({ target: { files: selectedMedia } });
-            }
-        }
-        
-        async function uploadMedia() {
-            const mediaIds = [];
-            
-            for (const file of selectedMedia) {
-                const reader = new FileReader();
-                const base64 = await new Promise(resolve => {
-                    reader.onload = e => resolve(e.target.result.split(',')[1]);
-                    reader.readAsDataURL(file);
-                });
-                
-                const response = await fetch(`${API_URL}/api/upload-media`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({
-                        filename: file.name,
-                        fileData: base64,
-                        fileType: file.type
-                    })
-                });
-                
-                const data = await response.json();
-                mediaIds.push(data.mediaId);
-            }
-            
-            return mediaIds;
-        }
-        
-        async function generateAIContent() {
-            const topic = document.getElementById('postContent').value || 'general business update';
-            const platforms = Array.from(document.querySelectorAll('#postPlatforms input:checked')).map(cb => cb.value);
-            
-            try {
-                const response = await fetch(`${API_URL}/api/generate-content`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ topic, platforms })
-                });
-                
-                const data = await response.json();
-                document.getElementById('postContent').value = data.content;
-                document.getElementById('charCount').textContent = data.content.length;
-                
-            } catch (error) {
-                alert('AI generation failed: ' + error.message);
-            }
-        }
-        
-        async function schedulePost() {
-            const content = document.getElementById('postContent').value;
-            const platforms = Array.from(document.querySelectorAll('#postPlatforms input:checked')).map(cb => cb.value);
-            const scheduledTime = document.getElementById('scheduleTime').value;
-            
-            if (!content) {
-                alert('Please enter post content');
-                return;
-            }
-            
-            if (platforms.length === 0) {
-                alert('Please select at least one platform');
-                return;
-            }
-            
-            try {
-                // Upload media first if any
-                const mediaIds = selectedMedia.length > 0 ? await uploadMedia() : [];
-                const mediaUrls = []; // Would be populated from upload response
-                
-                const response = await fetch(`${API_URL}/api/schedule-post`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({
-                        content,
-                        platforms,
-                        mediaUrls,
-                        mediaIds,
-                        scheduledTime: scheduledTime || new Date().toISOString()
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert('Post scheduled successfully!');
-                    document.getElementById('postContent').value = '';
-                    document.getElementById('scheduleTime').value = '';
-                    selectedMedia = [];
-                    document.getElementById('mediaPreviewGrid').innerHTML = '';
-                    document.getElementById('mediaPreviewGrid').classList.add('hidden');
-                    document.getElementById('mediaUploadArea').classList.remove('has-files');
-                    document.getElementById('uploadPrompt').classList.remove('hidden');
-                    loadCustomerDashboard();
-                }
-                
-            } catch (error) {
-                alert('Failed to schedule post: ' + error.message);
-            }
-        }
-        
-        // ==================== MESSAGING SYSTEM ====================
+        // ==================== MESSAGING ====================
         async function loadMessages(unreadCount) {
             if (unreadCount > 0) {
                 document.getElementById('unreadBadge').textContent = unreadCount;
@@ -3332,7 +4079,6 @@ id="adminActiveWeek">0</div>
             }
             
             try {
-                // For customers, always send to admin (user ID 1)
                 const response = await fetch(`${API_URL}/api/messages/send`, {
                     method: 'POST',
                     headers: {
@@ -3340,7 +4086,7 @@ id="adminActiveWeek">0</div>
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     },
                     body: JSON.stringify({
-                        recipientId: 1, // Admin ID
+                        recipientId: 1,
                         subject: subject || 'Support Request',
                         content
                     })
@@ -3363,7 +4109,6 @@ id="adminActiveWeek">0</div>
         // ==================== ADMIN DASHBOARD ====================
         async function loadAdminDashboard() {
             try {
-                // Load stats
                 const statsResponse = await fetch(`${API_URL}/api/admin/stats`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 });
@@ -3378,13 +4123,9 @@ id="adminActiveWeek">0</div>
                 document.getElementById('adminPro').textContent = stats.users.professional_users;
                 document.getElementById('adminCustom').textContent = stats.users.custom_users;
                 
-                // Load users table
                 loadAdminUsers();
-                
-                // Load tickets
                 loadAdminTickets();
                 
-                // Load activity
                 const activityDiv = document.getElementById('adminActivity');
                 activityDiv.innerHTML = stats.recentActivity.map(act => `
                     <div style="padding: 12px; border-bottom: 1px solid #eee; font-size: 14px;">
@@ -3434,7 +4175,6 @@ id="adminActiveWeek">0</div>
         
         async function loadAdminTickets() {
             try {
-                // Get all messages for admin
                 const response = await fetch(`${API_URL}/api/admin/clients`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 });
@@ -3442,7 +4182,6 @@ id="adminActiveWeek">0</div>
                 const clients = await response.json();
                 const ticketList = document.getElementById('ticketList');
                 
-                // For each client, check if they have unread messages
                 const tickets = await Promise.all(clients.map(async client => {
                     const msgResponse = await fetch(`${API_URL}/api/messages/conversation/${client.id}`, {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
@@ -3458,7 +4197,6 @@ id="adminActiveWeek">0</div>
                     };
                 }));
                 
-                // Sort by unread first, then by date
                 tickets.sort((a, b) => {
                     if (a.unread !== b.unread) return b.unread - a.unread;
                     return new Date(b.lastMessage?.created_at) - new Date(a.lastMessage?.created_at);
@@ -3485,7 +4223,6 @@ id="adminActiveWeek">0</div>
         // ==================== ADMIN USER MANAGEMENT ====================
         function editUser(userId) {
             editingUserId = userId;
-            // Load user details and populate modal
             fetch(`${API_URL}/api/admin/user/${userId}`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             })
@@ -3659,7 +4396,6 @@ id="adminActiveWeek">0</div>
             }
         }
         
-        // ==================== ADMIN MESSAGING ====================
         function messageUser(userId) {
             replyingToClientId = userId;
             openTicket(userId);
@@ -3721,8 +4457,8 @@ id="adminActiveWeek">0</div>
                 });
                 
                 document.getElementById('adminReplyContent').value = '';
-                openTicket(replyingToClientId); // Refresh conversation
-                loadAdminTickets(); // Refresh ticket list
+                openTicket(replyingToClientId);
+                loadAdminTickets();
                 
             } catch (error) {
                 alert('Failed to send reply: ' + error.message);
@@ -3776,30 +4512,24 @@ id="adminActiveWeek">0</div>
             toggle.parentElement.classList.toggle('enabled');
         }
         
-        // Character counter for post content
+        // Character counter
         document.getElementById('postContent')?.addEventListener('input', function() {
             document.getElementById('charCount').textContent = this.value.length;
         });
         
-        // Check for existing session on load
+        // Check for existing session
         window.addEventListener('load', () => {
+            const saved = localStorage.getItem('preferredLanguage');
+            if (saved) setLanguage(saved);
+            
             const token = localStorage.getItem('token');
             if (token) {
-                // Validate token and restore session
                 fetch(`${API_URL}/api/user/profile`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 .then(res => {
-                    if (res.ok) {
-                        // Auto-login
-                        document.getElementById('loginEmail').value = '';
-                        document.getElementById('loginPassword').value = '';
-                        // Trigger login with stored credentials not possible, 
-                        // but we can show dashboard if token is valid
-                        return res.json();
-                    } else {
-                        localStorage.removeItem('token');
-                    }
+                    if (res.ok) return res.json();
+                    localStorage.removeItem('token');
                 })
                 .then(data => {
                     if (data) {
@@ -3823,4 +4553,5 @@ id="adminActiveWeek">0</div>
     </script>
 </body>
 </html>
-L
+⁷⁶777
+
