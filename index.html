@@ -555,7 +555,7 @@
         .stat-value { font-size: 28px; font-weight: 700; color: var(--accent); }
         .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
         
-        /* Platform Grid - Updated for more platforms */
+        /* Platform Grid - Updated for 16 platforms */
         .platform-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -566,6 +566,12 @@
         @media (min-width: 600px) {
             .platform-grid {
                 grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        
+        @media (min-width: 900px) {
+            .platform-grid {
+                grid-template-columns: repeat(8, 1fr);
             }
         }
         
@@ -945,6 +951,7 @@
             margin-right: 4px;
         }
         
+        
         .btn-suspend { background: var(--warning); color: white; }
         .btn-activate { background: var(--success); color: white; }
         .btn-delete { background: var(--danger); color: white; }
@@ -1044,6 +1051,206 @@
         footer a {
             color: var(--accent);
         }
+        
+        /* ==================== NEW ENHANCED STYLES ==================== */
+        
+        /* Post Type Tabs */
+        .post-type-tab {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .post-type-tab.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        /* Platform Toggle */
+        .platform-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .platform-toggle.selected {
+            border-color: var(--success);
+            background: #f0fff4;
+        }
+        
+        .platform-toggle .platform-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .platform-toggle .platform-icon {
+            font-size: 24px;
+        }
+        
+        /* View Buttons */
+        .view-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .view-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        /* Calendar Styles */
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 12px;
+            position: relative;
+        }
+        
+        .calendar-day.has-posts {
+            background: #e3f2fd;
+            cursor: pointer;
+        }
+        
+        .calendar-day.today {
+            border: 2px solid var(--accent);
+        }
+        
+        .calendar-day .post-indicator {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        
+        /* Post Item */
+        .post-item {
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .post-item:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .post-item.recurring {
+            border-left: 4px solid var(--purple);
+        }
+        
+        .post-item.recalled {
+            opacity: 0.6;
+            background: #f5f5f5;
+        }
+        
+        .post-platforms {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .post-platform-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            background: #e3f2fd;
+            color: var(--accent);
+        }
+        
+        .post-platform-badge.included {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .post-platform-badge.excluded {
+            background: #f8d7da;
+            color: #721c24;
+            text-decoration: line-through;
+        }
+        
+        .post-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .post-action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .post-action-btn.recall {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .post-action-btn.edit {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .post-action-btn.delete {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* AI Generator Preview */
+        .ai-preview {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        .ai-variation {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .ai-variation:hover {
+            border-color: var(--accent);
+        }
+        
+        .ai-variation.selected {
+            border-color: var(--accent);
+            background: #f0f7ff;
+        }
     </style>
 </head>
 <body>
@@ -1086,7 +1293,7 @@
                     <div class="demo-step">
                         <div class="demo-step-number">1</div>
                         <h3 data-i18n="step1Title">Connect Your Accounts</h3>
-                        <p data-i18n="step1Text">Link all your social media profiles in one place. Instagram, Facebook, Twitter, LinkedIn, TikTok, YouTube, and more - all managed from a single dashboard.</p>
+                        <p data-i18n="step1Text">Link all your social media profiles in one place. Instagram, Facebook, Twitter, LinkedIn, TikTok,8 YouTube, and more - all managed from a single dashboard.</p>
                         <div class="demo-visual">
                             <h4>Your Connected Platforms</h4>
                             <div class="mock-interface">
@@ -1230,18 +1437,18 @@
                 <button class="select-btn" onclick="openPayment('growth', 509)" data-i18n="getStarted">Get Started</button>
             </div>
             
-            <!-- Professional -->
+            <!-- Professional - Updated for 16 platforms -->
             <div class="package-card">
                 <div class="package-name" data-i18n="proName">Professional</div>
                 <div class="package-price">$849<span>/mo</span></div>
                 <div class="savings" data-i18n="saveQuarterly">Save 15% with quarterly</div>
                 <ul class="features-list">
-                    <li data-i18n="proFeat1">10 Social Platforms</li>
+                    <li data-i18n="proFeat1">16 Social Platforms</li>
                     <li data-i18n="proFeat2">Unlimited Posts</li>
                     <li data-i18n="proFeat3">AI Video & Image Gen</li>
                     <li data-i18n="proFeat4">Dedicated Account Manager</li>
                 </ul>
-                <div class="platform-limit-note" data-i18n="platformLimit10">Connect up to 10 platforms - our full suite of options</div>
+                <div class="platform-limit-note" data-i18n="platformLimit16">Connect up to 16 platforms - our complete suite</div>
                 <button class="select-btn" onclick="openPayment('professional', 849)" data-i18n="getStarted">Get Started</button>
             </div>
             
@@ -1344,7 +1551,8 @@
             <p style="margin-top: 16px; opacity: 0.7; font-size: 14px;">© 2026 Reel Bridge</p>
         </footer>
     </div>
-    <!-- Customer Dashboard (shown when logged in as customer) -->
+    
+    <!-- ==================== CUSTOMER DASHBOARD (ENHANCED) ==================== -->
     <div id="customerDashboard" class="hidden" style="margin-top: 60px;">
         <div class="section">
             <!-- Password Change Notice -->
@@ -1379,7 +1587,7 @@
                 </div>
             </div>
             
-            <!-- Connect Accounts - Updated with 10 platforms -->
+            <!-- Connect Accounts - Updated with 16 platforms -->
             <h3 style="margin: 24px 0 12px 0; font-size: 18px;" data-i18n="connectSocial">Connect Social Accounts</h3>
             <p style="color: #666; font-size: 14px; margin-bottom: 12px;" data-i18n="clickToLink">Click a platform to link your account to ReelBridge</p>
             <p id="platformLimitInfo" style="color: var(--accent); font-size: 13px; margin-bottom: 12px;"></p>
@@ -1425,54 +1633,248 @@
                     <span class="platform-icon">🎮</span>
                     <span>Twitch</span>
                 </button>
+                <!-- NEW PLATFORMS -->
+                <button class="platform-btn" onclick="initiateOAuth('reddit')" data-platform="reddit" id="btn-reddit">
+                    <span class="platform-icon">🔴</span>
+                    <span>Reddit</span>
+                </button>
+                <button class="platform-btn" onclick="initiateOAuth('tumblr')" data-platform="tumblr" id="btn-tumblr">
+                    <span class="platform-icon">🔵</span>
+                    <span>Tumblr</span>
+                </button>
+                <button class="platform-btn" onclick="initiateOAuth('medium')" data-platform="medium" id="btn-medium">
+                    <span class="platform-icon">📝</span>
+                    <span>Medium</span>
+                </button>
+                <button class="platform-btn" onclick="initiateOAuth('yelp')" data-platform="yelp" id="btn-yelp">
+                    <span class="platform-icon">⭐</span>
+                    <span>Yelp</span>
+                </button>
+                <button class="platform-btn" onclick="initiateOAuth('google_business')" data-platform="google_business" id="btn-google_business">
+                    <span class="platform-icon">🏢</span>
+                    <span>Google Business</span>
+                </button>
+                <button class="platform-btn" onclick="initiateOAuth('whatsapp')" data-platform="whatsapp" id="btn-whatsapp">
+                    <span class="platform-icon">💬</span>
+                    <span>WhatsApp</span>
+                </button>
             </div>
             
-            <!-- Create Post with Media Upload -->
-            <h3 style="margin: 24px 0 12px 0; font-size: 18px;" data-i18n="createPost">Create New Post</h3>
-            <div class="package-card">
-                <textarea id="postContent" rows="4" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; resize: vertical;" placeholder="What's on your mind?" data-i18n-placeholder="postPlaceholder"></textarea>
-                <div style="text-align: right; font-size: 12px; color: #666; margin-top: 4px;">
-                    <span id="charCount">0</span> <span data-i18n="chars">chars</span>
+            <!-- ==================== ENHANCED AI CONTENT GENERATOR ==================== -->
+            <div class="package-card" style="margin-top: 20px;">
+                <h4 style="margin-bottom: 16px;">🤖 <span data-i18n="aiContentGenerator">AI Content Generator</span></h4>
+                
+                <!-- Industry Selection -->
+                <div class="form-group">
+                    <label data-i18n="selectIndustry">Select Your Industry</label>
+                    <select id="aiIndustry" onchange="updatePostTypes()">
+                        <option value="general">General Business</option>
+                        <option value="automotive">Automotive / Car Dealership</option>
+                        <option value="realestate">Real Estate</option>
+                        <option value="medical">Medical / Healthcare</option>
+                        <option value="restaurant">Restaurant / Food Service</option>
+                        <option value="fitness">Fitness / Gym</option>
+                        <option value="legal">Legal Services</option>
+                        <option value="salon">Beauty / Salon</option>
+                        <option value="retail">Retail / Fashion</option>
+                        <option value="technology">Technology / Software</option>
+                    </select>
+                </div>
+                
+                <!-- Post Type Tabs -->
+                <div style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;">
+                    <button class="post-type-tab active" data-type="promotional" onclick="selectPostType(this)">Promotional</button>
+                    <button class="post-type-tab" data-type="educational" onclick="selectPostType(this)">Educational</button>
+                    <button class="post-type-tab" data-type="engagement" onclick="selectPostType(this)">Engagement</button>
+                    <button class="post-type-tab" data-type="seasonal" onclick="selectPostType(this)">Seasonal</button>
+                    <button class="post-type-tab" data-type="motivational" onclick="selectPostType(this)">Motivational</button>
+                </div>
+                
+                <!-- Tone Selection -->
+                <div class="form-group">
+                    <label data-i18n="toneOfVoice">Tone of Voice</label>
+                    <select id="aiTone">
+                        <option value="professional">Professional</option>
+                        <option value="casual">Casual / Friendly</option>
+                        <option value="excited">Excited / Energetic</option>
+                        <option value="empathetic">Empathetic / Caring</option>
+                        <option value="authoritative">Authoritative / Expert</option>
+                    </select>
+                </div>
+                
+                <!-- Topic -->
+                <div class="form-group">
+                    <label data-i18n="topicOrFocus">Topic or Focus</label>
+                    <input type="text" id="aiTopic" placeholder="e.g., New spring collection, Holiday hours, Customer appreciation">
+                </div>
+                
+                <!-- Target Audience -->
+                <div class="form-group">
+                    <label data-i18n="targetAudience">Target Audience (Optional)</label>
+                    <input type="text" id="aiTargetAudience" placeholder="e.g., First-time buyers, Local customers, Young professionals">
+                </div>
+                
+                <!-- Call to Action -->
+                <div class="form-group">
+                    <label data-i18n="callToAction">Call to Action (Optional)</label>
+                    <input type="text" id="aiCallToAction" placeholder="e.g., Book now, Call today, Limited spots available">
+                </div>
+                
+                <!-- Options -->
+                <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+                    <label style="display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="aiIncludeHashtags" checked style="width: auto;">
+                        <span data-i18n="includeHashtags">Include Hashtags</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="aiIncludeEmoji" checked style="width: auto;">
+                        <span data-i18n="includeEmoji">Include Emoji</span>
+                    </label>
+                </div>
+                
+                <!-- Platform Selection for AI -->
+                <div class="form-group">
+                    <label data-i18n="platformsForAi">Platforms for This Post</label>
+                    <div id="aiPlatformSelection" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                
+                <button class="select-btn" onclick="generateAIContent()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    ✨ <span data-i18n="generateContent">Generate Content</span>
+                </button>
+                
+                <!-- Generated Content Preview -->
+                <div id="aiGeneratedPreview" class="hidden" style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 12px;">
+                    <h5 style="margin-bottom: 12px;">Generated Content:</h5>
+                    <div id="aiGeneratedText" style="margin-bottom: 16px; padding: 16px; background: white; border-radius: 8px; border-left: 4px solid var(--accent);"></div>
+                    
+                    <div id="aiVariations" style="margin-bottom: 16px;">
+                        <h6 style="margin-bottom: 8px; color: #666;">Alternative Versions:</h6>
+                        <div id="aiVariationsList"></div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px;">
+                        <button class="select-btn" onclick="useGeneratedContent()" style="flex: 1;">
+                            <span data-i18n="useThisContent">Use This Content</span>
+                        </button>
+                        <button class="select-btn" onclick="regenerateContent()" style="flex: 1; background: #9b59b6;">
+                            🔄 <span data-i18n="regenerate">Regenerate</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== ENHANCED POST SCHEDULER ==================== -->
+            <div class="package-card" style="margin-top: 20px;">
+                <h4 style="margin-bottom: 16px;">📅 <span data-i18n="scheduleNewPost">Schedule New Post</span></h4>
+                
+                <!-- Content -->
+                <div class="form-group">
+                    <label data-i18n="postContent">Post Content</label>
+                    <textarea id="postContent" rows="4" placeholder="What's on your mind?"></textarea>
+                    <div style="text-align: right; font-size: 12px; color: #666; margin-top: 4px;">
+                        <span id="charCount">0</span> chars
+                    </div>
                 </div>
                 
                 <!-- Media Upload -->
                 <div class="media-upload-area" id="mediaUploadArea" onclick="document.getElementById('mediaInput').click()">
                     <div id="uploadPrompt">
                         <div style="font-size: 48px; margin-bottom: 10px;">📎</div>
-                        <p style="font-weight: 600; color: var(--primary);" data-i18n="addMedia">Add Photos or Videos</p>
-                        <p style="font-size: 14px; color: #666; margin-top: 5px;" data-i18n="dragDrop">Click to upload or drag and drop</p>
+                        <p style="font-weight: 600;">Add Photos or Videos</p>
+                        <p style="font-size: 14px; color: #666; margin-top: 5px;">Click to upload</p>
                     </div>
                     <div class="media-preview-grid hidden" id="mediaPreviewGrid"></div>
                     <input type="file" id="mediaInput" multiple accept="image/*,video/*" style="display: none;" onchange="handleMediaSelect(event)">
                 </div>
                 
-                <div style="margin: 16px 0;">
-                    <label style="font-weight: 600; margin-bottom: 8px; display: block;" data-i18n="selectPlatforms">Select Platforms:</label>
-                    <div id="postPlatforms" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <!-- Populated dynamically -->
+                <!-- Platform Selection with Toggle -->
+                <div class="form-group">
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        <span data-i18n="selectPlatforms">Select Platforms</span>
+                        <button onclick="toggleAllPlatforms(true)" style="font-size: 12px; background: none; border: none; color: var(--accent); cursor: pointer;">Select All</button>
+                    </label>
+                    <div id="schedulePlatformSelection" style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Populated dynamically with toggle switches -->
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label data-i18n="scheduleTime">Schedule Time</label>
-                    <input type="datetime-local" id="scheduleTime">
+                <!-- Scheduling -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-i18n="scheduleDate">Date</label>
+                        <input type="date" id="scheduleDate">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="scheduleTime">Time</label>
+                        <input type="time" id="scheduleTimeInput">
+                    </div>
                 </div>
                 
-                <div style="display: flex; gap: 12px; margin-top: 16px;">
-                    <button class="select-btn" onclick="generateAIContent()" style="flex: 1; background: #9b59b6;">
-                        ✨ <span data-i18n="aiGenerate">AI Generate</span>
-                    </button>
-                    <button class="select-btn" onclick="schedulePost()" style="flex: 2;">
-                        <span data-i18n="schedulePost">Schedule Post</span>
-                    </button>
+                <!-- Recurrence -->
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="isRecurring" onchange="toggleRecurrence()" style="width: auto;">
+                        <span data-i18n="makeRecurring">Make this a recurring post</span>
+                    </label>
+                </div>
+                
+                <div id="recurrenceOptions" class="hidden">
+                    <div class="form-group">
+                        <label data-i18n="repeatEvery">Repeat</label>
+                        <select id="recurrencePattern">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Every 2 Weeks</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="endDate">End Date (Optional)</label>
+                        <input type="date" id="recurrenceEndDate">
+                    </div>
+                </div>
+                
+                <button class="select-btn" onclick="schedulePost()">
+                    <span data-i18n="schedulePost">Schedule Post</span>
+                </button>
+            </div>
+
+            <!-- ==================== UPCOMING POSTS CALENDAR VIEW ==================== -->
+            <div class="package-card" style="margin-top: 20px;">
+                <h4 style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>📆 <span data-i18n="upcomingPosts">Upcoming Posts</span></span>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="switchView('list')" id="viewListBtn" class="view-btn active">List</button>
+                        <button onclick="switchView('calendar')" id="viewCalendarBtn" class="view-btn">Calendar</button>
+                    </div>
+                </h4>
+                
+                <!-- View Toggle -->
+                <div id="postsListView">
+                    <div id="scheduledPostsList">
+                        <div style="text-align: center; color: #666; padding: 40px;">No upcoming posts</div>
+                    </div>
+                </div>
+                
+                <div id="postsCalendarView" class="hidden">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <button onclick="changeMonth(-1)" style="background: none; border: none; font-size: 20px; cursor: pointer;">◀</button>
+                        <h5 id="calendarMonthYear" style="margin: 0;"></h5>
+                        <button onclick="changeMonth(1)" style="background: none; border: none; font-size: 20px; cursor: pointer;">▶</button>
+                    </div>
+                    <div id="postsCalendar" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+                        <!-- Calendar populated dynamically -->
+                    </div>
                 </div>
             </div>
-            
-            <!-- Scheduled Posts -->
-            <h3 style="margin: 24px 0 12px 0; font-size: 18px;" data-i18n="scheduledPosts">Scheduled Posts</h3>
-            <div id="scheduledPostsList">
-                <div style="text-align: center; color: #666; padding: 40px;" data-i18n="noPosts">
-                    No posts scheduled yet
+
+            <!-- ==================== POST HISTORY & RECALL ==================== -->
+            <div class="package-card" style="margin-top: 20px;">
+                <h4 style="margin-bottom: 16px;">📜 <span data-i18n="postHistory">Post History</span></h4>
+                <div id="postHistoryList">
+                    <!-- Populated dynamically -->
                 </div>
             </div>
             
@@ -1510,7 +1912,8 @@
                     <div class="stat-label" data-i18n="totalRevenue">Total Revenue</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="adminActiveWeek">0</div>
+                    <div class="stat-value"
+id="adminActiveWeek">0</div>
                     <div class="stat-label" data-i18n="activeThisWeek">Active This Week</div>
                 </div>
             </div>
@@ -3405,3 +3808,4 @@
 </body>
 </html>
 L
+
