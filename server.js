@@ -28,9 +28,19 @@ const paypalEnvironment = new Environment(
 const paypalClient = new paypal.core.PayPalHttpClient(paypalEnvironment);
 
 // Middleware
-app.use(cors({ origin: '*' }));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Update this in server.js:
+app.use(cors({ 
+    origin: [
+        'https://reelbridge-api.onrender.com',  // Your backend
+        'https://reelbridge.pages.dev',  // Your frontend - UPDATE THIS
+        'https://reelbridge.site',  // Your custom domain if you have one
+        'http://localhost:3000'  // Local testing
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 
 // JWT middleware
 const authenticateToken = (req, res, next) => {
