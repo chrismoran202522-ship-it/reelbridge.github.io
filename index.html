@@ -1484,6 +1484,17 @@
     </style>
 </head>
 <body>
+   <script>
+console.log('Frontend loaded');
+console.log('API_URL:', 'https://reelbridge-api.onrender.com');
+
+// Test backend connection
+fetch('https://reelbridge-api.onrender.com/api/packages')
+    .then(r => r.json())
+    .then(data => console.log('Backend connected:', data))
+    .catch(err => console.error('Backend connection failed:', err));
+</script>
+ 
     <!-- Language Selector -->
     <div class="language-selector">
         <button class="lang-btn active" onclick="setLanguage('en')" data-lang="en">English</button>
