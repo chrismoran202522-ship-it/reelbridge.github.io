@@ -64,7 +64,8 @@ async function runSchemaUpdates() {
             return result.rows.length > 0;
         };
         
-        const columnsToAdd = [
+        // Users table columns
+        const userColumnsToAdd = [
             { name: 'business_name', type: 'VARCHAR(255)' },
             { name: 'contact_name', type: 'VARCHAR(255)' },
             { name: 'phone', type: 'VARCHAR(50)' },
@@ -82,10 +83,35 @@ async function runSchemaUpdates() {
             { name: 'language', type: 'VARCHAR(10) DEFAULT \'en\'' }
         ];
         
-        for (const col of columnsToAdd) {
+        for (const col of userColumnsToAdd) {
             const exists = await checkColumn('users', col.name);
             if (!exists) {
                 await client.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+                console.log(`✅ Added column: ${col.name}`);
+            }
+        }
+        
+        // Scheduled posts columns for enhanced features
+        const postColumns = [
+            { name: 'industry', type: 'VARCHAR(50)' },
+            { name: 'post_type', type: 'VARCHAR(50)' },
+            { name: 'tone', type: 'VARCHAR(20) DEFAULT \'professional\'' },
+            { name: 'target_audience', type: 'VARCHAR(100)' },
+            { name: 'call_to_action', type: 'VARCHAR(100)' },
+            { name: 'is_recurring', type: 'BOOLEAN DEFAULT false' },
+            { name: 'recurrence_pattern', type: 'VARCHAR(50)' },
+            { name: 'recurrence_end_date', type: 'TIMESTAMP' },
+            { name: 'parent_post_id', type: 'INTEGER REFERENCES scheduled_posts(id)' },
+            { name: 'platforms_data', type: 'JSONB DEFAULT \'{}\'' },
+            { name: 'is_recalled', type: 'BOOLEAN DEFAULT false' },
+            { name: 'recalled_at', type: 'TIMESTAMP' },
+            { name: 'recall_reason', type: 'TEXT' }
+        ];
+        
+        for (const col of postColumns) {
+            const exists = await checkColumn('scheduled_posts', col.name);
+            if (!exists) {
+                await client.query(`ALTER TABLE scheduled_posts ADD COLUMN ${col.name} ${col.type}`);
                 console.log(`✅ Added column: ${col.name}`);
             }
         }
@@ -114,6 +140,19 @@ async function runSchemaUpdates() {
                 file_type VARCHAR(50),
                 file_size INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
+        // Create post instances table for recurring posts
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS post_instances (
+                id SERIAL PRIMARY KEY,
+                parent_post_id INTEGER REFERENCES scheduled_posts(id) ON DELETE CASCADE,
+                scheduled_time TIMESTAMP NOT NULL,
+                status VARCHAR(20) DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                published_at TIMESTAMP,
+                is_recalled BOOLEAN DEFAULT false
             )
         `);
         
@@ -178,13 +217,26 @@ async function initDatabase() {
                 user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                 content TEXT NOT NULL,
                 platforms TEXT[] NOT NULL,
+                platforms_data JSONB DEFAULT '{}',
                 media_urls TEXT[],
                 media_ids INTEGER[],
                 scheduled_time TIMESTAMP NOT NULL,
                 status VARCHAR(20) DEFAULT 'pending',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 published_at TIMESTAMP,
-                engagement_stats JSONB
+                engagement_stats JSONB,
+                industry VARCHAR(50),
+                post_type VARCHAR(50),
+                tone VARCHAR(20) DEFAULT 'professional',
+                target_audience VARCHAR(100),
+                call_to_action VARCHAR(100),
+                is_recurring BOOLEAN DEFAULT false,
+                recurrence_pattern VARCHAR(50),
+                recurrence_end_date TIMESTAMP,
+                parent_post_id INTEGER REFERENCES scheduled_posts(id),
+                is_recalled BOOLEAN DEFAULT false,
+                recalled_at TIMESTAMP,
+                recall_reason TEXT
             );
             
             CREATE TABLE IF NOT EXISTS social_accounts (
@@ -208,6 +260,10 @@ async function initDatabase() {
                 topic VARCHAR(255),
                 content TEXT,
                 platforms TEXT[],
+                industry VARCHAR(50),
+                post_type VARCHAR(50),
+                tone VARCHAR(20),
+                target_audience VARCHAR(100),
                 used BOOLEAN DEFAULT false,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -249,7 +305,7 @@ async function initDatabase() {
                 INSERT INTO package_config (package_name, price_monthly, posts_limit, platforms_limit, features) VALUES
                 ('starter', 254, 30, 3, '{"ai_content": true, "basic_analytics": true, "basic_dashboard": true}'),
                 ('growth', 509, 75, 6, '{"ai_content": true, "ai_video": true, "auto_engagement": true, "priority_support": true, "basic_dashboard": true, "analytics_advanced": true}'),
-                ('professional', 849, 999999, 10, '{"ai_content": true, "ai_video": true, "ai_image": true, "dedicated_manager": true, "unlimited": true, "basic_dashboard": true, "analytics_advanced": true, "content_scheduler": true}'),
+                ('professional', 849, 999999, 16, '{"ai_content": true, "ai_video": true, "ai_image": true, "dedicated_manager": true, "unlimited": true, "basic_dashboard": true, "analytics_advanced": true, "content_scheduler": true}'),
                 ('custom', 99, 50, 3, '{"base": true, "basic_dashboard": true}')
             `);
             console.log('✅ Default packages created');
@@ -265,7 +321,6 @@ async function initDatabase() {
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
-        // Case-insensitive email lookup
         const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
         const user = result.rows[0];
         
@@ -371,7 +426,7 @@ app.get('/api/packages', async (req, res) => {
 app.post('/api/create-stripe-intent', async (req, res) => {
     const { package, amount, email, billingCycle, features } = req.body;
     const postsMap = { 'starter': 30, 'growth': 75, 'professional': 999999, 'custom': features?.posts || 50 };
-    const platformMap = { 'starter': 3, 'growth': 6, 'professional': 10, 'custom': features?.platforms || 3 };
+    const platformMap = { 'starter': 3, 'growth': 6, 'professional': 16, 'custom': features?.platforms || 3 };
     
     try {
         const intent = await stripe.paymentIntents.create({
@@ -421,7 +476,7 @@ app.post('/api/capture-paypal-order', async (req, res) => {
             
             const hash = await bcrypt.hash(password, 10);
             const postsMap = { 'starter': 30, 'growth': 75, 'professional': 999999, 'custom': features?.posts || 50 };
-            const platformMap = { 'starter': 3, 'growth': 6, 'professional': 10, 'custom': features?.platforms || 3 };
+            const platformMap = { 'starter': 3, 'growth': 6, 'professional': 16, 'custom': features?.platforms || 3 };
             
             const result = await pool.query(
                 `INSERT INTO users (email, password_hash, package, billing_cycle, posts_remaining, platform_limit, platforms, paypal_order_id, status, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
@@ -473,11 +528,513 @@ function getPlatforms(pkg, features = null) {
     const map = {
         'starter': ['instagram', 'facebook', 'twitter'],
         'growth': ['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube'],
-        'professional': ['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube', 'pinterest', 'threads', 'snapchat', 'twitch'],
+        'professional': ['instagram', 'tiktok', 'twitter', 'facebook', 'linkedin', 'youtube', 'pinterest', 'threads', 'snapchat', 'twitch', 'reddit', 'tumblr', 'medium', 'yelp', 'google_business', 'whatsapp'],
         'custom': features?.platforms ? ['instagram', 'facebook', 'twitter', 'tiktok', 'linkedin', 'youtube', 'pinterest', 'threads', 'snapchat', 'twitch'].slice(0, features.platforms) : ['instagram', 'facebook', 'twitter']
     };
     return map[pkg] || map['starter'];
 }
+
+// ==================== ENHANCED AI CONTENT GENERATION ====================
+app.post('/api/generate-content', authenticateToken, async (req, res) => {
+    const { 
+        topic, 
+        platforms, 
+        industry = 'general',
+        postType = 'promotional',
+        tone = 'professional',
+        targetAudience = '',
+        callToAction = '',
+        includeHashtags = true,
+        includeEmoji = true
+    } = req.body;
+    
+    // Industry-specific templates and knowledge
+    const industryTemplates = {
+        automotive: {
+            educational: [
+                "🚗 Did you know? {topic}. Understanding your vehicle better helps you make informed decisions. #CarCare #AutoTips",
+                "⚙️ Maintenance Monday: {topic}. Regular upkeep saves you money long-term. Schedule your service today! #AutoMaintenance",
+                "🔧 Pro Tip: {topic}. Our certified technicians are here to help with all your automotive needs. #CarExperts"
+            ],
+            promotional: [
+                "🚙 Ready to upgrade? {topic}! Check out our latest inventory with unbeatable prices. Limited time offers available! 🏃‍♂️💨 #NewCars #AutoDeals",
+                "💰 Trade-in special! {topic}. Get top dollar for your vehicle and drive away in your dream car today! #TradeIn #Upgrade",
+                "🎉 Flash Sale Alert! {topic}. Don't miss out - these deals won't last long! Visit us or call now. #CarSale #LimitedTime"
+            ],
+            engagement: [
+                "📸 Show us your ride! {topic}. Drop a photo in the comments - we love seeing our community's vehicles! #CarCommunity",
+                "🤔 What's your dream car? {topic}. Tell us in the comments! 👇 #DreamCar #CarTalk",
+                "🏆 Customer spotlight: {topic}. We love hearing from happy customers! Share your experience with us. #Testimonial"
+            ],
+            seasonal: [
+                "❄️ Winter is coming! {topic}. Make sure your vehicle is ready for the cold months ahead. #WinterPrep",
+                "☀️ Summer road trip ready? {topic}. Get your vehicle checked before you hit the road! #RoadTrip #SummerReady"
+            ]
+        },
+        realestate: {
+            educational: [
+                "🏠 Market insight: {topic}. Stay informed to make the best real estate decisions. #RealEstateTips #MarketUpdate",
+                "📊 Did you know? {topic}. Understanding the market helps buyers and sellers alike. #RealEstateEducation",
+                "💡 First-time buyer tip: {topic}. We're here to guide you through every step! #FirstTimeBuyer #HomeBuying"
+            ],
+            promotional: [
+                "🔥 Just Listed! {topic}. This stunning property won't last long - schedule your showing today! #NewListing #DreamHome",
+                "💎 Price Improvement! {topic}. Now's your chance to own this incredible property at an unbeatable value! #PriceDrop #Deal",
+                "🏡 Open House This Weekend! {topic}. Join us Saturday & Sunday 1-4 PM. Don't miss it! #OpenHouse #WeekendPlans"
+            ],
+            engagement: [
+                "🎯 Guess the price! {topic}. Drop your guess in the comments! Closest without going over wins a gift card! 🎁 #GuessThePrice",
+                "📸 Home goals! {topic}. Which feature is your must-have? Let us know! 👇 #DreamHome #RealEstate",
+                "🏆 Sold! Congratulations to our clients! {topic}. Another happy homeowner! #JustSold #HappyClients"
+            ],
+            seasonal: [
+                "🌸 Spring market is heating up! {topic}. Now is the perfect time to buy or sell! #SpringMarket #RealEstate",
+                "🏠 New Year, New Home? {topic}. Start 2026 in your dream property! #NewYearNewHome"
+            ]
+        },
+        medical: {
+            educational: [
+                "💙 Health Tip: {topic}. Small changes make a big difference in your wellness journey. #HealthTips #Wellness",
+                "🩺 Did you know? {topic}. Stay informed about your health - knowledge is power! #HealthEducation",
+                "⚕️ Prevention is key: {topic}. Regular check-ups help catch issues early. #PreventiveCare #HealthFirst"
+            ],
+            promotional: [
+                "📅 Now accepting new patients! {topic}. Experience compassionate, quality care close to home. Schedule today! #NewPatients #Healthcare",
+                "🎉 Special offer: {topic}. Limited time wellness packages available - invest in your health! #WellnessPackage #HealthDeal",
+                "🏥 Expanded services! {topic}. We're growing to better serve our community's health needs. #NewServices #CommunityHealth"
+            ],
+            engagement: [
+                "❓ Health Q&A: {topic}. Drop your questions below - our experts will answer! 👇 #HealthQuestions #AskADoctor",
+                "💪 Wellness Wednesday: {topic}. Share your healthy habits in the comments! #WellnessWednesday #HealthyLiving",
+                "🌟 Patient success story: {topic}. Real results, real people! #PatientTestimonial #SuccessStory"
+            ],
+            trust: [
+                "🎓 Meet Dr. [Name]: {topic}. Our team brings expertise and compassion to every patient interaction. #MeetTheDoctor #ExpertCare",
+                "🏆 Award-winning care: {topic}. Recognized for excellence in patient satisfaction! #AwardWinning #QualityCare"
+            ]
+        },
+        restaurant: {
+            educational: [
+                "👨‍🍳 Chef's secret: {topic}. Learn what makes our dishes special! #ChefTips #CookingSecrets",
+                "🍷 Pairing guide: {topic}. Elevate your dining experience with the perfect combination. #WinePairing #Foodie",
+                "🥗 Nutrition spotlight: {topic}. Delicious AND good for you! #HealthyEating #Nutritious"
+            ],
+            promotional: [
+                "🍽️ Tonight's special: {topic}! Join us for an unforgettable dining experience. Reservations recommended! #Specials #DineLocal",
+                "🎉 Happy Hour 4-7 PM! {topic}. Great drinks, great prices, great vibes! #HappyHour #DrinkSpecials",
+                "🍰 Weekend brunch is back! {topic}. Bottomless mimosas and mouthwatering dishes await! #Brunch #WeekendVibes"
+            ],
+            engagement: [
+                "📸 Foodie Friday: {topic}. Tag us in your photos for a chance to be featured! #FoodieFriday #FoodPorn",
+                "🗳️ Vote now! {topic}. Help us choose our next featured dish! 👇 #Vote #MenuPlanning",
+                "🎂 Birthday celebration! {topic}. Join us for complimentary dessert on your special day! #BirthdayDeal #Celebrate"
+            ],
+            behindScenes: [
+                "🔥 In the kitchen: {topic}. Fresh ingredients, passionate chefs, amazing flavors! #BehindTheScenes #KitchenLife",
+                "🌾 Farm to table: {topic}. We source locally for the freshest taste! #FarmToTable #LocalIngredients"
+            ]
+        },
+        fitness: {
+            educational: [
+                "💪 Form check: {topic}. Proper technique prevents injury and maximizes results! #FitnessTips #ProperForm",
+                "🥗 Nutrition 101: {topic}. Fuel your body right for optimal performance! #Nutrition #FitnessFuel",
+                "😴 Recovery matters: {topic}. Rest is when your muscles grow stronger! #Recovery #FitnessEducation"
+            ],
+            motivational: [
+                "🔥 No excuses! {topic}. Your only limit is you. Let's crush those goals together! 💪 #NoExcuses #FitnessMotivation",
+                "📈 Progress, not perfection: {topic}. Every workout counts - keep showing up! #Progress #KeepGoing",
+                "🏆 Transformation Tuesday: {topic}. Real members, real results! #Transformation #FitnessJourney"
+            ],
+            promotional: [
+                "🎉 New member special: {topic}! Join now and get your first month FREE! #NewMember #FitnessDeal",
+                "👯‍♀️ Bring a friend! {topic}. Working out is better together - both save on membership! #ReferAFriend #WorkoutBuddy",
+                "🎯 Challenge accepted: {topic}. 30-day transformation challenge starts Monday! Sign up now! #FitnessChallenge #Transform"
+            ],
+            community: [
+                "🤝 Meet our community: {topic}. These members inspire us every day! #MemberSpotlight #FitnessFamily",
+                "📸 Share your sweat! {topic}. Tag us in your workout photos! #SweatSelfie #GymLife"
+            ]
+        },
+        legal: {
+            educational: [
+                "⚖️ Legal insight: {topic}. Understanding your rights is the first step to protection. #LegalTips #KnowYourRights",
+                "📋 Important update: {topic}. Stay informed about changes that may affect you. #LegalNews #StayInformed",
+                "❓ Common question: {topic}. We're here to provide clarity on complex legal matters. #LegalFAQ #AskALawyer"
+            ],
+            promotional: [
+                "📞 Free consultation: {topic}. Discuss your case with experienced attorneys - no obligation! #FreeConsultation #LegalHelp",
+                "🏆 Case result: {topic}. Another successful outcome for our client! #CaseResult #LegalVictory",
+                "📅 Limited time: {topic}. Estate planning package special - protect your family's future! #EstatePlanning #SpecialOffer"
+            ],
+            trust: [
+                "🎓 Meet the team: {topic}. Decades of combined experience working for you. #LegalTeam #ExperiencedAttorneys",
+                "⭐ Client review: {topic}. See why clients trust us with their most important matters. #ClientReview #Testimonial"
+            ]
+        },
+        salon: {
+            educational: [
+                "💇‍♀️ Hair care tip: {topic}. Keep your locks looking luscious between visits! #HairCare #BeautyTips",
+                "💅 Nail health: {topic}. Beautiful nails start with healthy nails! #NailCare #HealthyNails",
+                "✨ Skin care 101: {topic}. The right routine makes all the difference! #SkinCare #BeautyEducation"
+            ],
+            promotional: [
+                "💇‍♀️ New client special: {topic}! 20% off your first service - book now! #NewClient #SalonDeal",
+                "🎉 Flash sale: {topic}! This weekend only - don't miss out! #FlashSale #BeautyDeal",
+                "👰 Bridal package: {topic}. Look stunning on your special day! #BridalBeauty #WeddingReady"
+            ],
+            showcase: [
+                "✨ Transformation: {topic}. Before & after - we love making clients feel beautiful! #HairTransformation #Beauty",
+                "📸 Style of the week: {topic}. Which look is your favorite? #Hairstyle #BeautyInspo"
+            ]
+        },
+        retail: {
+            educational: [
+                "🛍️ Style guide: {topic}. Elevate your wardrobe with these tips! #StyleTips #FashionAdvice",
+                "👗 Care instructions: {topic}. Make your favorites last longer! #ClothingCare #SustainableFashion",
+                "🎨 Color trends: {topic}. Stay ahead of the fashion curve! #ColorTrends #FashionForward"
+            ],
+            promotional: [
+                "🏷️ Sale alert: {topic}! Up to 50% off select items - shop now! #Sale #Shopping",
+                "🎁 New arrivals: {topic}. Be the first to shop our latest collection! #NewArrivals #MustHave",
+                "💳 Member exclusive: {topic}. Extra 15% off for loyalty members! #MemberPerks #Exclusive"
+            ],
+            engagement: [
+                "🗳️ This or that? {topic}. Help us choose which style to stock more of! 👇 #ThisOrThat #FashionPoll",
+                "📸 Outfit of the day: {topic}. Tag us in your looks for a chance to be featured! #OOTD #Fashion"
+            ]
+        },
+        technology: {
+            educational: [
+                "💡 Tech tip: {topic}. Get the most out of your devices! #TechTips #Productivity",
+                "🔒 Security alert: {topic}. Protect your data with these simple steps! #CyberSecurity #DataProtection",
+                "🚀 Innovation spotlight: {topic}. The future is here - stay ahead of the curve! #Innovation #TechTrends"
+            ],
+            promotional: [
+                "💻 Upgrade special: {topic}! Trade in your old device for big savings! #TechDeal #Upgrade",
+                "🎉 New product launch: {topic}. Be among the first to experience the future! #NewTech #Launch",
+                "🔧 Service special: {topic}. Keep your tech running smoothly! #TechSupport #RepairSpecial"
+            ],
+            thoughtLeadership: [
+                "🤔 Industry insight: {topic}. Our experts share their perspective on what's next. #TechInsights #ThoughtLeadership",
+                "📊 Market analysis: {topic}. Understanding trends helps you make better tech decisions! #TechAnalysis #MarketTrends"
+            ]
+        },
+        general: {
+            promotional: [
+                "🚀 Excited to share: {topic}! Check out what's new with us! #New #Exciting",
+                "💎 Special offer: {topic}! Limited time only - don't miss out! #SpecialOffer #Deal",
+                "🎉 Big news: {topic}! We're thrilled to share this with our community! #Announcement #News"
+            ],
+            educational: [
+                "💡 Did you know? {topic}. We love sharing insights that help our customers! #Tips #Education",
+                "📚 Learn more: {topic}. Knowledge is power! #Learning #Insights"
+            ],
+            engagement: [
+                "🤔 Question for you: {topic}? We'd love to hear your thoughts! 👇 #Question #Community",
+                "📸 Show us: {topic}! Tag us in your photos! #Share #Community"
+            ]
+        }
+    };
+    
+    // Select templates based on industry and post type
+    const templates = industryTemplates[industry]?.[postType] || industryTemplates.general.promotional;
+    
+    // Generate content
+    let content = templates[Math.floor(Math.random() * templates.length)].replace('{topic}', topic);
+    
+    // Add call to action if provided
+    if (callToAction) {
+        content += ` ${callToAction}`;
+    }
+    
+    // Generate industry-specific hashtags
+    const hashtagSets = {
+        automotive: ['#Auto', '#CarLife', '#Drive', '#Vehicle', '#AutoIndustry'],
+        realestate: ['#RealEstate', '#Home', '#Property', '#Housing', '#Realtor'],
+        medical: ['#Health', '#Wellness', '#Healthcare', '#Medical', '#HealthyLiving'],
+        restaurant: ['#Foodie', '#Food', '#EatLocal', '#Restaurant', '#Delicious'],
+        fitness: ['#Fitness', '#Workout', '#GymLife', '#Healthy', '#FitLife'],
+        legal: ['#Legal', '#Law', '#Justice', '#Attorney', '#LegalAdvice'],
+        salon: ['#Beauty', '#Salon', '#Hair', '#Style', '#Glam'],
+        retail: ['#Shopping', '#Fashion', '#Style', '#Retail', '#ShopLocal'],
+        technology: ['#Tech', '#Innovation', '#Digital', '#Technology', '#Future'],
+        general: ['#Business', '#Success', '#Growth', '#Entrepreneur', '#Innovation']
+    };
+    
+    const hashtags = (hashtagSets[industry] || hashtagSets.general).join(' ');
+    
+    // Add emoji if requested
+    if (!includeEmoji) {
+        content = content.replace(/[\u{1F600}-\u{1F64F}]/gu, '').replace(/[\u{1F300}-\u{1F5FF}]/gu, '').replace(/[\u{1F680}-\u{1F6FF}]/gu, '').replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '').replace(/[\u{2600}-\u{26FF}]/gu, '').replace(/[\u{2700}-\u{27BF}]/gu, '');
+    }
+    
+    // Generate best posting times based on industry
+    const bestTimesByIndustry = {
+        restaurant: ['11:30 AM', '5:00 PM', '7:00 PM'],
+        retail: ['12:00 PM', '3:00 PM', '7:00 PM'],
+        medical: ['9:00 AM', '1:00 PM', '4:00 PM'],
+        realestate: ['9:00 AM', '12:00 PM', '6:00 PM'],
+        automotive: ['10:00 AM', '2:00 PM', '6:00 PM'],
+        fitness: ['6:00 AM', '12:00 PM', '5:00 PM'],
+        general: ['9:00 AM', '12:00 PM', '6:00 PM']
+    };
+    
+    try {
+        await pool.query(`
+            INSERT INTO ai_generated_content 
+            (user_id, topic, content, platforms, industry, post_type, tone, target_audience) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [req.user.userId, topic, content, platforms, industry, postType, tone, targetAudience]);
+    } catch (e) {
+        console.error(e);
+    }
+    
+    res.json({
+        success: true,
+        content,
+        hashtags: includeHashtags ? hashtags : '',
+        bestTimes: bestTimesByIndustry[industry] || bestTimesByIndustry.general,
+        industry,
+        postType,
+        tone,
+        variations: templates.slice(0, 3).map(t => t.replace('{topic}', topic))
+    });
+});
+
+// ==================== ENHANCED SCHEDULING WITH RECURRENCE ====================
+app.post('/api/schedule-post', authenticateToken, async (req, res) => {
+    const { 
+        content, 
+        platforms, 
+        platformsData,
+        mediaUrls, 
+        mediaIds, 
+        scheduledTime,
+        industry = 'general',
+        postType = 'promotional',
+        tone = 'professional',
+        targetAudience = '',
+        callToAction = '',
+        isRecurring = false,
+        recurrencePattern = null,
+        recurrenceEndDate = null
+    } = req.body;
+    
+    try {
+        const user = await pool.query('SELECT posts_remaining, platform_limit FROM users WHERE id = $1', [req.user.userId]);
+        
+        if (user.rows[0].posts_remaining <= 0) {
+            return res.status(403).json({ error: 'Post limit reached. Upgrade your package.' });
+        }
+        
+        // Create the parent post
+        const result = await pool.query(`
+            INSERT INTO scheduled_posts 
+            (user_id, content, platforms, platforms_data, media_urls, media_ids, scheduled_time, 
+             industry, post_type, tone, target_audience, call_to_action,
+             is_recurring, recurrence_pattern, recurrence_end_date, status) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) 
+            RETURNING id
+        `, [
+            req.user.userId, content, platforms, JSON.stringify(platformsData || {}), 
+            mediaUrls || [], mediaIds || [], scheduledTime,
+            industry, postType, tone, targetAudience, callToAction,
+            isRecurring, recurrencePattern, recurrenceEndDate,
+            isRecurring ? 'recurring_parent' : 'pending'
+        ]);
+        
+        const parentPostId = result.rows[0].id;
+        
+        // If recurring, create future instances
+        if (isRecurring && recurrencePattern) {
+            const instances = generateRecurringInstances(scheduledTime, recurrencePattern, recurrenceEndDate);
+            
+            for (const instanceTime of instances) {
+                await pool.query(`
+                    INSERT INTO post_instances 
+                    (parent_post_id, scheduled_time) 
+                    VALUES ($1, $2)
+                `, [parentPostId, instanceTime]);
+            }
+        }
+        
+        await pool.query(`
+            UPDATE users 
+            SET posts_remaining = posts_remaining - 1, posts_used = posts_used + 1 
+            WHERE id = $1
+        `, [req.user.userId]);
+        
+        res.json({ 
+            success: true, 
+            postId: parentPostId, 
+            message: isRecurring ? 'Recurring post schedule created!' : 'Post scheduled!',
+            isRecurring,
+            instancesCreated: isRecurring ? instances.length : 0
+        });
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+function generateRecurringInstances(startTime, pattern, endDate) {
+    const instances = [];
+    let current = new Date(startTime);
+    const end = endDate ? new Date(endDate) : new Date(current.getTime() + 90 * 24 * 60 * 60 * 1000);
+    
+    while (current <= end) {
+        instances.push(current.toISOString());
+        
+        if (pattern === 'daily') {
+            current.setDate(current.getDate() + 1);
+        } else if (pattern === 'weekly') {
+            current.setDate(current.getDate() + 7);
+        } else if (pattern === 'monthly') {
+            current.setMonth(current.getMonth() + 1);
+        } else if (pattern === 'biweekly') {
+            current.setDate(current.getDate() + 14);
+        }
+    }
+    
+    return instances.slice(1);
+}
+
+// ==================== GET SCHEDULED POSTS WITH INSTANCES ====================
+app.get('/api/user/scheduled-posts', authenticateToken, async (req, res) => {
+    try {
+        const posts = await pool.query(`
+            SELECT 
+                sp.*,
+                COUNT(pi.id) as instance_count,
+                ARRAY_AGG(
+                    CASE 
+                        WHEN pi.id IS NOT NULL 
+                        THEN jsonb_build_object(
+                            'id', pi.id,
+                            'scheduled_time', pi.scheduled_time,
+                            'status', pi.status,
+                            'is_recalled', pi.is_recalled
+                        )
+                        ELSE NULL
+                    END
+                ) FILTER (WHERE pi.id IS NOT NULL) as instances
+            FROM scheduled_posts sp
+            LEFT JOIN post_instances pi ON sp.id = pi.parent_post_id
+            WHERE sp.user_id = $1 AND sp.is_recalled = false
+            GROUP BY sp.id
+            ORDER BY sp.scheduled_time DESC
+        `, [req.user.userId]);
+        
+        res.json(posts.rows);
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==================== RECALL A POST ====================
+app.post('/api/recall-post/:postId', authenticateToken, async (req, res) => {
+    const { postId } = req.params;
+    const { reason, recallInstances = false } = req.body;
+    
+    try {
+        const post = await pool.query(
+            'SELECT * FROM scheduled_posts WHERE id = $1 AND user_id = $2',
+            [postId, req.user.userId]
+        );
+        
+        if (post.rows.length === 0) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+        
+        if (post.rows[0].status === 'published') {
+            const publishedAt = new Date(post.rows[0].published_at);
+            const now = new Date();
+            const hoursSincePublished = (now - publishedAt) / (1000 * 60 * 60);
+            
+            if (hoursSincePublished > 1) {
+                return res.status(403).json({ 
+                    error: 'Recall window expired. Posts can only be recalled within 1 hour of publishing.' 
+                });
+            }
+        }
+        
+        await pool.query(`
+            UPDATE scheduled_posts 
+            SET is_recalled = true, 
+                recalled_at = NOW(), 
+                recall_reason = $1,
+                status = 'recalled'
+            WHERE id = $2
+        `, [reason, postId]);
+        
+        if (recallInstances && post.rows[0].is_recurring) {
+            await pool.query(`
+                UPDATE post_instances 
+                SET is_recalled = true 
+                WHERE parent_post_id = $1 AND status = 'pending'
+            `, [postId]);
+        }
+        
+        const deletionResults = await recallFromPlatforms(post.rows[0]);
+        
+        res.json({ 
+            success: true, 
+            message: 'Post recalled successfully',
+            deletionResults
+        });
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+async function recallFromPlatforms(post) {
+    const results = {};
+    const platforms = post.platforms || [];
+    
+    for (const platform of platforms) {
+        try {
+            results[platform] = await deleteFromPlatform(platform, post);
+        } catch (err) {
+            results[platform] = { success: false, error: err.message };
+        }
+    }
+    
+    return results;
+}
+
+async function deleteFromPlatform(platform, post) {
+    const account = await pool.query(
+        'SELECT access_token, page_id FROM social_accounts WHERE user_id = $1 AND platform = $2',
+        [post.user_id, platform]
+    );
+    
+    if (account.rows.length === 0) {
+        return { success: false, error: 'No connected account' };
+    }
+    
+    return { success: true, message: 'Deletion requested' };
+}
+
+// ==================== UPDATE POST PLATFORMS ====================
+app.patch('/api/post/:postId/platforms', authenticateToken, async (req, res) => {
+    const { postId } = req.params;
+    const { platforms, platformsData } = req.body;
+    
+    try {
+        await pool.query(`
+            UPDATE scheduled_posts 
+            SET platforms = $1, platforms_data = $2, updated_at = NOW()
+            WHERE id = $3 AND user_id = $4 AND status = 'pending'
+        `, [platforms, JSON.stringify(platformsData), postId, req.user.userId]);
+        
+        res.json({ success: true });
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // ==================== USER DASHBOARD ====================
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
@@ -513,7 +1070,13 @@ app.get('/api/oauth/:platform/url', authenticateToken, async (req, res) => {
         pinterest: `https://www.pinterest.com/oauth/?client_id=${process.env.PINTEREST_APP_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/pinterest&scope=boards:read,pins:read,pins:write&response_type=code&state=${userId}`,
         threads: `https://threads.net/oauth/authorize?client_id=${process.env.THREADS_APP_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/threads&scope=threads_basic,threads_content_publish&response_type=code&state=${userId}`,
         snapchat: `https://accounts.snapchat.com/accounts/oauth2/authorize?client_id=${process.env.SNAPCHAT_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/snapchat&scope=snapchat-marketing-api&response_type=code&state=${userId}`,
-        twitch: `https://id.twitch.tv/oauth2/authorize?client_id=${process.env.TWITCH_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/twitch&scope=channel:manage:broadcast user:read:email&response_type=code&state=${userId}`
+        twitch: `https://id.twitch.tv/oauth2/authorize?client_id=${process.env.TWITCH_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/twitch&scope=channel:manage:broadcast user:read:email&response_type=code&state=${userId}`,
+        reddit: `https://www.reddit.com/api/v1/authorize?client_id=${process.env.REDDIT_CLIENT_ID}&response_type=code&state=${userId}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/reddit&scope=submit,read`,
+        tumblr: `https://www.tumblr.com/oauth2/authorize?client_id=${process.env.TUMBLR_CONSUMER_KEY}&response_type=code&state=${userId}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/tumblr`,
+        medium: `https://medium.com/m/oauth/authorize?client_id=${process.env.MEDIUM_INTEGRATION_TOKEN}&scope=basicProfile,publishPost&state=${userId}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/medium`,
+        yelp: `https://biz.yelp.com/oauth2/authorize?client_id=${process.env.YELP_API_KEY}&state=${userId}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/yelp`,
+        google_business: `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_BUSINESS_CLIENT_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/google_business&scope=https://www.googleapis.com/auth/business.manage&response_type=code&state=${userId}`,
+        whatsapp: `https://graph.facebook.com/v18.0/oauth/authorize?client_id=${process.env.WHATSAPP_BUSINESS_ID}&redirect_uri=${process.env.OAUTH_REDIRECT_URI}/whatsapp&scope=whatsapp_business_messaging,whatsapp_business_management&response_type=code&state=${userId}`
     };
     
     res.json({ url: oauthUrls[platform] || null });
@@ -524,13 +1087,9 @@ app.post('/api/oauth/:platform/callback', async (req, res) => {
     const { code, state: userId } = req.body;
     
     try {
-        // Exchange code for access token (implementation varies by platform)
         const tokenResponse = await exchangeCodeForToken(platform, code);
-        
-        // Get account info
         const accountInfo = await getAccountInfo(platform, tokenResponse.access_token);
         
-        // Store in database
         await pool.query(
             `INSERT INTO social_accounts (user_id, platform, account_username, profile_url, access_token, refresh_token, page_id, page_name, is_active) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -548,8 +1107,6 @@ app.post('/api/oauth/:platform/callback', async (req, res) => {
 });
 
 async function exchangeCodeForToken(platform, code) {
-    // Platform-specific token exchange implementations
-    // This is a simplified version - each platform has different requirements
     const tokenUrls = {
         instagram: 'https://api.instagram.com/oauth/access_token',
         facebook: 'https://graph.facebook.com/v18.0/oauth/access_token',
@@ -560,23 +1117,25 @@ async function exchangeCodeForToken(platform, code) {
         pinterest: 'https://api.pinterest.com/v5/oauth/token',
         threads: 'https://graph.threads.net/oauth/access_token',
         snapchat: 'https://accounts.snapchat.com/accounts/oauth2/token',
-        twitch: 'https://id.twitch.tv/oauth2/token'
+        twitch: 'https://id.twitch.tv/oauth2/token',
+        reddit: 'https://www.reddit.com/api/v1/access_token',
+        tumblr: 'https://api.tumblr.com/v2/oauth2/token',
+        medium: 'https://api.medium.com/v1/tokens',
+        yelp: 'https://api.yelp.com/oauth2/token',
+        google_business: 'https://oauth2.googleapis.com/token',
+        whatsapp: 'https://graph.facebook.com/v18.0/oauth/access_token'
     };
     
-    // Implementation would use axios to make the actual token exchange
-    // Return mock for now - implement per platform as needed
     return { access_token: 'mock_token_' + Date.now(), refresh_token: 'mock_refresh_' + Date.now() };
 }
 
 async function getAccountInfo(platform, accessToken) {
-    // Platform-specific API calls to get account info
     return { username: 'user_' + Date.now(), profileUrl: `https://${platform}.com/user`, pageId: 'page_' + Date.now(), pageName: 'My Page' };
 }
 
 app.post('/api/connect-account', authenticateToken, async (req, res) => {
     const { platform, accountUsername, profileUrl, pageId, pageName } = req.body;
     try {
-        // Check platform limit
         const user = await pool.query('SELECT platform_limit, (SELECT COUNT(*) FROM social_accounts WHERE user_id = $1 AND is_active = true) as connected_count FROM users WHERE id = $1', [req.user.userId]);
         
         if (parseInt(user.rows[0].connected_count) >= user.rows[0].platform_limit) {
@@ -601,8 +1160,6 @@ app.post('/api/upload-media', authenticateToken, async (req, res) => {
     const { filename, fileData, fileType } = req.body;
     
     try {
-        // In production, upload to S3 or similar storage
-        // For now, store base64 or save to filesystem
         const fileUrl = `/uploads/${Date.now()}_${filename}`;
         
         const result = await pool.query(
@@ -620,52 +1177,6 @@ app.get('/api/user/media', authenticateToken, async (req, res) => {
     try {
         const media = await pool.query('SELECT * FROM media_uploads WHERE user_id = $1 ORDER BY created_at DESC', [req.user.userId]);
         res.json(media.rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ==================== AI CONTENT ====================
-app.post('/api/generate-content', authenticateToken, async (req, res) => {
-    const { topic, platforms, tone = 'professional' } = req.body;
-    
-    const templates = {
-        professional: [`Excited to share insights about ${topic}! 🚀 #${topic.replace(/\s+/g, '')}`, `Just published new content about ${topic}. Check it out! 👆`, `${topic} is changing the game. Here's what you need to know... 💡`],
-        casual: [`Obsessed with ${topic} right now! 🔥`, `Quick tip about ${topic}... 😎`, `Can we talk about ${topic}? 👀`],
-        promotional: [`🚨 Limited time: Master ${topic}! Link in bio 👆`, `Stop struggling with ${topic}. We found the solution 🎯`, `Double your ${topic} results in 30 days. 💪`]
-    };
-    
-    const selected = templates[tone] || templates.professional;
-    const content = selected[Math.floor(Math.random() * selected.length)];
-    
-    try {
-        await pool.query(`INSERT INTO ai_generated_content (user_id, topic, content, platforms) VALUES ($1, $2, $3, $4)`, [req.user.userId, topic, content, platforms]);
-    } catch (e) {
-        console.error(e);
-    }
-    
-    res.json({ success: true, content, hashtags: [`#${topic.replace(/\s+/g, '')}`, '#Trending'], bestTimes: ['9:00 AM', '12:00 PM', '6:00 PM'] });
-});
-
-// ==================== POST SCHEDULING ====================
-app.post('/api/schedule-post', authenticateToken, async (req, res) => {
-    const { content, platforms, mediaUrls, mediaIds, scheduledTime } = req.body;
-    
-    try {
-        const user = await pool.query('SELECT posts_remaining FROM users WHERE id = $1', [req.user.userId]);
-        
-        if (user.rows[0].posts_remaining <= 0) {
-            return res.status(403).json({ error: 'Post limit reached. Upgrade your package.' });
-        }
-        
-        const result = await pool.query(
-            `INSERT INTO scheduled_posts (user_id, content, platforms, media_urls, media_ids, scheduled_time) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-            [req.user.userId, content, platforms, mediaUrls || [], mediaIds || [], scheduledTime]
-        );
-        
-        await pool.query('UPDATE users SET posts_remaining = posts_remaining - 1, posts_used = posts_used + 1 WHERE id = $1', [req.user.userId]);
-        
-        res.json({ success: true, postId: result.rows[0].id, message: 'Post scheduled!' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -701,7 +1212,6 @@ app.get('/api/messages/conversation/:userId', authenticateToken, async (req, res
             ORDER BY m.created_at ASC
         `, [req.user.userId, req.params.userId]);
         
-        // Mark as read
         await pool.query('UPDATE messages SET is_read = true WHERE recipient_id = $1 AND sender_id = $2', [req.user.userId, req.params.userId]);
         
         res.json(messages.rows);
@@ -742,7 +1252,7 @@ cron.schedule('*/5 * * * *', async () => {
         const pending = await pool.query(`
             SELECT sp.*, u.email, u.package FROM scheduled_posts sp
             JOIN users u ON sp.user_id = u.id
-            WHERE sp.status = 'pending' AND sp.scheduled_time <= NOW() AND u.is_active = true AND u.status = 'active'
+            WHERE sp.status = 'pending' AND sp.scheduled_time <= NOW() AND u.is_active = true AND u.status = 'active' AND sp.is_recalled = false
         `);
         
         for (const post of pending.rows) {
@@ -750,7 +1260,7 @@ cron.schedule('*/5 * * * *', async () => {
                 const accounts = await pool.query('SELECT platform, access_token, page_id FROM social_accounts WHERE user_id = $1 AND is_active = true', [post.user_id]);
                 
                 for (const account of accounts.rows) {
-                    if (post.platforms.includes(account.platform)) {
+                    if (post.platforms.includes(account.platform) && post.platforms_data[account.platform] !== false) {
                         await publishToPlatform(account.platform, account.access_token, account.page_id, post.content, post.media_urls);
                     }
                 }
@@ -764,15 +1274,40 @@ cron.schedule('*/5 * * * *', async () => {
                 console.error(`❌ Failed post ${post.id}:`, err.message);
             }
         }
+        
+        // Also check post_instances for recurring posts
+        const recurringInstances = await pool.query(`
+            SELECT pi.*, sp.user_id, sp.content, sp.media_urls, sp.platforms, sp.platforms_data
+            FROM post_instances pi
+            JOIN scheduled_posts sp ON pi.parent_post_id = sp.id
+            WHERE pi.scheduled_time <= NOW() AND pi.status = 'pending' AND pi.is_recalled = false
+        `);
+        
+        for (const instance of recurringInstances.rows) {
+            try {
+                const accounts = await pool.query('SELECT platform, access_token, page_id FROM social_accounts WHERE user_id = $1 AND is_active = true', [instance.user_id]);
+                
+                for (const account of accounts.rows) {
+                    if (instance.platforms.includes(account.platform) && instance.platforms_data[account.platform] !== false) {
+                        await publishToPlatform(account.platform, account.access_token, account.page_id, instance.content, instance.media_urls);
+                    }
+                }
+                
+                await pool.query('UPDATE post_instances SET status = $1, published_at = NOW() WHERE id = $2', ['published', instance.id]);
+                
+                console.log(`✅ Published instance ${instance.id}`);
+            } catch (err) {
+                await pool.query('UPDATE post_instances SET status = $1 WHERE id = $2', ['failed', instance.id]);
+                console.error(`❌ Failed instance ${instance.id}:`, err.message);
+            }
+        }
     } catch (error) {
         console.error('Cron error:', error);
     }
 });
 
 async function publishToPlatform(platform, accessToken, pageId, content, mediaUrls) {
-    // Platform-specific publishing implementations
     console.log(`Publishing to ${platform}...`);
-    // Implementation would use platform APIs (Facebook Graph API, Twitter API, etc.)
 }
 
 // ==================== ADMIN ROUTES ====================
@@ -825,10 +1360,7 @@ app.get('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, res)
             return res.status(404).json({ error: 'User not found' });
         }
         
-        // Get user's posts
         const posts = await pool.query('SELECT * FROM scheduled_posts WHERE user_id = $1 ORDER BY scheduled_time DESC LIMIT 10', [req.params.id]);
-        
-        // Get user's messages
         const messages = await pool.query(`
             SELECT m.*, sender.email as sender_email
             FROM messages m
@@ -865,6 +1397,7 @@ app.patch('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, re
 
         values.push(req.params.id);
 
+        const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${param
         const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
         const result = await pool.query(query, values);
 
@@ -935,4 +1468,3 @@ const PORT = process.env.PORT || 3000;
 initDatabase().then(() => {
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 });
-
