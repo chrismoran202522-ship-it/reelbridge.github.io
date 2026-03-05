@@ -204,7 +204,8 @@ async function initDatabase() {
                 referral_source VARCHAR(100),
                 marketing_consent BOOLEAN DEFAULT false,
                 address_street VARCHAR(255),
-                address_city VARCHAR(100),
+                address_city VARCHAR
+(100),
                 address_state VARCHAR(100),
                 address_zip VARCHAR(20),
                 address_country VARCHAR(100) DEFAULT 'US',
@@ -534,7 +535,72 @@ function getPlatforms(pkg, features = null) {
     return map[pkg] || map['starter'];
 }
 
-// ==================== ENHANCED AI CONTENT GENERATION ====================
+// ==================== REAL AI CONTENT GENERATION (OpenAI Ready) ====================
+// To use real AI, set OPENAI_API_KEY in environment variables
+// The system will fall back to templates if no API key is provided
+
+async function generateWithAI(params) {
+    const { topic, industry, postType, tone, targetAudience, callToAction, includeHashtags, includeEmoji } = params;
+    
+    // Check if OpenAI is configured
+    if (!process.env.OPENAI_API_KEY) {
+        return null; // Fall back to templates
+    }
+    
+    try {
+        const OpenAI = require('openai');
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        
+        const industryNames = {
+            automotive: 'automotive/car dealership',
+            realestate: 'real estate',
+            medical: 'medical/healthcare',
+            restaurant: 'restaurant/food service',
+            fitness: 'fitness/gym',
+            legal: 'legal services',
+            salon: 'beauty/salon',
+            retail: 'retail/fashion',
+            technology: 'technology/software',
+            general: 'general business'
+        };
+        
+        const systemPrompt = `You are a professional social media content creator specializing in ${industryNames[industry] || 'business'} content.
+Create engaging, platform-appropriate social media posts.
+Tone: ${tone}
+Post type: ${postType}
+${targetAudience ? `Target audience: ${targetAudience}` : ''}
+${callToAction ? `Include call to action: ${callToAction}` : ''}
+${includeEmoji ? 'Use appropriate emojis.' : 'No emojis.'}
+${includeHashtags ? 'Include relevant hashtags at the end.' : 'No hashtags.'}
+Provide exactly 3 variations of the post, numbered 1-2-3.`;
+
+        const userPrompt = `Create a social media post about: ${topic}`;
+
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4",
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt }
+            ],
+            temperature: 0.8,
+            max_tokens: 800
+        });
+
+        const content = completion.choices[0].message.content;
+        
+        // Parse variations from AI response
+        const variations = content.split(/\d+[\.\)]\s*/).filter(v => v.trim().length > 20).slice(0, 3);
+        
+        return {
+            content: variations[0] || content,
+            variations: variations.length >= 3 ? variations : [content, content, content]
+        };
+    } catch (error) {
+        console.error('OpenAI generation failed:', error);
+        return null; // Fall back to templates
+    }
+}
+
 app.post('/api/generate-content', authenticateToken, async (req, res) => {
     const { 
         topic, 
@@ -548,190 +614,280 @@ app.post('/api/generate-content', authenticateToken, async (req, res) => {
         includeEmoji = true
     } = req.body;
     
-    // Industry-specific templates and knowledge
+    // Try real AI first
+    const aiResult = await generateWithAI({
+        topic, industry, postType, tone, targetAudience, callToAction, includeHashtags, includeEmoji
+    });
+    
+    if (aiResult) {
+        // Save to history
+        try {
+            await pool.query(`
+                INSERT INTO ai_generated_content 
+                (user_id, topic, content, platforms, industry, post_type, tone, target_audience) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [req.user.userId, topic, aiResult.content, platforms, industry, postType, tone, targetAudience]);
+        } catch (e) {
+            console.error(e);
+        }
+        
+        return res.json({
+            success: true,
+            content: aiResult.content,
+            variations: aiResult.variations,
+            source: 'ai',
+            industry,
+            postType,
+            tone
+        });
+    }
+    
+    // Fall back to template-based generation
     const industryTemplates = {
         automotive: {
-            educational: [
-                "🚗 Did you know? {topic}. Understanding your vehicle better helps you make informed decisions. #CarCare #AutoTips",
-                "⚙️ Maintenance Monday: {topic}. Regular upkeep saves you money long-term. Schedule your service today! #AutoMaintenance",
-                "🔧 Pro Tip: {topic}. Our certified technicians are here to help with all your automotive needs. #CarExperts"
-            ],
             promotional: [
-                "🚙 Ready to upgrade? {topic}! Check out our latest inventory with unbeatable prices. Limited time offers available! 🏃‍♂️💨 #NewCars #AutoDeals",
-                "💰 Trade-in special! {topic}. Get top dollar for your vehicle and drive away in your dream car today! #TradeIn #Upgrade",
-                "🎉 Flash Sale Alert! {topic}. Don't miss out - these deals won't last long! Visit us or call now. #CarSale #LimitedTime"
+                "🚗 Ready to upgrade? {topic}! Check out our latest inventory with unbeatable prices. Limited time offers available! 🏃‍♂️💨",
+                "💰 Trade-in special! {topic}. Get top dollar for your vehicle and drive away in your dream car today!",
+                "🎉 Flash Sale Alert! {topic}. Don't miss out - these deals won't last long! Visit us or call now."
+            ],
+            educational: [
+                "🚗 Did you know? {topic}. Understanding your vehicle better helps you make informed decisions.",
+                "⚙️ Maintenance Monday: {topic}. Regular upkeep saves you money long-term. Schedule your service today!",
+                "🔧 Pro Tip: {topic}. Our certified technicians are here to help with all your automotive needs."
             ],
             engagement: [
-                "📸 Show us your ride! {topic}. Drop a photo in the comments - we love seeing our community's vehicles! #CarCommunity",
-                "🤔 What's your dream car? {topic}. Tell us in the comments! 👇 #DreamCar #CarTalk",
-                "🏆 Customer spotlight: {topic}. We love hearing from happy customers! Share your experience with us. #Testimonial"
+                "📸 Show us your ride! {topic}. Drop a photo in the comments - we love seeing our community's vehicles!",
+                "🤔 What's your dream car? {topic}. Tell us in the comments! 👇",
+                "🏆 Customer spotlight: {topic}. We love hearing from happy customers! Share your experience with us."
             ],
             seasonal: [
-                "❄️ Winter is coming! {topic}. Make sure your vehicle is ready for the cold months ahead. #WinterPrep",
-                "☀️ Summer road trip ready? {topic}. Get your vehicle checked before you hit the road! #RoadTrip #SummerReady"
+                "❄️ Winter is coming! {topic}. Make sure your vehicle is ready for the cold months ahead.",
+                "☀️ Summer road trip ready? {topic}. Get your vehicle checked before you hit the road!"
+            ],
+            trust: [
+                "🎓 Meet our certified technicians: {topic}. Expert care for your vehicle every time.",
+                "🏆 Award-winning service: {topic}. Trusted by thousands of happy customers!"
             ]
         },
         realestate: {
-            educational: [
-                "🏠 Market insight: {topic}. Stay informed to make the best real estate decisions. #RealEstateTips #MarketUpdate",
-                "📊 Did you know? {topic}. Understanding the market helps buyers and sellers alike. #RealEstateEducation",
-                "💡 First-time buyer tip: {topic}. We're here to guide you through every step! #FirstTimeBuyer #HomeBuying"
-            ],
             promotional: [
-                "🔥 Just Listed! {topic}. This stunning property won't last long - schedule your showing today! #NewListing #DreamHome",
-                "💎 Price Improvement! {topic}. Now's your chance to own this incredible property at an unbeatable value! #PriceDrop #Deal",
-                "🏡 Open House This Weekend! {topic}. Join us Saturday & Sunday 1-4 PM. Don't miss it! #OpenHouse #WeekendPlans"
+                "🔥 Just Listed! {topic}. This stunning property won't last long - schedule your showing today!",
+                "💎 Price Improvement! {topic}. Now's your chance to own this incredible property at an unbeatable value!",
+                "🏡 Open House This Weekend! {topic}. Join us Saturday & Sunday 1-4 PM. Don't miss it!"
+            ],
+            educational: [
+                "🏠 Market insight: {topic}. Stay informed to make the best real estate decisions.",
+                "📊 Did you know? {topic}. Understanding the market helps buyers and sellers alike.",
+                "💡 First-time buyer tip: {topic}. We're here to guide you through every step!"
             ],
             engagement: [
-                "🎯 Guess the price! {topic}. Drop your guess in the comments! Closest without going over wins a gift card! 🎁 #GuessThePrice",
-                "📸 Home goals! {topic}. Which feature is your must-have? Let us know! 👇 #DreamHome #RealEstate",
-                "🏆 Sold! Congratulations to our clients! {topic}. Another happy homeowner! #JustSold #HappyClients"
+                "🎯 Guess the price! {topic}. Drop your guess in the comments! Closest without going over wins!",
+                "📸 Home goals! {topic}. Which feature is your must-have? Let us know! 👇",
+                "🏆 Sold! Congratulations to our clients! {topic}. Another happy homeowner!"
             ],
             seasonal: [
-                "🌸 Spring market is heating up! {topic}. Now is the perfect time to buy or sell! #SpringMarket #RealEstate",
-                "🏠 New Year, New Home? {topic}. Start 2026 in your dream property! #NewYearNewHome"
+                "🌸 Spring market is heating up! {topic}. Now is the perfect time to buy or sell!",
+                "🏠 New Year, New Home? {topic}. Start 2026 in your dream property!"
+            ],
+            trust: [
+                "🎓 Meet our agents: {topic}. Local experts with proven results.",
+                "⭐ 5-Star Review: {topic}. See why clients love working with us!"
             ]
         },
         medical: {
-            educational: [
-                "💙 Health Tip: {topic}. Small changes make a big difference in your wellness journey. #HealthTips #Wellness",
-                "🩺 Did you know? {topic}. Stay informed about your health - knowledge is power! #HealthEducation",
-                "⚕️ Prevention is key: {topic}. Regular check-ups help catch issues early. #PreventiveCare #HealthFirst"
-            ],
             promotional: [
-                "📅 Now accepting new patients! {topic}. Experience compassionate, quality care close to home. Schedule today! #NewPatients #Healthcare",
-                "🎉 Special offer: {topic}. Limited time wellness packages available - invest in your health! #WellnessPackage #HealthDeal",
-                "🏥 Expanded services! {topic}. We're growing to better serve our community's health needs. #NewServices #CommunityHealth"
+                "📅 Now accepting new patients! {topic}. Experience compassionate, quality care close to home.",
+                "🎉 Special offer: {topic}. Limited time wellness packages available - invest in your health!",
+                "🏥 Expanded services! {topic}. We're growing to better serve our community's health needs."
+            ],
+            educational: [
+                "💙 Health Tip: {topic}. Small changes make a big difference in your wellness journey.",
+                "🩺 Did you know? {topic}. Stay informed about your health - knowledge is power!",
+                "⚕️ Prevention is key: {topic}. Regular check-ups help catch issues early."
             ],
             engagement: [
-                "❓ Health Q&A: {topic}. Drop your questions below - our experts will answer! 👇 #HealthQuestions #AskADoctor",
-                "💪 Wellness Wednesday: {topic}. Share your healthy habits in the comments! #WellnessWednesday #HealthyLiving",
-                "🌟 Patient success story: {topic}. Real results, real people! #PatientTestimonial #SuccessStory"
+                "❓ Health Q&A: {topic}. Drop your questions below - our experts will answer! 👇",
+                "💪 Wellness Wednesday: {topic}. Share your healthy habits in the comments!",
+                "🌟 Patient success story: {topic}. Real results, real people!"
             ],
             trust: [
-                "🎓 Meet Dr. [Name]: {topic}. Our team brings expertise and compassion to every patient interaction. #MeetTheDoctor #ExpertCare",
-                "🏆 Award-winning care: {topic}. Recognized for excellence in patient satisfaction! #AwardWinning #QualityCare"
+                "🎓 Meet Dr. [Name]: {topic}. Our team brings expertise and compassion to every patient interaction.",
+                "🏆 Award-winning care: {topic}. Recognized for excellence in patient satisfaction!"
+            ],
+            seasonal: [
+                "🍂 Flu season prep: {topic}. Protect yourself and your family this season.",
+                "☀️ Summer health tips: {topic}. Stay healthy and active all summer long!"
             ]
         },
         restaurant: {
-            educational: [
-                "👨‍🍳 Chef's secret: {topic}. Learn what makes our dishes special! #ChefTips #CookingSecrets",
-                "🍷 Pairing guide: {topic}. Elevate your dining experience with the perfect combination. #WinePairing #Foodie",
-                "🥗 Nutrition spotlight: {topic}. Delicious AND good for you! #HealthyEating #Nutritious"
-            ],
             promotional: [
-                "🍽️ Tonight's special: {topic}! Join us for an unforgettable dining experience. Reservations recommended! #Specials #DineLocal",
-                "🎉 Happy Hour 4-7 PM! {topic}. Great drinks, great prices, great vibes! #HappyHour #DrinkSpecials",
-                "🍰 Weekend brunch is back! {topic}. Bottomless mimosas and mouthwatering dishes await! #Brunch #WeekendVibes"
+                "🍽️ Tonight's special: {topic}! Join us for an unforgettable dining experience. Reservations recommended!",
+                "🎉 Happy Hour 4-7 PM! {topic}. Great drinks, great prices, great vibes!",
+                "🍰 Weekend brunch is back! {topic}. Bottomless mimosas and mouthwatering dishes await!"
+            ],
+            educational: [
+                "👨‍🍳 Chef's secret: {topic}. Learn what makes our dishes special!",
+                "🍷 Pairing guide: {topic}. Elevate your dining experience with the perfect combination.",
+                "🥗 Nutrition spotlight: {topic}. Delicious AND good for you!"
             ],
             engagement: [
-                "📸 Foodie Friday: {topic}. Tag us in your photos for a chance to be featured! #FoodieFriday #FoodPorn",
-                "🗳️ Vote now! {topic}. Help us choose our next featured dish! 👇 #Vote #MenuPlanning",
-                "🎂 Birthday celebration! {topic}. Join us for complimentary dessert on your special day! #BirthdayDeal #Celebrate"
+                "📸 Foodie Friday: {topic}. Tag us in your photos for a chance to be featured!",
+                "🗳️ Vote now! {topic}. Help us choose our next featured dish! 👇",
+                "🎂 Birthday celebration! {topic}. Join us for complimentary dessert on your special day!"
             ],
             behindScenes: [
-                "🔥 In the kitchen: {topic}. Fresh ingredients, passionate chefs, amazing flavors! #BehindTheScenes #KitchenLife",
-                "🌾 Farm to table: {topic}. We source locally for the freshest taste! #FarmToTable #LocalIngredients"
+                "🔥 In the kitchen: {topic}. Fresh ingredients, passionate chefs, amazing flavors!",
+                "🌾 Farm to table: {topic}. We source locally for the freshest taste!"
+            ],
+            seasonal: [
+                "🎃 Halloween special: {topic}. Spooky delicious treats for the whole family!",
+                "🦃 Holiday catering: {topic}. Let us handle the cooking this season!"
             ]
         },
         fitness: {
+            promotional: [
+                "🎉 New member special: {topic}! Join now and get your first month FREE!",
+                "👯‍♀️ Bring a friend! {topic}. Working out is better together - both save on membership!",
+                "🎯 Challenge accepted: {topic}. 30-day transformation challenge starts Monday!"
+            ],
             educational: [
-                "💪 Form check: {topic}. Proper technique prevents injury and maximizes results! #FitnessTips #ProperForm",
-                "🥗 Nutrition 101: {topic}. Fuel your body right for optimal performance! #Nutrition #FitnessFuel",
-                "😴 Recovery matters: {topic}. Rest is when your muscles grow stronger! #Recovery #FitnessEducation"
+                "💪 Form check: {topic}. Proper technique prevents injury and maximizes results!",
+                "🥗 Nutrition 101: {topic}. Fuel your body right for optimal performance!",
+                "😴 Recovery matters: {topic}. Rest is when your muscles grow stronger!"
             ],
             motivational: [
-                "🔥 No excuses! {topic}. Your only limit is you. Let's crush those goals together! 💪 #NoExcuses #FitnessMotivation",
-                "📈 Progress, not perfection: {topic}. Every workout counts - keep showing up! #Progress #KeepGoing",
-                "🏆 Transformation Tuesday: {topic}. Real members, real results! #Transformation #FitnessJourney"
+                "🔥 No excuses! {topic}. Your only limit is you. Let's crush those goals together! 💪",
+                "📈 Progress, not perfection: {topic}. Every workout counts - keep showing up!",
+                "🏆 Transformation Tuesday: {topic}. Real members, real results!"
             ],
-            promotional: [
-                "🎉 New member special: {topic}! Join now and get your first month FREE! #NewMember #FitnessDeal",
-                "👯‍♀️ Bring a friend! {topic}. Working out is better together - both save on membership! #ReferAFriend #WorkoutBuddy",
-                "🎯 Challenge accepted: {topic}. 30-day transformation challenge starts Monday! Sign up now! #FitnessChallenge #Transform"
+            engagement: [
+                "🤝 Meet our community: {topic}. These members inspire us every day!",
+                "📸 Share your sweat! {topic}. Tag us in your workout photos!"
             ],
             community: [
-                "🤝 Meet our community: {topic}. These members inspire us every day! #MemberSpotlight #FitnessFamily",
-                "📸 Share your sweat! {topic}. Tag us in your workout photos! #SweatSelfie #GymLife"
+                "🏋️‍♀️ Group class alert: {topic}. Find your fitness family with us!",
+                "🎽 Member milestone: {topic}. Celebrating amazing achievements in our community!"
             ]
         },
         legal: {
-            educational: [
-                "⚖️ Legal insight: {topic}. Understanding your rights is the first step to protection. #LegalTips #KnowYourRights",
-                "📋 Important update: {topic}. Stay informed about changes that may affect you. #LegalNews #StayInformed",
-                "❓ Common question: {topic}. We're here to provide clarity on complex legal matters. #LegalFAQ #AskALawyer"
-            ],
             promotional: [
-                "📞 Free consultation: {topic}. Discuss your case with experienced attorneys - no obligation! #FreeConsultation #LegalHelp",
-                "🏆 Case result: {topic}. Another successful outcome for our client! #CaseResult #LegalVictory",
-                "📅 Limited time: {topic}. Estate planning package special - protect your family's future! #EstatePlanning #SpecialOffer"
+                "📞 Free consultation: {topic}. Discuss your case with experienced attorneys - no obligation!",
+                "🏆 Case result: {topic}. Another successful outcome for our client!",
+                "📅 Limited time: {topic}. Estate planning package special - protect your family's future!"
+            ],
+            educational: [
+                "⚖️ Legal insight: {topic}. Understanding your rights is the first step to protection.",
+                "📋 Important update: {topic}. Stay informed about changes that may affect you.",
+                "❓ Common question: {topic}. We're here to provide clarity on complex legal matters."
             ],
             trust: [
-                "🎓 Meet the team: {topic}. Decades of combined experience working for you. #LegalTeam #ExperiencedAttorneys",
-                "⭐ Client review: {topic}. See why clients trust us with their most important matters. #ClientReview #Testimonial"
+                "🎓 Meet the team: {topic}. Decades of combined experience working for you.",
+                "⭐ Client review: {topic}. See why clients trust us with their most important matters."
+            ],
+            engagement: [
+                "📊 Poll: {topic}. We want to hear your thoughts on this important issue!",
+                "🎉 Client win: {topic}. Celebrating justice served for our community!"
+            ],
+            seasonal: [
+                "📝 Year-end legal checkup: {topic}. Start the new year with your affairs in order.",
+                "🏠 Spring cleaning for your legal documents: {topic}. Time for an update?"
             ]
         },
         salon: {
-            educational: [
-                "💇‍♀️ Hair care tip: {topic}. Keep your locks looking luscious between visits! #HairCare #BeautyTips",
-                "💅 Nail health: {topic}. Beautiful nails start with healthy nails! #NailCare #HealthyNails",
-                "✨ Skin care 101: {topic}. The right routine makes all the difference! #SkinCare #BeautyEducation"
-            ],
             promotional: [
-                "💇‍♀️ New client special: {topic}! 20% off your first service - book now! #NewClient #SalonDeal",
-                "🎉 Flash sale: {topic}! This weekend only - don't miss out! #FlashSale #BeautyDeal",
-                "👰 Bridal package: {topic}. Look stunning on your special day! #BridalBeauty #WeddingReady"
+                "💇‍♀️ New client special: {topic}! 20% off your first service - book now!",
+                "🎉 Flash sale: {topic}! This weekend only - don't miss out!",
+                "👰 Bridal package: {topic}. Look stunning on your special day!"
+            ],
+            educational: [
+                "💇‍♀️ Hair care tip: {topic}. Keep your locks looking luscious between visits!",
+                "💅 Nail health: {topic}. Beautiful nails start with healthy nails!",
+                "✨ Skin care 101: {topic}. The right routine makes all the difference!"
+            ],
+            engagement: [
+                "📸 Transformation Tuesday: {topic}. Before & after - we love making clients feel beautiful!",
+                "🗳️ This or that: {topic}. Help us choose which style to feature next!",
+                "🎨 Color of the season: {topic}. What's your go-to shade?"
             ],
             showcase: [
-                "✨ Transformation: {topic}. Before & after - we love making clients feel beautiful! #HairTransformation #Beauty",
-                "📸 Style of the week: {topic}. Which look is your favorite? #Hairstyle #BeautyInspo"
+                "✨ Style spotlight: {topic}. Our latest creations that we absolutely love!",
+                "🏆 Award-winning stylist: {topic}. Recognized excellence in our salon!"
+            ],
+            seasonal: [
+                "🌸 Spring refresh: {topic}. New season, new look!",
+                "🎄 Holiday glam: {topic}. Get party-ready with our special packages!"
             ]
         },
         retail: {
-            educational: [
-                "🛍️ Style guide: {topic}. Elevate your wardrobe with these tips! #StyleTips #FashionAdvice",
-                "👗 Care instructions: {topic}. Make your favorites last longer! #ClothingCare #SustainableFashion",
-                "🎨 Color trends: {topic}. Stay ahead of the fashion curve! #ColorTrends #FashionForward"
-            ],
             promotional: [
-                "🏷️ Sale alert: {topic}! Up to 50% off select items - shop now! #Sale #Shopping",
-                "🎁 New arrivals: {topic}. Be the first to shop our latest collection! #NewArrivals #MustHave",
-                "💳 Member exclusive: {topic}. Extra 15% off for loyalty members! #MemberPerks #Exclusive"
+                "🏷️ Sale alert: {topic}! Up to 50% off select items - shop now!",
+                "🎁 New arrivals: {topic}. Be the first to shop our latest collection!",
+                "💳 Member exclusive: {topic}. Extra 15% off for loyalty members!"
+            ],
+            educational: [
+                "🛍️ Style guide: {topic}. Elevate your wardrobe with these tips!",
+                "👗 Care instructions: {topic}. Make your favorites last longer!",
+                "🎨 Color trends: {topic}. Stay ahead of the fashion curve!"
             ],
             engagement: [
-                "🗳️ This or that? {topic}. Help us choose which style to stock more of! 👇 #ThisOrThat #FashionPoll",
-                "📸 Outfit of the day: {topic}. Tag us in your looks for a chance to be featured! #OOTD #Fashion"
+                "🗳️ This or that? {topic}. Help us choose which style to stock more of! 👇",
+                "📸 Outfit of the day: {topic}. Tag us in your looks for a chance to be featured!",
+                "🎉 Customer spotlight: {topic}. Real style from real customers!"
+            ],
+            showcase: [
+                "✨ Featured collection: {topic}. Handpicked favorites just for you!",
+                "🔥 Trending now: {topic}. What's flying off our shelves this week!"
+            ],
+            seasonal: [
+                "🍂 Fall wardrobe essentials: {topic}. Must-haves for the new season!",
+                "🎁 Holiday gift guide: {topic}. Perfect presents for everyone on your list!"
             ]
         },
         technology: {
-            educational: [
-                "💡 Tech tip: {topic}. Get the most out of your devices! #TechTips #Productivity",
-                "🔒 Security alert: {topic}. Protect your data with these simple steps! #CyberSecurity #DataProtection",
-                "🚀 Innovation spotlight: {topic}. The future is here - stay ahead of the curve! #Innovation #TechTrends"
-            ],
             promotional: [
-                "💻 Upgrade special: {topic}! Trade in your old device for big savings! #TechDeal #Upgrade",
-                "🎉 New product launch: {topic}. Be among the first to experience the future! #NewTech #Launch",
-                "🔧 Service special: {topic}. Keep your tech running smoothly! #TechSupport #RepairSpecial"
+                "💻 Upgrade special: {topic}! Trade in your old device for big savings!",
+                "🎉 New product launch: {topic}. Be among the first to experience the future!",
+                "🔧 Service special: {topic}. Keep your tech running smoothly!"
+            ],
+            educational: [
+                "💡 Tech tip: {topic}. Get the most out of your devices!",
+                "🔒 Security alert: {topic}. Protect your data with these simple steps!",
+                "🚀 Innovation spotlight: {topic}. The future is here - stay ahead of the curve!"
             ],
             thoughtLeadership: [
-                "🤔 Industry insight: {topic}. Our experts share their perspective on what's next. #TechInsights #ThoughtLeadership",
-                "📊 Market analysis: {topic}. Understanding trends helps you make better tech decisions! #TechAnalysis #MarketTrends"
+                "🤔 Industry insight: {topic}. Our experts share their perspective on what's next.",
+                "📊 Market analysis: {topic}. Understanding trends helps you make better tech decisions!"
+            ],
+            engagement: [
+                "🗳️ Product poll: {topic}. Which feature matters most to you? Let us know!",
+                "🎉 Beta access: {topic}. Be the first to try our newest innovations!"
+            ],
+            seasonal: [
+                "🎓 Back to school tech: {topic}. Gear up for success this semester!",
+                "🎄 Holiday tech gifts: {topic}. The perfect gadgets for everyone on your list!"
             ]
         },
         general: {
             promotional: [
-                "🚀 Excited to share: {topic}! Check out what's new with us! #New #Exciting",
-                "💎 Special offer: {topic}! Limited time only - don't miss out! #SpecialOffer #Deal",
-                "🎉 Big news: {topic}! We're thrilled to share this with our community! #Announcement #News"
+                "🚀 Excited to share: {topic}! Check out what's new with us!",
+                "💎 Special offer: {topic}! Limited time only - don't miss out!",
+                "🎉 Big news: {topic}! We're thrilled to share this with our community!"
             ],
             educational: [
-                "💡 Did you know? {topic}. We love sharing insights that help our customers! #Tips #Education",
-                "📚 Learn more: {topic}. Knowledge is power! #Learning #Insights"
+                "💡 Did you know? {topic}. We love sharing insights that help our customers!",
+                "📚 Learn more: {topic}. Knowledge is power!"
             ],
             engagement: [
-                "🤔 Question for you: {topic}? We'd love to hear your thoughts! 👇 #Question #Community",
-                "📸 Show us: {topic}! Tag us in your photos! #Share #Community"
+                "🤔 Question for you: {topic}? We'd love to hear your thoughts! 👇",
+                "📸 Show us: {topic}! Tag us in your photos!"
+            ],
+            motivational: [
+                "💪 Monday motivation: {topic}. Start your week strong with us!",
+                "🌟 Success story: {topic}. Real results from real customers!"
+            ],
+            seasonal: [
+                "🎆 New beginnings: {topic}. Start fresh with us this season!",
+                "🎉 Holiday hours: {topic}. We're here when you need us most!"
             ]
         }
     };
@@ -740,7 +896,7 @@ app.post('/api/generate-content', authenticateToken, async (req, res) => {
     const templates = industryTemplates[industry]?.[postType] || industryTemplates.general.promotional;
     
     // Generate content
-    let content = templates[Math.floor(Math.random() * templates.length)].replace('{topic}', topic);
+    let content = templates[0].replace('{topic}', topic);
     
     // Add call to action if provided
     if (callToAction) {
@@ -797,7 +953,8 @@ app.post('/api/generate-content', authenticateToken, async (req, res) => {
         industry,
         postType,
         tone,
-        variations: templates.slice(0, 3).map(t => t.replace('{topic}', topic))
+        variations: templates.slice(0, 3).map(t => t.replace('{topic}', topic)),
+        source: 'template'
     });
 });
 
@@ -846,8 +1003,9 @@ app.post('/api/schedule-post', authenticateToken, async (req, res) => {
         const parentPostId = result.rows[0].id;
         
         // If recurring, create future instances
+        let instances = [];
         if (isRecurring && recurrencePattern) {
-            const instances = generateRecurringInstances(scheduledTime, recurrencePattern, recurrenceEndDate);
+            instances = generateRecurringInstances(scheduledTime, recurrencePattern, recurrenceEndDate);
             
             for (const instanceTime of instances) {
                 await pool.query(`
@@ -869,7 +1027,7 @@ app.post('/api/schedule-post', authenticateToken, async (req, res) => {
             postId: parentPostId, 
             message: isRecurring ? 'Recurring post schedule created!' : 'Post scheduled!',
             isRecurring,
-            instancesCreated: isRecurring ? instances.length : 0
+            instancesCreated: instances.length
         });
         
     } catch (error) {
@@ -881,6 +1039,17 @@ function generateRecurringInstances(startTime, pattern, endDate) {
     const instances = [];
     let current = new Date(startTime);
     const end = endDate ? new Date(endDate) : new Date(current.getTime() + 90 * 24 * 60 * 60 * 1000);
+    
+    // Skip the first one (parent post)
+    if (pattern === 'daily') {
+        current.setDate(current.getDate() + 1);
+    } else if (pattern === 'weekly') {
+        current.setDate(current.getDate() + 7);
+    } else if (pattern === 'monthly') {
+        current.setMonth(current.getMonth() + 1);
+    } else if (pattern === 'biweekly') {
+        current.setDate(current.getDate() + 14);
+    }
     
     while (current <= end) {
         instances.push(current.toISOString());
@@ -896,7 +1065,7 @@ function generateRecurringInstances(startTime, pattern, endDate) {
         }
     }
     
-    return instances.slice(1);
+    return instances;
 }
 
 // ==================== GET SCHEDULED POSTS WITH INSTANCES ====================
@@ -905,23 +1074,26 @@ app.get('/api/user/scheduled-posts', authenticateToken, async (req, res) => {
         const posts = await pool.query(`
             SELECT 
                 sp.*,
-                COUNT(pi.id) as instance_count,
-                ARRAY_AGG(
-                    CASE 
-                        WHEN pi.id IS NOT NULL 
-                        THEN jsonb_build_object(
-                            'id', pi.id,
-                            'scheduled_time', pi.scheduled_time,
-                            'status', pi.status,
-                            'is_recalled', pi.is_recalled
-                        )
-                        ELSE NULL
-                    END
-                ) FILTER (WHERE pi.id IS NOT NULL) as instances
+                COALESCE(pi.instance_count, 0) as instance_count,
+                COALESCE(pi.instances, ARRAY[]::jsonb[]) as instances
             FROM scheduled_posts sp
-            LEFT JOIN post_instances pi ON sp.id = pi.parent_post_id
+            LEFT JOIN (
+                SELECT 
+                    parent_post_id,
+                    COUNT(*) as instance_count,
+                    ARRAY_AGG(
+                        jsonb_build_object(
+                            'id', id,
+                            'scheduled_time', scheduled_time,
+                            'status', status,
+                            'is_recalled', is_recalled
+                        ) ORDER BY scheduled_time
+                    ) FILTER (WHERE status = 'pending' AND is_recalled = false) as instances
+                FROM post_instances
+                WHERE status = 'pending' AND is_recalled = false
+                GROUP BY parent_post_id
+            ) pi ON sp.id = pi.parent_post_id
             WHERE sp.user_id = $1 AND sp.is_recalled = false
-            GROUP BY sp.id
             ORDER BY sp.scheduled_time DESC
         `, [req.user.userId]);
         
@@ -947,8 +1119,11 @@ app.post('/api/recall-post/:postId', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Post not found' });
         }
         
-        if (post.rows[0].status === 'published') {
-            const publishedAt = new Date(post.rows[0].published_at);
+        const postData = post.rows[0];
+        
+        // Check recall window for published posts
+        if (postData.status === 'published') {
+            const publishedAt = new Date(postData.published_at);
             const now = new Date();
             const hoursSincePublished = (now - publishedAt) / (1000 * 60 * 60);
             
@@ -959,6 +1134,7 @@ app.post('/api/recall-post/:postId', authenticateToken, async (req, res) => {
             }
         }
         
+        // Update the post
         await pool.query(`
             UPDATE scheduled_posts 
             SET is_recalled = true, 
@@ -968,7 +1144,8 @@ app.post('/api/recall-post/:postId', authenticateToken, async (req, res) => {
             WHERE id = $2
         `, [reason, postId]);
         
-        if (recallInstances && post.rows[0].is_recurring) {
+        // Recall future instances if requested
+        if (recallInstances && postData.is_recurring) {
             await pool.query(`
                 UPDATE post_instances 
                 SET is_recalled = true 
@@ -976,7 +1153,8 @@ app.post('/api/recall-post/:postId', authenticateToken, async (req, res) => {
             `, [postId]);
         }
         
-        const deletionResults = await recallFromPlatforms(post.rows[0]);
+        // Attempt to delete from platforms
+        const deletionResults = await recallFromPlatforms(postData);
         
         res.json({ 
             success: true, 
@@ -1014,6 +1192,8 @@ async function deleteFromPlatform(platform, post) {
         return { success: false, error: 'No connected account' };
     }
     
+    // Platform-specific deletion logic would go here
+    // For now, return success (actual implementation requires platform APIs)
     return { success: true, message: 'Deletion requested' };
 }
 
@@ -1107,29 +1287,13 @@ app.post('/api/oauth/:platform/callback', async (req, res) => {
 });
 
 async function exchangeCodeForToken(platform, code) {
-    const tokenUrls = {
-        instagram: 'https://api.instagram.com/oauth/access_token',
-        facebook: 'https://graph.facebook.com/v18.0/oauth/access_token',
-        twitter: 'https://api.twitter.com/2/oauth2/token',
-        linkedin: 'https://www.linkedin.com/oauth/v2/accessToken',
-        youtube: 'https://oauth2.googleapis.com/token',
-        tiktok: 'https://open-api.tiktok.com/oauth/access_token/',
-        pinterest: 'https://api.pinterest.com/v5/oauth/token',
-        threads: 'https://graph.threads.net/oauth/access_token',
-        snapchat: 'https://accounts.snapchat.com/accounts/oauth2/token',
-        twitch: 'https://id.twitch.tv/oauth2/token',
-        reddit: 'https://www.reddit.com/api/v1/access_token',
-        tumblr: 'https://api.tumblr.com/v2/oauth2/token',
-        medium: 'https://api.medium.com/v1/tokens',
-        yelp: 'https://api.yelp.com/oauth2/token',
-        google_business: 'https://oauth2.googleapis.com/token',
-        whatsapp: 'https://graph.facebook.com/v18.0/oauth/access_token'
-    };
-    
+    // In production, implement actual token exchange with each platform
+    // For now, return mock tokens
     return { access_token: 'mock_token_' + Date.now(), refresh_token: 'mock_refresh_' + Date.now() };
 }
 
 async function getAccountInfo(platform, accessToken) {
+    // In production, fetch actual account info from each platform
     return { username: 'user_' + Date.now(), profileUrl: `https://${platform}.com/user`, pageId: 'page_' + Date.now(), pageName: 'My Page' };
 }
 
@@ -1160,6 +1324,8 @@ app.post('/api/upload-media', authenticateToken, async (req, res) => {
     const { filename, fileData, fileType } = req.body;
     
     try {
+        // In production, upload to cloud storage (S3, Cloudinary, etc.)
+        // For now, store locally
         const fileUrl = `/uploads/${Date.now()}_${filename}`;
         
         const result = await pool.query(
@@ -1249,6 +1415,7 @@ cron.schedule('*/5 * * * *', async () => {
     console.log('🤖 Auto-publishing...');
     
     try {
+        // Get pending posts
         const pending = await pool.query(`
             SELECT sp.*, u.email, u.package FROM scheduled_posts sp
             JOIN users u ON sp.user_id = u.id
@@ -1260,7 +1427,9 @@ cron.schedule('*/5 * * * *', async () => {
                 const accounts = await pool.query('SELECT platform, access_token, page_id FROM social_accounts WHERE user_id = $1 AND is_active = true', [post.user_id]);
                 
                 for (const account of accounts.rows) {
-                    if (post.platforms.includes(account.platform) && post.platforms_data[account.platform] !== false) {
+                    // Check if platform is included in this post
+                    const platformsData = post.platforms_data || {};
+                    if (post.platforms.includes(account.platform) && platformsData[account.platform] !== false) {
                         await publishToPlatform(account.platform, account.access_token, account.page_id, post.content, post.media_urls);
                     }
                 }
@@ -1288,7 +1457,8 @@ cron.schedule('*/5 * * * *', async () => {
                 const accounts = await pool.query('SELECT platform, access_token, page_id FROM social_accounts WHERE user_id = $1 AND is_active = true', [instance.user_id]);
                 
                 for (const account of accounts.rows) {
-                    if (instance.platforms.includes(account.platform) && instance.platforms_data[account.platform] !== false) {
+                    const platformsData = instance.platforms_data || {};
+                    if (instance.platforms.includes(account.platform) && platformsData[account.platform] !== false) {
                         await publishToPlatform(account.platform, account.access_token, account.page_id, instance.content, instance.media_urls);
                     }
                 }
@@ -1307,7 +1477,12 @@ cron.schedule('*/5 * * * *', async () => {
 });
 
 async function publishToPlatform(platform, accessToken, pageId, content, mediaUrls) {
+    // Platform-specific publishing logic would go here
+    // This requires integration with each platform's API
     console.log(`Publishing to ${platform}...`);
+    
+    // Return mock success for now
+    return { success: true, platform };
 }
 
 // ==================== ADMIN ROUTES ====================
@@ -1397,7 +1572,6 @@ app.patch('/api/admin/user/:id', authenticateToken, requireAdmin, async (req, re
 
         values.push(req.params.id);
 
-        const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${param
         const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
         const result = await pool.query(query, values);
 
@@ -1454,7 +1628,7 @@ app.post('/api/admin/user-status', authenticateToken, requireAdmin, async (req, 
 });
 
 app.post('/api/admin/add-posts', authenticateToken, requireAdmin, async (req, res) => {
-    const { userId, postsToAdd } = req.body;
+    ⁵ { userId, postsToAdd } = req.body;
     try {
         await pool.query('UPDATE users SET posts_remaining = posts_remaining + $1 WHERE id = $2', [postsToAdd, userId]);
         res.json({ success: true });
@@ -1468,3 +1642,4 @@ const PORT = process.env.PORT || 3000;
 initDatabase().then(() => {
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 });
+⁵
