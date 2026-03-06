@@ -30,18 +30,20 @@ const paypalClient = new paypal.core.PayPalHttpClient(paypalEnvironment);
 // Middleware
 app.use(cors({ 
     origin: [
-        'https://reelbridge.pages.dev',      // Cloudflare Pages
-        'https://reelbridge.site',           // Custom domain
-        'https://www.reelbridge.site',       // www subdomain
-        'https://reelbridge-api.onrender.com', // Backend (for testing)
-        'http://localhost:3000',             // Local development
-        'http://localhost:5500',             // Live Server local
-        'http://127.0.0.1:5500'              // Live Server IP
+        'https://reelbridge.pages.dev',
+        'https://reelbridge.site',
+        'https://www.reelbridge.site',
+        'http://localhost:3000',
+        'http://localhost:5500'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Add this line right after the CORS setup:
+app.options('*', cors());
+
 
 
 // JWT middleware
