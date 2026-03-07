@@ -1642,7 +1642,8 @@ app.post('/api/admin/user-status', authenticateToken, requireAdmin, async (req, 
 });
 
 app.post('/api/admin/add-posts', authenticateToken, requireAdmin, async (req, res) => {
-    const { userId, postsToAdd } = req.body;
+    const { userId, postsToAdd } = req.body;   // ← fixed: removed stray superscript character
+
     try {
         await pool.query('UPDATE users SET posts_remaining = posts_remaining + $1 WHERE id = $2', [postsToAdd, userId]);
         res.json({ success: true });
@@ -1650,7 +1651,6 @@ app.post('/api/admin/add-posts', authenticateToken, requireAdmin, async (req, re
         res.status(500).json({ error: error.message });
     }
 });
-
 
 // ==================== START ====================
 const PORT = process.env.PORT || 3000;
