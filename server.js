@@ -9,6 +9,9 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+// Add these two lines (built-in to Express since v4.16+, no extra package needed)
+app.use(express.json());          // parses application/json
+app.use(express.urlencoded({ extended: true }));  // optional: parses form-urlencoded if you use it anywhere
 
 // Database
 const pool = new Pool({
