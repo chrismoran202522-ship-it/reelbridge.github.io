@@ -2337,9 +2337,7 @@
     </div>
     
     <div class="modal" id="adminEditModal">
-        <div class="modal-content edit-modal-content">
-            <div class="modal-header">
-                <div class="modal-title" data-i18n="editUserAccount">Edit User Account</div>
+        <div class="mod     <div class="modal-title" data-i18n="editUserAccount">Edit User Account</div>
                 <button class="close-modal" onclick="closeAdminEdit()">×</button>
             </div>
             
@@ -2356,73 +2354,56 @@
             <div class="oauth-body">
                 <p id="oauthDescription" style="text-align: center; color: #666; margin-bottom: 20px;">Select a platform to connect</p>
                 
-                <div class="oauth-platforms" id="oauthPlatformSelection">
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('instagram')">
-                        <span class="icon">📸</span>
-                        <div>Instagram</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('tiktok')">
-                        <span class="icon">🎵</span>
-                        <div>TikTok</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('twitter')">
-                        <span class="icon">🐦</span>
-                        <div>Twitter</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('facebook')">
-                        <span class="icon">👥</span>
-                        <div>Facebook</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('linkedin')">
-                        <span class="icon">💼</span>
-                        <div>LinkedIn</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('youtube')">
-                        <span class="icon">📺</span>
-                        <div>YouTube</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('pinterest')">
-                        <span class="icon">📌</span>
-                        <div>Pinterest</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('threads')">
-                        <span class="icon">🧵</span>
-                        <div>Threads</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('snapchat')">
-                        <span class="icon">👻</span>
-                        <div>Snapchat</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('twitch')">
-                        <span class="icon">🎮</span>
-                        <div>Twitch</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('reddit')">
-                        <span class="icon">🔴</span>
-                        <div>Reddit</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('tumblr')">
-                        <span class="icon">🔵</span>
-                        <div>Tumblr</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('medium')">
-                        <span class="icon">📝</span>
-                        <div>Medium</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('yelp')">
-                        <span class="icon">⭐</span>
-                        <div>Yelp</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('google_business')">
-                        <span class="icon">🏢</span>
-                        <div>Google Business</div>
-                    </button>
-                    <button class="oauth-platform-btn" onclick="startOAuthFlow('whatsapp')">
-                        <span class="icon">💬</span>
-                        <div>WhatsApp</div>
-                    </button>
-                </div>
-                
+              <div class="platform-grid">
+  <button class="platform-btn" data-platform="instagram" onclick="initiateOAuth('instagram')">
+    <i class="si si-instagram" style="color:#E1306C; font-size:32px; display:block; margin-bottom:6px;"></i> Instagram
+  </button>
+  <button class="platform-btn" data-platform="tiktok" onclick="initiateOAuth('tiktok')">
+    <i class="si si-tiktok" style="color:#EE1D52; font-size:32px; display:block; margin-bottom:6px;"></i> TikTok
+  </button>
+  <button class="platform-btn" data-platform="twitter" onclick="initiateOAuth('twitter')">
+    <i class="si si-x" style="color:#000000; font-size:32px; display:block; margin-bottom:6px;"></i> Twitter
+  </button>
+  <button class="platform-btn" data-platform="facebook" onclick="initiateOAuth('facebook')">
+    <i class="si si-facebook" style="color:#1877F2; font-size:32px; display:block; margin-bottom:6px;"></i> Facebook
+  </button>
+  <button class="platform-btn" data-platform="linkedin" onclick="initiateOAuth('linkedin')">
+    <i class="si si-linkedin" style="color:#0A66C2; font-size:32px; display:block; margin-bottom:6px;"></i> LinkedIn
+  </button>
+  <button class="platform-btn" data-platform="youtube" onclick="initiateOAuth('youtube')">
+    <i class="si si-youtube" style="color:#FF0000; font-size:32px; display:block; margin-bottom:6px;"></i> YouTube
+  </button>
+  <button class="platform-btn" data-platform="pinterest" onclick="initiateOAuth('pinterest')">
+    <i class="si si-pinterest" style="color:#E60023; font-size:32px; display:block; margin-bottom:6px;"></i> Pinterest
+  </button>
+  <button class="platform-btn" data-platform="threads" onclick="initiateOAuth('threads')">
+    <i class="si si-threads" style="color:#000000; font-size:32px; display:block; margin-bottom:6px;"></i> Threads
+  </button>
+  <button class="platform-btn" data-platform="snapchat" onclick="initiateOAuth('snapchat')">
+    <i class="si si-snapchat" style="color:#FFFC00; font-size:32px; display:block; margin-bottom:6px;"></i> Snapchat
+  </button>
+  <button class="platform-btn" data-platform="twitch" onclick="initiateOAuth('twitch')">
+    <i class="si si-twitch" style="color:#9146FF; font-size:32px; display:block; margin-bottom:6px;"></i> Twitch
+  </button>
+  <button class="platform-btn" data-platform="reddit" onclick="initiateOAuth('reddit')">
+    <i class="si si-reddit" style="color:#FF4500; font-size:32px; display:block; margin-bottom:6px;"></i> Reddit
+  </button>
+  <button class="platform-btn" data-platform="tumblr" onclick="initiateOAuth('tumblr')">
+    <i class="si si-tumblr" style="color:#36465D; font-size:32px; display:block; margin-bottom:6px;"></i> Tumblr
+  </button>
+  <button class="platform-btn" data-platform="medium" onclick="initiateOAuth('medium')">
+    <i class="si si-medium" style="color:#000000; font-size:32px; display:block; margin-bottom:6px;"></i> Medium
+  </button>
+  <button class="platform-btn" data-platform="yelp" onclick="initiateOAuth('yelp')">
+    <i class="si si-yelp" style="color:#D32323; font-size:32px; display:block; margin-bottom:6px;"></i> Yelp
+  </button>
+  <button class="platform-btn" data-platform="google" onclick="initiateOAuth('google')">
+    <i class="si si-google" style="color:#4285F4; font-size:32px; display:block; margin-bottom:6px;"></i> Google Business
+  </button>
+  <button class="platform-btn" data-platform="whatsapp" onclick="initiateOAuth('whatsapp')">
+    <i class="si si-whatsapp" style="color:#25D366; font-size:32px; display:block; margin-bottom:6px;"></i> WhatsApp
+  </button>
+              </div>  
                 <div id="oauthStatus" class="oauth-status hidden"></div>
                 
                 <div style="margin-top: 20px; text-align: center;">
