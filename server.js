@@ -15,8 +15,12 @@ app.use(express.urlencoded({ extended: true }));  // optional: parses form-urlen
 
 // Database
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    connectionString: process.env.DATABASE_URL,  // ensure this is INTERNAL
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 10000,     // Give more time to connect (10s → try 30000 for 30s)
+    idleTimeoutMillis: 30000,           // Close idle connections after 30s
+    max: 20,                            // Limit pool size (default is 10; adjust based on tier)
+    keepAlive: true                     // Helps prevent idle timeouts
 });
 
 // PayPal setup
