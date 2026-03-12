@@ -4317,9 +4317,33 @@
                             loadCustomerDashboard();
                         }
                     }
+                })
+                .catch(err => {
+                    console.error('Profile load failed:', err);
+                    localStorage.removeItem('token');
                 });
             }
         });
     </script>
+
+    <!-- New Footer with Privacy & Terms links -->
+    <footer style="background: var(--primary); color: white; text-align: center; padding: 40px 20px; margin-top: 60px; font-size: 14px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <p style="margin-bottom: 12px;">
+                © 2026 Reel Bridge – Saint John, New Brunswick, Canada
+            </p>
+            <p style="margin: 8px 0;">
+                <a href="/privacy" style="color: #3498db; text-decoration: none; margin: 0 16px; font-weight: 500;">Privacy Policy</a>
+                <span style="color: #777;">|</span>
+                <a href="/terms" style="color: #3498db; text-decoration: none; margin: 0 16px; font-weight: 500;">Terms of Service</a>
+            </p>
+            <p style="margin-top: 20px; opacity: 0.85; font-size: 13px;">
+                Automated social media management for small businesses & creators.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>
 </body>
                         </html>
