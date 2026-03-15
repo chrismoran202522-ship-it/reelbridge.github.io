@@ -607,15 +607,16 @@
         }
         
         .platform-btn.locked::before {
-            content: "🔒";
+            Content: "🔒";
             position: absolute;
             top: 5px;
             right: 5px;
             font-size: 10px;
         }
-        
-        .platform-icon {
-            font-size: 24px;
+        ×
+Lee8e
+        .platform-icon {1a!
+            font-size: 24px;8
             display: block;
             margin-bottom: 4px;
         }
@@ -791,26 +792,24 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            margin-top: 15px;
         }
         
         .media-preview-item {
             position: relative;
-            aspect-ratio: 1;
             border-radius: 8px;
             overflow: hidden;
         }
         
-        .media-preview-item img {
+        .media-preview-item img, .media-preview-item video {
             width: 100%;
-            height: 100%;
+            height: 100px;
             object-fit: cover;
         }
         
-        .media-preview-item .remove-btn {
+        .remove-media {
             position: absolute;
-            top: 5px;
-            right: 5px;
+            top: 4px;
+            right: 4px;
             background: var(--danger);
             color: white;
             border: none;
@@ -818,138 +817,30 @@
             width: 24px;
             height: 24px;
             cursor: pointer;
-            font-size: 12px;
         }
         
-        .oauth-window {
-            position: fixed;
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            z-index: 2000;
-            overflow: hidden;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
         
-        .oauth-header {
-            background: var(--primary);
-            color: white;
-            padding: 20px;
-            text-align: center;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
-        .oauth-header h3 {
-            margin: 0;
-        }
+        .hidden { display: none !important; }
         
-        .oauth-body {
-            padding: 30px;
-        }
-        
-        .oauth-platforms {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin: 20px 0;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        @media (max-width: 500px) {
-            .oauth-platforms {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        .oauth-platform-btn {
-            padding: 15px 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: white;
-        }
-        
-        .oauth-platform-btn:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .oauth-platform-btn .icon {
-            font-size: 28px;
-            display: block;
-            margin-bottom: 8px;
-        }
-        
-        .oauth-platform-btn div {
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .oauth-status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        
-        .oauth-status.connecting {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .oauth-status.success {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .oauth-status.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        
-        .admin-table th, .admin-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .admin-table th { background: #f8f9fa; font-weight: 600; }
-        
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .status-active { background: #d4edda; color: #155724; }
-        .status-suspended { background: #f8d7da; color: #721c24; }
-        .status-pending { background: #fff3cd; color: #856404; }
-        
-        .action-btn {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            margin-right: 4px;
-        }
-        
-        .btn-suspend { background: var(--warning); color: white; }
         .btn-activate { background: var(--success); color: white; }
         .btn-delete { background: var(--danger); color: white; }
         .btn-edit { background: var(--accent); color: white; }
@@ -1020,8 +911,6 @@
             margin-bottom: 20px;
             text-align: center;
         }
-        
-        .hidden { display: none !important; }
         
         .overlay {
             position: fixed;
@@ -1422,31 +1311,6 @@
             height: 20px;
             border: 3px solid #f3f3f3;
             border-top: 3px solid var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .btn-loading {
-            position: relative;
-            color: transparent !important;
-        }
-        
-        .btn-loading::after {
-            content: "";
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            top: 50%;
-            left: 50%;
-            margin-left: -10px;
-            margin-top: -10px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
