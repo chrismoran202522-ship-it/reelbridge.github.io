@@ -15,6 +15,8 @@ const app = express();
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/api/oauth', oauthRoutes);
+
 
 // Database configuration
 const pool = new Pool({
