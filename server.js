@@ -1,3 +1,5 @@
+// At the top of server.js
+const oauthRoutes = require('./routes/oauth');
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const paypal = require('@paypal/checkout-server-sdk');
