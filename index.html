@@ -3601,67 +3601,8 @@ Lee8e
             document.getElementById('postContent').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Line 1468+: NEW ASYNC VERSION - Replace the old function with this
-async function initiateOAuth(platform) {
-    currentOAuthPlatform = platform;
     
-    // Special handling for X (Twitter) OAuth 2.0
-    if (platform === 'twitter') {
-        try {
-            const response = await fetch(`${API_URL}/api/oauth/twitter/url`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            
-            const data = await response.json();
-            
-            if (data.url) {
-                // Calculate popup position (centered)
-                const width = 600;
-                const height = 700;
-                const left = (window.screen.width - width) / 2;
-                const top = (window.screen.height - height) / 2;
-                
-                // Open OAuth popup
-                const popup = window.open(
-                    data.url,
-                    'oauth',
-                    `width=${width},height=${height},left=${left},top=${top},scrollbars=yes`
-                );
-                
-                // Listen for message from popup
-                window.addEventListener('message', async function handler(event) {
-                    // Security: verify origin
-                    if (event.origin !== 'https://reelbridge.site') return;
-                    
-                    if (event.data.type === 'oauth-success') {
-                        window.removeEventListener('message', handler);
-                        
-                        // Show success notification
-                        showNotification(`Connected to ${PLATFORM_CONFIG[platform]?.name || platform} as @${event.data.username}!`);
-                        
-                        // Refresh dashboard to show connected account
-                        await loadCustomerDashboard();
-                        
-                    } else if (event.data.type === 'oauth-error') {
-                        window.removeEventListener('message', handler);
-                        showNotification(`Failed to connect: ${event.data.message}`, 'error');
-                    }
-                });
-            } else {
-                throw new Error('No OAuth URL received from server');
-            }
-            
-        } catch (error) {
-            console.error('OAuth initiation error:', error);
-            showNotification('Failed to initiate connection. Please try again.', 'error');
-        }
-        return;
-    }
-    
-    // For all other platforms, use the existing modal approach
-    document.getElementById('oauthTitle').textContent = `Connect ${PLATFORM_CONFIG[platform]?.name || platform}`;
-    document.getElementById('oauthDescription').textContent = `Click below to authorize ReelBridge to access your ${PLATFORM_CONFIG[platform]?.name || platform} account`;
-    document.getElementById('oauthModal').classList.add('active');
+
 }
         async function startOAuthFlow(platform) {
             const statusDiv = document.getElementById('oauthStatus');
@@ -3675,7 +3616,47 @@ async function initiateOAuth(platform) {
                 });
                 
                 const { url } = await response.json();
-                const popup = window.open(url, 'oauth', 'width=600,height=700');
+               }            const popup = window.open(url, 'oauth', 'width=600,height=700');
+        } 
+    // ADD THIS NEW FUNCTION around line 1607 (after toggleFeature, before window.addEventListener)
+function showNotification(message, type = 'success') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        padding: 16px 24px;
+        background: ${type === 'success' ? '#27ae60' : '#e74c3c'};
+        color: white;
+        border-radius: 8px;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    
+    // Add animation styles if not present
+    if (!document.getElementById('notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);}
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 4 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
                 
                 window.addEventListener('message', async function handler(event) {
                     if (event.data.type === 'oauth-success') {
