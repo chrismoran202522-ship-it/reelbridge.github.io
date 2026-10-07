@@ -4,759 +4,505 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Reel Bridge - Automated Social Media Management</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-icons-font@16/font/simple-icons.min.css" type="text/css">
     <script src="https://js.stripe.com/v3/"></script>
     <script src="https://www.paypal.com/sdk/js?client-id=AdJIUkTjZ2NfPN69w87QZU8Ylw9R1_ByaRnZLn5JavjKx3NREjoH8srOYFv0ZvoFqZO2RcE_FEaugLEt&currency=USD&intent=capture"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         :root {
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --purple: #9b59b6;
-            --bg: #f0f4f8;
-            --card: #ffffff;
+            --primary: #2c3e50; --accent: #3498db; --success: #27ae60;
+            --warning: #f39c12; --danger: #e74c3c; --bg: #f0f4f8; --card: #fff;
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--primary);
-            line-height: 1.5;
-            font-size: 16px;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .mobile-header {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            background: var(--primary);
-            color: white;
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--primary); line-height: 1.5; font-size: 16px; }
+        .mobile-header { position: fixed; top: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .logo { font-size: 20px; font-weight: 700; }
-
-        .header-login {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .header-login input {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            width: 120px;
-        }
-
-        .header-login button {
-            padding: 8px 16px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .create-account-btn {
-            background: var(--success) !important;
-            font-weight: 600;
-        }
-
-        .hero {
-            margin-top: 60px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-            color: white;
-            padding: 40px 20px;
-            text-align: center;
-        }
-
+        .header-login { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .header-login input { padding: 8px 12px; border: none; border-radius: 6px; font-size: 14px; width: 110px; }
+        .header-login button { padding: 8px 14px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .create-account-btn { background: var(--success) !important; font-weight: 600; }
+        .hero { margin-top: 60px; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; padding: 40px 20px; text-align: center; }
         .hero h1 { font-size: 28px; margin-bottom: 12px; }
         .hero p { font-size: 16px; opacity: 0.9; margin-bottom: 20px; }
-
-        .cta-btn {
-            display: inline-block;
-            background: var(--success);
-            color: white;
-            padding: 16px 32px;
-            border-radius: 30px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 16px;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        .section {
-            padding: 32px 16px;
-            background: var(--card);
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: var(--primary);
-            border-left: 4px solid var(--accent);
-            padding-left: 12px;
-        }
-
-        .package-card {
-            background: var(--card);
-            border: 2px solid #e0e0e0;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            position: relative;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        .package-card.featured {
-            border-color: var(--accent);
-            background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%);
-        }
-
-        .package-badge {
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--accent);
-            color: white;
-            padding: 4px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
+        .cta-btn { display: inline-block; background: var(--success); color: white; padding: 16px 32px; border-radius: 30px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; max-width: 300px; width: 100%; }
+        .section { padding: 32px 16px; background: var(--card); margin-bottom: 16px; }
+        .section-title { font-size: 24px; margin-bottom: 20px; border-left: 4px solid var(--accent); padding-left: 12px; }
+        .package-card { background: var(--card); border: 2px solid #e0e0e0; border-radius: 16px; padding: 20px; margin-bottom: 16px; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .package-card.featured { border-color: var(--accent); background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%); }
+        .package-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; }
         .package-name { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
-        .package-price { font-size: 36px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        .package-price { font-size: 36px; font-weight: 700; margin-bottom: 4px; }
         .package-price span { font-size: 16px; font-weight: 400; color: #666; }
-
         .features-list { list-style: none; margin: 16px 0; }
-        .features-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .features-list li:before { content: "✓"; color: var(--success); font-weight: 700; }
-
-        .select-btn {
-            width: 100%;
-            padding: 16px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 16px;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 1001;
-            justify-content: center;
-            align-items: flex-end;
-        }
-
+        .features-list li { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+        .features-list li:before { content: "✓ "; color: var(--success); font-weight: 700; }
+        .select-btn { width: 100%; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1001; justify-content: center; align-items: flex-end; }
         .modal.active { display: flex; }
-
-        .modal-content {
-            background: white;
-            width: 100%;
-            max-height: 90vh;
-            border-radius: 20px 20px 0 0;
-            padding: 24px;
-            overflow-y: auto;
-        }
-
+        .modal-content { background: white; width: 100%; max-height: 90vh; border-radius: 20px 20px 0 0; padding: 24px; overflow-y: auto; }
         .hidden { display: none !important; }
-
-        .stat-card {
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .platform-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin: 16px 0;
-        }
-
-        .platform-btn {
-            padding: 12px 8px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 12px;
-            background: white;
-        }
-
-        .platform-btn.connected {
-            border-color: var(--success);
-            background: #f0fff4;
-        }
-
+        .stat-card { background: #f8f9fa; padding: 16px; border-radius: 12px; text-align: center; }
+        .stat-value { font-size: 28px; font-weight: 700; color: var(--accent); }
+        .platform-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+        .platform-btn { padding: 12px 8px; border: 2px solid #e0e0e0; border-radius: 12px; text-align: center; cursor: pointer; font-size: 12px; background: white; }
+        .platform-btn.connected { border-color: var(--success); background: #f0fff4; }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; }
-        .form-group input {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-        }
-
-        #card-element {
-            padding: 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            background: white;
-        }
-
-        .payment-tabs {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .payment-tab {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .payment-tab.active {
-            border-color: var(--accent);
-            background: #f0f7ff;
-        }
-
-        .pay-btn {
-            width: 100%;
-            padding: 18px;
-            background: var(--success);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 12px;
-        }
-
+        .form-group input, .form-group select { width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; }
+        #card-element { padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; background: white; }
+        .payment-tabs { display: flex; gap: 12px; margin-bottom: 20px; }
+        .payment-tab { flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; text-align: center; cursor: pointer; font-weight: 600; }
+        .payment-tab.active { border-color: var(--accent); background: #f0f7ff; }
+        .pay-btn { width: 100%; padding: 18px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; margin-top: 12px; }
         .pay-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
+        .admin-table th, .admin-table td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
+        .admin-table th { background: #f8f9fa; }
+        .toggle-on { color: var(--success); font-weight: 700; }
+        .toggle-off { color: var(--danger); }
+        .btn-sm { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; margin-right: 4px; }
+        .btn-edit { background: var(--accent); color: white; }
+        .btn-del { background: var(--danger); color: white; }
+        .btn-toggle { background: var(--warning); color: white; }
+        .msg { padding: 12px; border-radius: 8px; margin: 10px 0; display: none; }
+        .msg.ok { display: block; background: #d4edda; color: #155724; }
+        .msg.err { display: block; background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
-
-    <!-- MOBILE HEADER -->
-    <header class="mobile-header">
-        <div class="logo">REEL BRIDGE</div>
-        <div class="header-login" id="headerLogin">
-            <input type="email" id="loginEmail" placeholder="Email">
-            <input type="password" id="loginPassword" placeholder="Password">
-            <button onclick="login()">Login</button>
-            <button onclick="showRegister()" class="create-account-btn">Create Account</button>
-        </div>
-        <div class="header-login hidden" id="headerUser">
-            <span id="userName"></span>
-            <button onclick="logout()" style="background: var(--danger);">Logout</button>
-        </div>
-    </header>
-
-    <!-- MAIN LANDING PAGE (shown when not logged in) -->
-    <div id="mainContent">
-        <section class="hero">
-            <h1>Automated Social Media</h1>
-            <p>AI-powered management for your business & creators</p>
-            <a href="#packages" class="cta-btn">View Packages</a>
-        </section>
-
-        <section class="section" id="packages">
-            <h2 class="section-title">Choose Your Plan</h2>
-
-            <div class="package-card">
-                <div class="package-name">Starter</div>
-                <div class="package-price">$254<span>/mo</span></div>
-                <ul class="features-list">
-                    <li>3 Social Platforms</li>
-                    <li>30 Posts/Month</li>
-                    <li>AI Content Generation</li>
-                    <li>Basic Analytics</li>
-                </ul>
-                <button class="select-btn" onclick="openPayment('starter', 254)">Get Started</button>
-            </div>
-
-            <div class="package-card featured">
-                <div class="package-badge">MOST POPULAR</div>
-                <div class="package-name">Growth</div>
-                <div class="package-price">$509<span>/mo</span></div>
-                <ul class="features-list">
-                    <li>6 Social Platforms</li>
-                    <li>75 Posts/Month</li>
-                    <li>AI Video Generation</li>
-                    <li>Auto-Engagement</li>
-                    <li>Priority Support</li>
-                </ul>
-                <button class="select-btn" onclick="openPayment('growth', 509)">Get Started</button>
-            </div>
-
-            <div class="package-card">
-                <div class="package-name">Professional</div>
-                <div class="package-price">$849<span>/mo</span></div>
-                <ul class="features-list">
-                    <li>10 Platforms</li>
-                    <li>Unlimited Posts</li>
-                    <li>AI Video & Image Gen</li>
-                    <li>Dedicated Account Manager</li>
-                </ul>
-                <button class="select-btn" onclick="openPayment('professional', 849)">Get Started</button>
-            </div>
-
-            <div class="package-card">
-                <div class="package-name">Custom Package</div>
-                <div class="package-price">$99<span> base</span></div>
-                <button class="select-btn" onclick="openPayment('custom', 99)" style="background: var(--success);">Build My Package</button>
-            </div>
-        </section>
-
-        <section class="section">
-            <h2 class="section-title">Key Features</h2>
-            <div style="display: grid; gap: 12px;">
-                <div class="package-card"><h4>🤖 AI Content Generation</h4><p>Auto-create posts, captions, hashtags</p></div>
-                <div class="package-card"><h4>📅 Smart Scheduling</h4><p>Post at optimal times automatically</p></div>
-                <div class="package-card"><h4>📊 Real-time Analytics</h4><p>Track engagement and growth</p></div>
-            </div>
-        </section>
+<header class="mobile-header">
+    <div class="logo">REEL BRIDGE</div>
+    <div class="header-login" id="headerLogin">
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <button onclick="openRegister()" class="create-account-btn">Create Account</button>
     </div>
+    <div class="header-login hidden" id="headerUser">
+        <span id="userName"></span>
+        <button onclick="logout()" style="background: var(--danger);">Logout</button>
+    </div>
+</header>
 
-    <!-- CUSTOMER DASHBOARD -->
-    <div id="customerDashboard" class="hidden" style="margin-top: 60px;">
-        <div class="section">
-            <h2>My Dashboard</h2>
-            <p id="dashboardEmail"></p>
+<div id="mainContent">
+    <section class="hero">
+        <h1>Automated Social Media</h1>
+        <p>AI-powered management for your business &amp; creators</p>
+        <button class="cta-btn" onclick="openRegister()">Create Free Account</button>
+    </section>
+    <section class="section" id="packages">
+        <h2 class="section-title">Choose Your Plan</h2>
+        <div class="package-card">
+            <div class="package-name">Starter</div>
+            <div class="package-price">$254<span>/mo</span></div>
+            <ul class="features-list"><li>3 Social Platforms</li><li>30 Posts/Month</li><li>AI Content Generation</li><li>Basic Analytics</li></ul>
+            <button class="select-btn" onclick="openPayment('starter', 254)">Get Started</button>
+        </div>
+        <div class="package-card featured">
+            <div class="package-badge">MOST POPULAR</div>
+            <div class="package-name">Growth</div>
+            <div class="package-price">$509<span>/mo</span></div>
+            <ul class="features-list"><li>6 Social Platforms</li><li>75 Posts/Month</li><li>AI Video Generation</li><li>Auto-Engagement</li><li>Priority Support</li></ul>
+            <button class="select-btn" onclick="openPayment('growth', 509)">Get Started</button>
+        </div>
+        <div class="package-card">
+            <div class="package-name">Professional</div>
+            <div class="package-price">$849<span>/mo</span></div>
+            <ul class="features-list"><li>10 Platforms</li><li>Unlimited Posts</li><li>AI Video &amp; Image Gen</li><li>Dedicated Account Manager</li></ul>
+            <button class="select-btn" onclick="openPayment('professional', 849)">Get Started</button>
+        </div>
+    </section>
+</div>
 
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                <div class="stat-card">
-                    <div class="stat-value" id="statRemaining">0</div>
-                    <div>Posts Remaining</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="statUsed">0</div>
-                    <div>Posts Used</div>
-                </div>
-            </div>
-
-            <h3 style="margin: 24px 0 12px;">Connect Social Accounts</h3>
-            <div class="platform-grid" id="platformGrid">
-                <button class="platform-btn" onclick="connectPlatform('twitter')">🐦 Twitter / X</button>
-            </div>
-
-            <h3 style="margin: 24px 0 12px;">Create New Post</h3>
-            <div class="package-card">
-                <textarea id="postContent" rows="4" style="width:100%; padding:14px; border:2px solid #e0e0e0; border-radius:10px;" placeholder="What's on your mind?"></textarea>
-                <button class="select-btn" onclick="schedulePost()" style="margin-top:12px;">Schedule Post</button>
-            </div>
+<div id="customerDashboard" class="hidden" style="margin-top: 60px;">
+    <div class="section">
+        <h2>My Dashboard</h2>
+        <p id="dashboardEmail"></p>
+        <p style="color:#666; margin-bottom:12px;">Plan: <strong id="dashboardPackage">free</strong></p>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div class="stat-card"><div class="stat-value" id="statRemaining">0</div><div>Posts Remaining</div></div>
+            <div class="stat-card"><div class="stat-value" id="statUsed">0</div><div>Posts Used</div></div>
+        </div>
+        <h3 style="margin: 24px 0 12px;">Connect Social Accounts</h3>
+        <div class="platform-grid" id="platformGrid"></div>
+        <h3 style="margin: 24px 0 12px;">Create New Post</h3>
+        <div class="package-card">
+            <textarea id="postContent" rows="4" style="width:100%; padding:14px; border:2px solid #e0e0e0; border-radius:10px;" placeholder="What's on your mind?"></textarea>
+            <button class="select-btn" onclick="schedulePost()" style="margin-top:12px;">Schedule Post</button>
         </div>
     </div>
+</div>
 
-    <!-- ADMIN DASHBOARD -->
-    <div id="adminDashboard" class="hidden" style="margin-top: 60px;">
-        <div class="section">
-            <h2>Admin Dashboard</h2>
+<div id="adminDashboard" class="hidden" style="margin-top: 60px;">
+    <div class="section">
+        <h2>Admin Dashboard</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+            <div class="stat-card"><div class="stat-value" id="adminTotalUsers">0</div><div>Total Users</div></div>
+            <div class="stat-card"><div class="stat-value" id="adminWeek">0</div><div>New This Week</div></div>
         </div>
-    </div>
 
-    <!-- PAYMENT MODAL -->
-    <div id="paymentModal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle">Complete Payment</h3>
-            <p style="margin-bottom: 16px; color: #666;">
-                <span id="selectedPackageLabel"></span> — $<span id="selectedPriceLabel">0</span>/mo
-            </p>
+        <h3>Social Platforms</h3>
+        <p style="font-size:13px; color:#666; margin-bottom:12px;">Enable/disable platforms shown to customers. Add OAuth client IDs to link apps.</p>
+        <div id="adminPlatformMsg" class="msg"></div>
+        <table class="admin-table" id="adminPlatformTable">
+            <thead><tr><th>Platform</th><th>Status</th><th>OAuth</th><th>Actions</th></tr></thead>
+            <tbody id="adminPlatformBody"></tbody>
+        </table>
 
-            <div class="form-group">
-                <label>Email (will be your login)</label>
-                <input type="email" id="newAccountEmail" placeholder="you@example.com" autocomplete="email">
+        <h3 style="margin-top:28px;">Add / Edit Platform</h3>
+        <div class="package-card">
+            <input type="hidden" id="platId">
+            <div class="form-group"><label>Key (e.g. twitter)</label><input id="platKey" placeholder="twitter"></div>
+            <div class="form-group"><label>Display name</label><input id="platName" placeholder="Twitter / X"></div>
+            <div class="form-group"><label>Icon (emoji)</label><input id="platIcon" placeholder="🐦"></div>
+            <div class="form-group"><label>Client ID (OAuth)</label><input id="platClientId" placeholder="optional"></div>
+            <div class="form-group"><label>Client Secret (OAuth)</label><input id="platClientSecret" type="password" placeholder="leave blank to keep existing"></div>
+            <div class="form-group"><label>Callback URL</label><input id="platCallback" placeholder="https://reelbridge-api.onrender.com/api/oauth/..."></div>
+            <div class="form-group"><label>Enabled</label>
+                <select id="platEnabled"><option value="true">Yes</option><option value="false">No</option></select>
             </div>
-            <div class="form-group">
-                <label>Password (min 8 characters)</label>
-                <input type="password" id="newAccountPassword" placeholder="••••••••" autocomplete="new-password">
-            </div>
-
-            <div class="payment-tabs">
-                <div class="payment-tab active" id="tabStripe" onclick="switchPaymentMethod('stripe')">💳 Card</div>
-                <div class="payment-tab" id="tabPaypal" onclick="switchPaymentMethod('paypal')">🅿️ PayPal</div>
-            </div>
-
-            <div id="stripeForm">
-                <div class="form-group">
-                    <label>Card Details</label>
-                    <div id="card-element"><!-- Stripe Card Element mounts here --></div>
-                    <div id="card-errors" style="color: var(--danger); font-size: 13px; margin-top: 6px;"></div>
-                </div>
-                <button class="pay-btn" id="stripePayBtn" onclick="processStripePayment()">
-                    Pay $<span id="stripePayAmount">0</span>
-                </button>
-            </div>
-
-            <div id="paypalForm" style="display: none;">
-                <div id="paypal-button-container"></div>
-                <p style="text-align:center; font-size:12px; color:#999; margin-top:8px;">
-                    You'll complete payment securely on PayPal
-                </p>
-            </div>
-
-            <div id="paymentResult" style="display:none; padding:15px; margin:12px 0; border-radius:8px; text-align:center;"></div>
-
-            <p style="text-align:center; font-size:12px; color:#666; margin-top:12px;">🔒 Secured by Stripe &amp; PayPal</p>
-            <button onclick="closePayment()" style="margin-top:16px; width:100%; padding:12px; border:2px solid #e0e0e0; background:white; border-radius:10px; cursor:pointer;">Close</button>
+            <button class="select-btn" onclick="savePlatform()">Save Platform</button>
+            <button class="select-btn" onclick="clearPlatformForm()" style="background:#95a5a6; margin-top:8px;">Clear Form</button>
         </div>
+
+        <h3 style="margin-top:28px;">Users</h3>
+        <table class="admin-table">
+            <thead><tr><th>Email</th><th>Role</th><th>Package</th><th>Posts left</th></tr></thead>
+            <tbody id="adminUsersBody"></tbody>
+        </table>
     </div>
+</div>
 
-    <script>
-        const API_URL = "https://reelbridge-api.onrender.com";
+<!-- REGISTER MODAL -->
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <h3>Create Account</h3>
+        <p style="color:#666; margin-bottom:16px;">Free plan includes 5 posts / month. Upgrade anytime.</p>
+        <div id="registerMsg" class="msg"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email"></div>
+        <div class="form-group"><label>Password (min 8 characters)</label><input type="password" id="regPassword" placeholder="••••••••" autocomplete="new-password"></div>
+        <div class="form-group"><label>Confirm password</label><input type="password" id="regPassword2" placeholder="••••••••" autocomplete="new-password"></div>
+        <button class="pay-btn" id="regBtn" onclick="register()">Create Account</button>
+        <button onclick="closeRegister()" style="margin-top:12px; width:100%; padding:12px; border:2px solid #e0e0e0; background:white; border-radius:10px; cursor:pointer;">Close</button>
+    </div>
+</div>
 
-        let currentPackage = '';
-        let currentPrice = 0;
-        let stripe = null;
-        let cardElement = null;
-        let stripeReady = false;
+<!-- PAYMENT MODAL -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Complete Payment</h3>
+        <p style="margin-bottom:16px; color:#666;"><span id="selectedPackageLabel"></span> — $<span id="selectedPriceLabel">0</span>/mo</p>
+        <div class="form-group"><label>Email (login)</label><input type="email" id="newAccountEmail" placeholder="you@example.com"></div>
+        <div class="form-group"><label>Password (min 8 chars)</label><input type="password" id="newAccountPassword" placeholder="••••••••"></div>
+        <div class="payment-tabs">
+            <div class="payment-tab active" id="tabStripe" onclick="switchPaymentMethod('stripe')">💳 Card</div>
+            <div class="payment-tab" id="tabPaypal" onclick="switchPaymentMethod('paypal')">🅿️ PayPal</div>
+        </div>
+        <div id="stripeForm">
+            <div class="form-group"><label>Card Details</label><div id="card-element"></div><div id="card-errors" style="color:var(--danger); font-size:13px; margin-top:6px;"></div></div>
+            <button class="pay-btn" id="stripePayBtn" onclick="processStripePayment()">Pay $<span id="stripePayAmount">0</span></button>
+        </div>
+        <div id="paypalForm" style="display:none;"><div id="paypal-button-container"></div></div>
+        <div id="paymentResult" style="display:none; padding:15px; margin:12px 0; border-radius:8px; text-align:center;"></div>
+        <button onclick="closePayment()" style="margin-top:16px; width:100%; padding:12px; border:2px solid #e0e0e0; background:white; border-radius:10px; cursor:pointer;">Close</button>
+    </div>
+</div>
 
-        // ====================== AUTH ======================
-        async function login() {
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-            if (!email || !password) return alert('Email and password required');
+<script>
+const API_URL = "https://reelbridge-api.onrender.com";
+let currentPackage = '', currentPrice = 0, stripe = null, cardElement = null, stripeReady = false;
 
-            try {
-                const res = await fetch(`${API_URL}/api/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                if (data.token) {
-                    localStorage.setItem('token', data.token);
-                    window.location.reload();
-                } else {
-                    alert(data.error || 'Login failed');
-                }
-            } catch (e) {
-                alert('Login error: ' + e.message);
-            }
-        }
+function authHeaders() {
+    const t = localStorage.getItem('token');
+    return t ? { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+}
 
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.reload();
-        }
+async function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    if (!email || !password) return alert('Email and password required');
+    try {
+        const res = await fetch(API_URL + '/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+        const data = await res.json();
+        if (data.token) { localStorage.setItem('token', data.token); window.location.reload(); }
+        else alert(data.error || 'Login failed');
+    } catch (e) { alert('Login error: ' + e.message); }
+}
 
-        function showRegister() {
-            document.getElementById('packages').scrollIntoView({ behavior: 'smooth' });
-        }
+function logout() { localStorage.removeItem('token'); window.location.reload(); }
 
-        // ====================== STRIPE INIT ======================
-        async function ensureStripe() {
-            if (stripeReady) return true;
-            try {
-                const res = await fetch(`${API_URL}/api/config`);
-                const cfg = await res.json();
-                if (!cfg.stripePublishableKey) {
-                    console.error('STRIPE_PUBLISHABLE_KEY not configured on server');
-                    return false;
-                }
-                stripe = Stripe(cfg.stripePublishableKey);
-                const elements = stripe.elements();
-                cardElement = elements.create('card', {
-                    style: {
-                        base: { fontSize: '16px', color: '#2c3e50', '::placeholder': { color: '#aab7c4' } },
-                        invalid: { color: '#e74c3c' }
-                    }
-                });
-                cardElement.on('change', (event) => {
-                    const el = document.getElementById('card-errors');
-                    el.textContent = event.error ? event.error.message : '';
-                });
-                stripeReady = true;
-                return true;
-            } catch (e) {
-                console.error('Stripe init failed', e);
-                return false;
-            }
-        }
+function openRegister() {
+    document.getElementById('registerMsg').className = 'msg';
+    document.getElementById('registerModal').classList.add('active');
+}
+function closeRegister() { document.getElementById('registerModal').classList.remove('active'); }
 
-        // ====================== PAYMENT UI ======================
-        async function openPayment(pkg, price) {
-            currentPackage = pkg;
-            currentPrice = price;
-
-            document.getElementById('modalTitle').textContent = 'Complete Payment';
-            document.getElementById('selectedPackageLabel').textContent =
-                pkg.charAt(0).toUpperCase() + pkg.slice(1) + ' plan';
-            document.getElementById('selectedPriceLabel').textContent = price;
-            document.getElementById('stripePayAmount').textContent = price;
-            document.getElementById('paymentResult').style.display = 'none';
-            document.getElementById('paymentModal').classList.add('active');
-
-            switchPaymentMethod('stripe');
-
-            const ok = await ensureStripe();
-            if (ok && cardElement) {
-                // Unmount if already mounted, then remount cleanly
-                try { cardElement.unmount(); } catch (_) {}
-                setTimeout(() => {
-                    try { cardElement.mount('#card-element'); } catch (e) { console.error(e); }
-                }, 50);
-            }
-        }
-
-        function closePayment() {
-            document.getElementById('paymentModal').classList.remove('active');
-            if (cardElement) {
-                try { cardElement.unmount(); } catch (_) {}
-            }
-        }
-
-        function switchPaymentMethod(method) {
-            document.getElementById('tabStripe').classList.toggle('active', method === 'stripe');
-            document.getElementById('tabPaypal').classList.toggle('active', method === 'paypal');
-            document.getElementById('stripeForm').style.display = method === 'stripe' ? 'block' : 'none';
-            document.getElementById('paypalForm').style.display = method === 'paypal' ? 'block' : 'none';
-            if (method === 'paypal') initPayPal();
-        }
-
-        function showPaymentResult(msg, type) {
-            const el = document.getElementById('paymentResult');
-            el.style.display = 'block';
-            el.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
-            el.style.color = type === 'success' ? '#155724' : '#721c24';
-            el.textContent = msg;
-        }
-
-        async function processStripePayment() {
-            const email = document.getElementById('newAccountEmail').value.trim();
-            const password = document.getElementById('newAccountPassword').value;
-            const btn = document.getElementById('stripePayBtn');
-
-            if (!email || !password || password.length < 8) {
-                alert('Please enter a valid email and password (min 8 characters)');
-                return;
-            }
-            if (!stripe || !cardElement) {
-                alert('Stripe is not ready. Check that STRIPE_PUBLISHABLE_KEY is set on the server.');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = 'Processing...';
-
-            try {
-                const intentRes = await fetch(`${API_URL}/api/create-stripe-intent`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        package: currentPackage,
-                        amount: currentPrice,
-                        email: email,
-                        password: password
-                    })
-                });
-
-                const intentData = await intentRes.json();
-                if (!intentRes.ok || !intentData.clientSecret) {
-                    throw new Error(intentData.error || 'Could not start payment');
-                }
-
-                const result = await stripe.confirmCardPayment(intentData.clientSecret, {
-                    payment_method: {
-                        card: cardElement,
-                        billing_details: { email: email }
-                    }
-                });
-
-                if (result.error) throw new Error(result.error.message);
-
-                showPaymentResult('Payment successful! Your account is being created. You can log in shortly.', 'success');
-                setTimeout(() => {
-                    closePayment();
-                    document.getElementById('loginEmail').value = email;
-                    alert('Account created! Log in with the email and password you just used.');
-                }, 2000);
-            } catch (error) {
-                showPaymentResult(error.message, 'error');
-                btn.disabled = false;
-                btn.textContent = `Pay $${currentPrice}`;
-            }
-        }
-
-        function initPayPal() {
-            const container = document.getElementById('paypal-button-container');
-            container.innerHTML = '';
-            const email = document.getElementById('newAccountEmail').value.trim();
-            const password = document.getElementById('newAccountPassword').value;
-
-            if (!email || !password || password.length < 8) {
-                container.innerHTML = '<p style="padding:16px;text-align:center;color:#e74c3c;">Enter email and password (min 8 chars) first</p>';
-                return;
-            }
-
-            // PayPal Buttons — backend capture can be added later; UI is ready
-            if (typeof paypal === 'undefined') {
-                container.innerHTML = '<p style="padding:16px;text-align:center;color:#666;">PayPal SDK not loaded</p>';
-                return;
-            }
-
-            paypal.Buttons({
-                createOrder: function (data, actions) {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: String(currentPrice) },
-                            description: `Reel Bridge ${currentPackage} plan`
-                        }]
-                    });
-                },
-                onApprove: function (data, actions) {
-                    return actions.order.capture().then(function (details) {
-                        showPaymentResult('PayPal payment successful! Account setup will complete shortly.', 'success');
-                        // TODO: call backend to create user after PayPal capture confirmation
-                    });
-                },
-                onError: function (err) {
-                    showPaymentResult('PayPal error: ' + (err.message || 'Unknown'), 'error');
-                }
-            }).render('#paypal-button-container');
-        }
-
-        // ====================== DASHBOARD ======================
-        async function loadCustomerDashboard() {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-            try {
-                const res = await fetch(`${API_URL}/api/user/profile`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (data.profile) {
-                    document.getElementById('statRemaining').textContent = data.profile.posts_remaining ?? 0;
-                    document.getElementById('statUsed').textContent = data.profile.posts_used ?? 0;
-                    document.getElementById('dashboardEmail').textContent = data.profile.email || '';
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        async function connectPlatform(platform) {
-            const token = localStorage.getItem('token');
-            if (!token) return alert('Please log in first');
-            try {
-                const res = await fetch(`${API_URL}/api/oauth/twitter/url`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (data.url) {
-                    window.location.href = data.url;
-                } else {
-                    alert(data.error || 'Could not start OAuth');
-                }
-            } catch (e) {
-                alert('OAuth error: ' + e.message);
-            }
-        }
-
-        async function schedulePost() {
-            const content = document.getElementById('postContent').value;
-            if (!content) return alert('Please enter post content');
-
-            const token = localStorage.getItem('token');
-            try {
-                const res = await fetch(`${API_URL}/api/schedule-post`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ content, platforms: ['twitter'] })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    alert('Post scheduled successfully!');
-                    loadCustomerDashboard();
-                } else {
-                    alert(data.error || 'Failed to schedule');
-                }
-            } catch (e) {
-                alert('Failed to schedule post');
-            }
-        }
-
-        // ====================== PAGE LOAD ======================
-        window.addEventListener('load', () => {
-            const token = localStorage.getItem('token');
-            if (token) {
-                fetch(`${API_URL}/api/user/profile`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.profile) {
-                        document.getElementById('headerLogin').classList.add('hidden');
-                        document.getElementById('headerUser').classList.remove('hidden');
-                        document.getElementById('userName').textContent = data.profile.email;
-                        document.getElementById('mainContent').classList.add('hidden');
-
-                        if (data.profile.role === 'admin') {
-                            document.getElementById('adminDashboard').classList.remove('hidden');
-                        } else {
-                            document.getElementById('customerDashboard').classList.remove('hidden');
-                            loadCustomerDashboard();
-                        }
-                    }
-                })
-                .catch(() => localStorage.removeItem('token'));
-            }
+async function register() {
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const password2 = document.getElementById('regPassword2').value;
+    const msg = document.getElementById('registerMsg');
+    const btn = document.getElementById('regBtn');
+    if (!email || !email.includes('@')) { msg.className = 'msg err'; msg.textContent = 'Enter a valid email'; return; }
+    if (!password || password.length < 8) { msg.className = 'msg err'; msg.textContent = 'Password must be at least 8 characters'; return; }
+    if (password !== password2) { msg.className = 'msg err'; msg.textContent = 'Passwords do not match'; return; }
+    btn.disabled = true; btn.textContent = 'Creating...';
+    try {
+        const res = await fetch(API_URL + '/api/register', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
         });
-    </script>
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Registration failed');
+        localStorage.setItem('token', data.token);
+        msg.className = 'msg ok'; msg.textContent = 'Account created! Loading dashboard...';
+        setTimeout(() => window.location.reload(), 800);
+    } catch (e) {
+        msg.className = 'msg err'; msg.textContent = e.message;
+        btn.disabled = false; btn.textContent = 'Create Account';
+    }
+}
 
-    <footer style="background: var(--primary); color: white; text-align: center; padding: 40px 20px; margin-top: 60px; font-size: 14px;">
-        <div style="max-width: 1200px; margin: 0 auto;">
-            <p>© 2026 Reel Bridge – Saint John, New Brunswick, Canada</p>
-            <p>
-                <a href="privacy.html" style="color: #3498db; margin: 0 16px;">Privacy Policy</a> |
-                <a href="terms.html" style="color: #3498db; margin: 0 16px;">Terms of Service</a>
-            </p>
-        </div>
-    </footer>
+async function ensureStripe() {
+    if (stripeReady) return true;
+    try {
+        const res = await fetch(API_URL + '/api/config');
+        const cfg = await res.json();
+        if (!cfg.stripePublishableKey) return false;
+        stripe = Stripe(cfg.stripePublishableKey);
+        const elements = stripe.elements();
+        cardElement = elements.create('card', { style: { base: { fontSize: '16px', color: '#2c3e50' } } });
+        cardElement.on('change', (ev) => { document.getElementById('card-errors').textContent = ev.error ? ev.error.message : ''; });
+        stripeReady = true; return true;
+    } catch (e) { return false; }
+}
 
+async function openPayment(pkg, price) {
+    currentPackage = pkg; currentPrice = price;
+    document.getElementById('selectedPackageLabel').textContent = pkg.charAt(0).toUpperCase() + pkg.slice(1) + ' plan';
+    document.getElementById('selectedPriceLabel').textContent = price;
+    document.getElementById('stripePayAmount').textContent = price;
+    document.getElementById('paymentResult').style.display = 'none';
+    document.getElementById('paymentModal').classList.add('active');
+    switchPaymentMethod('stripe');
+    if (await ensureStripe() && cardElement) {
+        try { cardElement.unmount(); } catch (_) {}
+        setTimeout(() => { try { cardElement.mount('#card-element'); } catch (_) {} }, 50);
+    }
+}
+function closePayment() {
+    document.getElementById('paymentModal').classList.remove('active');
+    if (cardElement) try { cardElement.unmount(); } catch (_) {}
+}
+function switchPaymentMethod(m) {
+    document.getElementById('tabStripe').classList.toggle('active', m === 'stripe');
+    document.getElementById('tabPaypal').classList.toggle('active', m === 'paypal');
+    document.getElementById('stripeForm').style.display = m === 'stripe' ? 'block' : 'none';
+    document.getElementById('paypalForm').style.display = m === 'paypal' ? 'block' : 'none';
+}
+function showPaymentResult(msg, type) {
+    const el = document.getElementById('paymentResult');
+    el.style.display = 'block';
+    el.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
+    el.style.color = type === 'success' ? '#155724' : '#721c24';
+    el.textContent = msg;
+}
+async function processStripePayment() {
+    const email = document.getElementById('newAccountEmail').value.trim();
+    const password = document.getElementById('newAccountPassword').value;
+    const btn = document.getElementById('stripePayBtn');
+    if (!email || !password || password.length < 8) return alert('Valid email and password (min 8) required');
+    if (!stripe || !cardElement) return alert('Stripe not ready — check STRIPE_PUBLISHABLE_KEY on server');
+    btn.disabled = true; btn.textContent = 'Processing...';
+    try {
+        const intentRes = await fetch(API_URL + '/api/create-stripe-intent', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ package: currentPackage, amount: currentPrice, email, password })
+        });
+        const intentData = await intentRes.json();
+        if (!intentRes.ok || !intentData.clientSecret) throw new Error(intentData.error || 'Could not start payment');
+        const result = await stripe.confirmCardPayment(intentData.clientSecret, {
+            payment_method: { card: cardElement, billing_details: { email } }
+        });
+        if (result.error) throw new Error(result.error.message);
+        showPaymentResult('Payment successful! You can log in with that email/password.', 'success');
+        setTimeout(() => { closePayment(); document.getElementById('loginEmail').value = email; }, 2000);
+    } catch (error) {
+        showPaymentResult(error.message, 'error');
+        btn.disabled = false; btn.textContent = 'Pay $' + currentPrice;
+    }
+}
+
+async function loadCustomerDashboard() {
+    try {
+        const res = await fetch(API_URL + '/api/user/profile', { headers: authHeaders() });
+        const data = await res.json();
+        if (data.profile) {
+            document.getElementById('statRemaining').textContent = data.profile.posts_remaining ?? 0;
+            document.getElementById('statUsed').textContent = data.profile.posts_used ?? 0;
+            document.getElementById('dashboardEmail').textContent = data.profile.email || '';
+            document.getElementById('dashboardPackage').textContent = data.profile.package || 'free';
+        }
+        const platRes = await fetch(API_URL + '/api/platforms');
+        const platData = await platRes.json();
+        const grid = document.getElementById('platformGrid');
+        grid.innerHTML = '';
+        const connected = new Set((data.accounts || []).map(a => a.platform));
+        (platData.platforms || []).forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'platform-btn' + (connected.has(p.key) ? ' connected' : '');
+            btn.textContent = (p.icon || '') + ' ' + p.name;
+            btn.onclick = () => connectPlatform(p.key);
+            grid.appendChild(btn);
+        });
+    } catch (e) { console.error(e); }
+}
+
+async function connectPlatform(platform) {
+    if (platform !== 'twitter') return alert('OAuth for ' + platform + ' — add client ID/secret in Admin, then wire the callback route.');
+    try {
+        const res = await fetch(API_URL + '/api/oauth/twitter/url', { headers: authHeaders() });
+        const data = await res.json();
+        if (data.url) window.location.href = data.url;
+        else alert(data.error || 'Could not start OAuth');
+    } catch (e) { alert(e.message); }
+}
+
+async function schedulePost() {
+    const content = document.getElementById('postContent').value;
+    if (!content) return alert('Enter post content');
+    try {
+        const res = await fetch(API_URL + '/api/schedule-post', {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({ content, platforms: ['twitter'] })
+        });
+        const data = await res.json();
+        if (res.ok) { alert('Post scheduled!'); loadCustomerDashboard(); }
+        else alert(data.error || 'Failed');
+    } catch (e) { alert('Failed to schedule'); }
+}
+
+// ---- ADMIN ----
+async function loadAdminDashboard() {
+    try {
+        const stats = await (await fetch(API_URL + '/api/admin/stats', { headers: authHeaders() })).json();
+        document.getElementById('adminTotalUsers').textContent = stats.users?.total_users ?? 0;
+        document.getElementById('adminWeek').textContent = stats.users?.active_this_week ?? 0;
+        await loadAdminPlatforms();
+        const users = await (await fetch(API_URL + '/api/admin/users', { headers: authHeaders() })).json();
+        const tbody = document.getElementById('adminUsersBody');
+        tbody.innerHTML = '';
+        (users.users || []).forEach(u => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + u.email + '</td><td>' + u.role + '</td><td>' + (u.package || '') + '</td><td>' + (u.posts_remaining ?? '') + '</td>';
+            tbody.appendChild(tr);
+        });
+    } catch (e) { console.error(e); }
+}
+
+async function loadAdminPlatforms() {
+    const res = await fetch(API_URL + '/api/admin/platforms', { headers: authHeaders() });
+    const data = await res.json();
+    const tbody = document.getElementById('adminPlatformBody');
+    tbody.innerHTML = '';
+    (data.platforms || []).forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + (p.icon || '') + ' ' + p.name + ' <small>(' + p.key + ')</small></td>' +
+            '<td class="' + (p.enabled ? 'toggle-on' : 'toggle-off') + '">' + (p.enabled ? 'ON' : 'OFF') + '</td>' +
+            '<td>' + (p.client_id ? 'ID set' : '—') + (p.has_secret ? ' · secret set' : '') + '</td>' +
+            '<td>' +
+            '<button class="btn-sm btn-toggle" onclick="togglePlatform(' + p.id + ',' + (!p.enabled) + ')">' + (p.enabled ? 'Disable' : 'Enable') + '</button>' +
+            '<button class="btn-sm btn-edit" onclick=\'editPlatform(' + JSON.stringify(p).replace(/'/g, "&#39;") + ')\'>Edit</button>' +
+            '<button class="btn-sm btn-del" onclick="deletePlatform(' + p.id + ')">Delete</button>' +
+            '</td>';
+        tbody.appendChild(tr);
+    });
+}
+
+function editPlatform(p) {
+    document.getElementById('platId').value = p.id;
+    document.getElementById('platKey').value = p.key;
+    document.getElementById('platKey').disabled = true;
+    document.getElementById('platName').value = p.name || '';
+    document.getElementById('platIcon').value = p.icon || '';
+    document.getElementById('platClientId').value = p.client_id || '';
+    document.getElementById('platClientSecret').value = '';
+    document.getElementById('platCallback').value = p.callback_url || '';
+    document.getElementById('platEnabled').value = p.enabled ? 'true' : 'false';
+    document.getElementById('platName').scrollIntoView({ behavior: 'smooth' });
+}
+function clearPlatformForm() {
+    document.getElementById('platId').value = '';
+    document.getElementById('platKey').value = '';
+    document.getElementById('platKey').disabled = false;
+    document.getElementById('platName').value = '';
+    document.getElementById('platIcon').value = '';
+    document.getElementById('platClientId').value = '';
+    document.getElementById('platClientSecret').value = '';
+    document.getElementById('platCallback').value = '';
+    document.getElementById('platEnabled').value = 'true';
+}
+
+async function savePlatform() {
+    const id = document.getElementById('platId').value;
+    const body = {
+        key: document.getElementById('platKey').value.trim(),
+        name: document.getElementById('platName').value.trim(),
+        icon: document.getElementById('platIcon').value.trim(),
+        client_id: document.getElementById('platClientId').value.trim() || null,
+        client_secret: document.getElementById('platClientSecret').value || null,
+        callback_url: document.getElementById('platCallback').value.trim() || null,
+        enabled: document.getElementById('platEnabled').value === 'true'
+    };
+    const msg = document.getElementById('adminPlatformMsg');
+    try {
+        let res;
+        if (id) {
+            res = await fetch(API_URL + '/api/admin/platforms/' + id, { method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body) });
+        } else {
+            res = await fetch(API_URL + '/api/admin/platforms', { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+        }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        msg.className = 'msg ok'; msg.textContent = 'Platform saved';
+        clearPlatformForm();
+        loadAdminPlatforms();
+    } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+}
+
+async function togglePlatform(id, enabled) {
+    await fetch(API_URL + '/api/admin/platforms/' + id, { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ enabled }) });
+    loadAdminPlatforms();
+}
+async function deletePlatform(id) {
+    if (!confirm('Delete this platform?')) return;
+    await fetch(API_URL + '/api/admin/platforms/' + id, { method: 'DELETE', headers: authHeaders() });
+    loadAdminPlatforms();
+}
+
+window.addEventListener('load', () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(API_URL + '/api/user/profile', { headers: authHeaders() })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.profile) return;
+            document.getElementById('headerLogin').classList.add('hidden');
+            document.getElementById('headerUser').classList.remove('hidden');
+            document.getElementById('userName').textContent = data.profile.email;
+            document.getElementById('mainContent').classList.add('hidden');
+            if (data.profile.role === 'admin') {
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                loadAdminDashboard();
+            } else {
+                document.getElementById('customerDashboard').classList.remove('hidden');
+                loadCustomerDashboard();
+            }
+        })
+        .catch(() => localStorage.removeItem('token'));
+});
+</script>
+<footer style="background: var(--primary); color: white; text-align: center; padding: 40px 20px; margin-top: 60px; font-size: 14px;">
+    <p>© 2026 Reel Bridge – Saint John, New Brunswick, Canada</p>
+    <p><a href="privacy.html" style="color:#3498db; margin:0 16px;">Privacy Policy</a> | <a href="terms.html" style="color:#3498db; margin:0 16px;">Terms of Service</a></p>
+</footer>
 </body>
 </html>
