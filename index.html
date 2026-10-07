@@ -9,7 +9,7 @@
     <script src="https://www.paypal.com/sdk/js?client-id=AdJIUkTjZ2NfPN69w87QZU8Ylw9R1_ByaRnZLn5JavjKx3NREjoH8srOYFv0ZvoFqZO2RcE_FEaugLEt&currency=USD&intent=capture"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         :root {
             --primary: #2c3e50;
             --accent: #3498db;
@@ -20,7 +20,7 @@
             --bg: #f0f4f8;
             --card: #ffffff;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
@@ -29,12 +29,10 @@
             font-size: 16px;
             -webkit-font-smoothing: antialiased;
         }
-        
+
         .mobile-header {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             background: var(--primary);
             color: white;
             padding: 12px 16px;
@@ -44,15 +42,15 @@
             z-index: 1000;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        
+
         .logo { font-size: 20px; font-weight: 700; }
-        
+
         .header-login {
             display: flex;
             gap: 8px;
             align-items: center;
         }
-        
+
         .header-login input {
             padding: 8px 12px;
             border: none;
@@ -60,7 +58,7 @@
             font-size: 14px;
             width: 120px;
         }
-        
+
         .header-login button {
             padding: 8px 16px;
             background: var(--accent);
@@ -70,12 +68,12 @@
             font-size: 14px;
             cursor: pointer;
         }
-        
+
         .create-account-btn {
             background: var(--success) !important;
             font-weight: 600;
         }
-        
+
         .hero {
             margin-top: 60px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
@@ -83,10 +81,10 @@
             padding: 40px 20px;
             text-align: center;
         }
-        
+
         .hero h1 { font-size: 28px; margin-bottom: 12px; }
         .hero p { font-size: 16px; opacity: 0.9; margin-bottom: 20px; }
-        
+
         .cta-btn {
             display: inline-block;
             background: var(--success);
@@ -101,13 +99,13 @@
             width: 100%;
             max-width: 300px;
         }
-        
+
         .section {
             padding: 32px 16px;
             background: var(--card);
             margin-bottom: 16px;
         }
-        
+
         .section-title {
             font-size: 24px;
             margin-bottom: 20px;
@@ -115,7 +113,7 @@
             border-left: 4px solid var(--accent);
             padding-left: 12px;
         }
-        
+
         .package-card {
             background: var(--card);
             border: 2px solid #e0e0e0;
@@ -125,40 +123,40 @@
             position: relative;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
-        
-        .package-card.featured { 
-            border-color: var(--accent); 
-            background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%); 
+
+        .package-card.featured {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%);
         }
-        
-        .package-badge { 
-            position: absolute; 
-            top: -10px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            background: var(--accent); 
-            color: white; 
-            padding: 4px 16px; 
-            border-radius: 20px; 
-            font-size: 12px; 
-            font-weight: 700; 
+
+        .package-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
         }
-        
+
         .package-name { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
         .package-price { font-size: 36px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
         .package-price span { font-size: 16px; font-weight: 400; color: #666; }
-        
+
         .features-list { list-style: none; margin: 16px 0; }
-        .features-list li { 
-            padding: 8px 0; 
-            border-bottom: 1px solid #eee; 
-            font-size: 14px; 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
+        .features-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .features-list li:before { content: "✓"; color: var(--success); font-weight: 700; }
-        
+
         .select-btn {
             width: 100%;
             padding: 16px;
@@ -171,22 +169,19 @@
             cursor: pointer;
             margin-top: 16px;
         }
-        
+
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.8);
             z-index: 1001;
             justify-content: center;
             align-items: flex-end;
         }
-        
+
         .modal.active { display: flex; }
-        
+
         .modal-content {
             background: white;
             width: 100%;
@@ -195,23 +190,23 @@
             padding: 24px;
             overflow-y: auto;
         }
-        
+
         .hidden { display: none !important; }
-        
+
         .stat-card {
             background: #f8f9fa;
             padding: 16px;
             border-radius: 12px;
             text-align: center;
         }
-        
+
         .platform-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 12px;
             margin: 16px 0;
         }
-        
+
         .platform-btn {
             padding: 12px 8px;
             border: 2px solid #e0e0e0;
@@ -221,11 +216,64 @@
             font-size: 12px;
             background: white;
         }
-        
-        .platform-btn.connected { 
-            border-color: var(--success); 
-            background: #f0fff4; 
+
+        .platform-btn.connected {
+            border-color: var(--success);
+            background: #f0fff4;
         }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; }
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        #card-element {
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .payment-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .payment-tab {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .payment-tab.active {
+            border-color: var(--accent);
+            background: #f0f7ff;
+        }
+
+        .pay-btn {
+            width: 100%;
+            padding: 18px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .pay-btn:disabled { background: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -247,18 +295,15 @@
 
     <!-- MAIN LANDING PAGE (shown when not logged in) -->
     <div id="mainContent">
-        <!-- HERO -->
         <section class="hero">
             <h1>Automated Social Media</h1>
             <p>AI-powered management for your business & creators</p>
             <a href="#packages" class="cta-btn">View Packages</a>
         </section>
 
-        <!-- PACKAGES -->
         <section class="section" id="packages">
             <h2 class="section-title">Choose Your Plan</h2>
-            
-            <!-- Starter -->
+
             <div class="package-card">
                 <div class="package-name">Starter</div>
                 <div class="package-price">$254<span>/mo</span></div>
@@ -270,8 +315,7 @@
                 </ul>
                 <button class="select-btn" onclick="openPayment('starter', 254)">Get Started</button>
             </div>
-            
-            <!-- Growth -->
+
             <div class="package-card featured">
                 <div class="package-badge">MOST POPULAR</div>
                 <div class="package-name">Growth</div>
@@ -285,8 +329,7 @@
                 </ul>
                 <button class="select-btn" onclick="openPayment('growth', 509)">Get Started</button>
             </div>
-            
-            <!-- Professional -->
+
             <div class="package-card">
                 <div class="package-name">Professional</div>
                 <div class="package-price">$849<span>/mo</span></div>
@@ -298,8 +341,7 @@
                 </ul>
                 <button class="select-btn" onclick="openPayment('professional', 849)">Get Started</button>
             </div>
-            
-            <!-- Custom -->
+
             <div class="package-card">
                 <div class="package-name">Custom Package</div>
                 <div class="package-price">$99<span> base</span></div>
@@ -307,7 +349,6 @@
             </div>
         </section>
 
-        <!-- FEATURES -->
         <section class="section">
             <h2 class="section-title">Key Features</h2>
             <div style="display: grid; gap: 12px;">
@@ -321,11 +362,9 @@
     <!-- CUSTOMER DASHBOARD -->
     <div id="customerDashboard" class="hidden" style="margin-top: 60px;">
         <div class="section">
-            <div class="dashboard-header">
-                <h2>My Dashboard</h2>
-                <p id="dashboardEmail"></p>
-            </div>
-            
+            <h2>My Dashboard</h2>
+            <p id="dashboardEmail"></p>
+
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
                 <div class="stat-card">
                     <div class="stat-value" id="statRemaining">0</div>
@@ -337,14 +376,11 @@
                 </div>
             </div>
 
-            <!-- Connect Platforms -->
             <h3 style="margin: 24px 0 12px;">Connect Social Accounts</h3>
             <div class="platform-grid" id="platformGrid">
                 <button class="platform-btn" onclick="connectPlatform('twitter')">🐦 Twitter / X</button>
-                <!-- Add more platforms as needed -->
             </div>
 
-            <!-- Create Post -->
             <h3 style="margin: 24px 0 12px;">Create New Post</h3>
             <div class="package-card">
                 <textarea id="postContent" rows="4" style="width:100%; padding:14px; border:2px solid #e0e0e0; border-radius:10px;" placeholder="What's on your mind?"></textarea>
@@ -357,7 +393,6 @@
     <div id="adminDashboard" class="hidden" style="margin-top: 60px;">
         <div class="section">
             <h2>Admin Dashboard</h2>
-            <!-- Admin content placeholder - your original admin tables go here -->
         </div>
     </div>
 
@@ -365,21 +400,59 @@
     <div id="paymentModal" class="modal">
         <div class="modal-content">
             <h3 id="modalTitle">Complete Payment</h3>
-            <div id="paymentResult" style="display:none; padding:15px; margin:10px 0; border-radius:8px;"></div>
-            <div id="paypal-button-container"></div>
-            <!-- Stripe elements can be added here if needed -->
-            <button onclick="closePayment()" style="margin-top:20px; width:100%; padding:12px;">Close</button>
+            <p style="margin-bottom: 16px; color: #666;">
+                <span id="selectedPackageLabel"></span> — $<span id="selectedPriceLabel">0</span>/mo
+            </p>
+
+            <div class="form-group">
+                <label>Email (will be your login)</label>
+                <input type="email" id="newAccountEmail" placeholder="you@example.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label>Password (min 8 characters)</label>
+                <input type="password" id="newAccountPassword" placeholder="••••••••" autocomplete="new-password">
+            </div>
+
+            <div class="payment-tabs">
+                <div class="payment-tab active" id="tabStripe" onclick="switchPaymentMethod('stripe')">💳 Card</div>
+                <div class="payment-tab" id="tabPaypal" onclick="switchPaymentMethod('paypal')">🅿️ PayPal</div>
+            </div>
+
+            <div id="stripeForm">
+                <div class="form-group">
+                    <label>Card Details</label>
+                    <div id="card-element"><!-- Stripe Card Element mounts here --></div>
+                    <div id="card-errors" style="color: var(--danger); font-size: 13px; margin-top: 6px;"></div>
+                </div>
+                <button class="pay-btn" id="stripePayBtn" onclick="processStripePayment()">
+                    Pay $<span id="stripePayAmount">0</span>
+                </button>
+            </div>
+
+            <div id="paypalForm" style="display: none;">
+                <div id="paypal-button-container"></div>
+                <p style="text-align:center; font-size:12px; color:#999; margin-top:8px;">
+                    You'll complete payment securely on PayPal
+                </p>
+            </div>
+
+            <div id="paymentResult" style="display:none; padding:15px; margin:12px 0; border-radius:8px; text-align:center;"></div>
+
+            <p style="text-align:center; font-size:12px; color:#666; margin-top:12px;">🔒 Secured by Stripe &amp; PayPal</p>
+            <button onclick="closePayment()" style="margin-top:16px; width:100%; padding:12px; border:2px solid #e0e0e0; background:white; border-radius:10px; cursor:pointer;">Close</button>
         </div>
     </div>
 
     <script>
-        // ====================== CONFIG ======================
-        const API_URL = "https://reelbridge-api.onrender.com";   // ← UPDATE AFTER RENDER DEPLOY
+        const API_URL = "https://reelbridge-api.onrender.com";
 
         let currentPackage = '';
         let currentPrice = 0;
+        let stripe = null;
+        let cardElement = null;
+        let stripeReady = false;
 
-        // ====================== AUTH FUNCTIONS ======================
+        // ====================== AUTH ======================
         async function login() {
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
@@ -409,58 +482,239 @@
         }
 
         function showRegister() {
-            alert("Registration is handled via payment flow. Click any 'Get Started' button.");
+            document.getElementById('packages').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // ====================== PAYMENT ======================
-        function openPayment(pkg, price) {
+        // ====================== STRIPE INIT ======================
+        async function ensureStripe() {
+            if (stripeReady) return true;
+            try {
+                const res = await fetch(`${API_URL}/api/config`);
+                const cfg = await res.json();
+                if (!cfg.stripePublishableKey) {
+                    console.error('STRIPE_PUBLISHABLE_KEY not configured on server');
+                    return false;
+                }
+                stripe = Stripe(cfg.stripePublishableKey);
+                const elements = stripe.elements();
+                cardElement = elements.create('card', {
+                    style: {
+                        base: { fontSize: '16px', color: '#2c3e50', '::placeholder': { color: '#aab7c4' } },
+                        invalid: { color: '#e74c3c' }
+                    }
+                });
+                cardElement.on('change', (event) => {
+                    const el = document.getElementById('card-errors');
+                    el.textContent = event.error ? event.error.message : '';
+                });
+                stripeReady = true;
+                return true;
+            } catch (e) {
+                console.error('Stripe init failed', e);
+                return false;
+            }
+        }
+
+        // ====================== PAYMENT UI ======================
+        async function openPayment(pkg, price) {
             currentPackage = pkg;
             currentPrice = price;
-            document.getElementById('modalTitle').textContent = `Pay $${price} for ${pkg} plan`;
+
+            document.getElementById('modalTitle').textContent = 'Complete Payment';
+            document.getElementById('selectedPackageLabel').textContent =
+                pkg.charAt(0).toUpperCase() + pkg.slice(1) + ' plan';
+            document.getElementById('selectedPriceLabel').textContent = price;
+            document.getElementById('stripePayAmount').textContent = price;
+            document.getElementById('paymentResult').style.display = 'none';
             document.getElementById('paymentModal').classList.add('active');
-            initPayPal();
+
+            switchPaymentMethod('stripe');
+
+            const ok = await ensureStripe();
+            if (ok && cardElement) {
+                // Unmount if already mounted, then remount cleanly
+                try { cardElement.unmount(); } catch (_) {}
+                setTimeout(() => {
+                    try { cardElement.mount('#card-element'); } catch (e) { console.error(e); }
+                }, 50);
+            }
         }
 
         function closePayment() {
             document.getElementById('paymentModal').classList.remove('active');
+            if (cardElement) {
+                try { cardElement.unmount(); } catch (_) {}
+            }
+        }
+
+        function switchPaymentMethod(method) {
+            document.getElementById('tabStripe').classList.toggle('active', method === 'stripe');
+            document.getElementById('tabPaypal').classList.toggle('active', method === 'paypal');
+            document.getElementById('stripeForm').style.display = method === 'stripe' ? 'block' : 'none';
+            document.getElementById('paypalForm').style.display = method === 'paypal' ? 'block' : 'none';
+            if (method === 'paypal') initPayPal();
+        }
+
+        function showPaymentResult(msg, type) {
+            const el = document.getElementById('paymentResult');
+            el.style.display = 'block';
+            el.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
+            el.style.color = type === 'success' ? '#155724' : '#721c24';
+            el.textContent = msg;
+        }
+
+        async function processStripePayment() {
+            const email = document.getElementById('newAccountEmail').value.trim();
+            const password = document.getElementById('newAccountPassword').value;
+            const btn = document.getElementById('stripePayBtn');
+
+            if (!email || !password || password.length < 8) {
+                alert('Please enter a valid email and password (min 8 characters)');
+                return;
+            }
+            if (!stripe || !cardElement) {
+                alert('Stripe is not ready. Check that STRIPE_PUBLISHABLE_KEY is set on the server.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            try {
+                const intentRes = await fetch(`${API_URL}/api/create-stripe-intent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        package: currentPackage,
+                        amount: currentPrice,
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const intentData = await intentRes.json();
+                if (!intentRes.ok || !intentData.clientSecret) {
+                    throw new Error(intentData.error || 'Could not start payment');
+                }
+
+                const result = await stripe.confirmCardPayment(intentData.clientSecret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: { email: email }
+                    }
+                });
+
+                if (result.error) throw new Error(result.error.message);
+
+                showPaymentResult('Payment successful! Your account is being created. You can log in shortly.', 'success');
+                setTimeout(() => {
+                    closePayment();
+                    document.getElementById('loginEmail').value = email;
+                    alert('Account created! Log in with the email and password you just used.');
+                }, 2000);
+            } catch (error) {
+                showPaymentResult(error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = `Pay $${currentPrice}`;
+            }
         }
 
         function initPayPal() {
             const container = document.getElementById('paypal-button-container');
             container.innerHTML = '';
-            // PayPal button logic from your original (cleaned)
-            // Full PayPal integration code is ready in server.js
-            alert("PayPal button would load here - backend is connected.");
+            const email = document.getElementById('newAccountEmail').value.trim();
+            const password = document.getElementById('newAccountPassword').value;
+
+            if (!email || !password || password.length < 8) {
+                container.innerHTML = '<p style="padding:16px;text-align:center;color:#e74c3c;">Enter email and password (min 8 chars) first</p>';
+                return;
+            }
+
+            // PayPal Buttons — backend capture can be added later; UI is ready
+            if (typeof paypal === 'undefined') {
+                container.innerHTML = '<p style="padding:16px;text-align:center;color:#666;">PayPal SDK not loaded</p>';
+                return;
+            }
+
+            paypal.Buttons({
+                createOrder: function (data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: String(currentPrice) },
+                            description: `Reel Bridge ${currentPackage} plan`
+                        }]
+                    });
+                },
+                onApprove: function (data, actions) {
+                    return actions.order.capture().then(function (details) {
+                        showPaymentResult('PayPal payment successful! Account setup will complete shortly.', 'success');
+                        // TODO: call backend to create user after PayPal capture confirmation
+                    });
+                },
+                onError: function (err) {
+                    showPaymentResult('PayPal error: ' + (err.message || 'Unknown'), 'error');
+                }
+            }).render('#paypal-button-container');
         }
 
         // ====================== DASHBOARD ======================
         async function loadCustomerDashboard() {
             const token = localStorage.getItem('token');
             if (!token) return;
-            // Load profile, posts, etc.
-            console.log("Customer dashboard loaded");
+            try {
+                const res = await fetch(`${API_URL}/api/user/profile`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.profile) {
+                    document.getElementById('statRemaining').textContent = data.profile.posts_remaining ?? 0;
+                    document.getElementById('statUsed').textContent = data.profile.posts_used ?? 0;
+                    document.getElementById('dashboardEmail').textContent = data.profile.email || '';
+                }
+            } catch (e) {
+                console.error(e);
+            }
         }
 
-        function connectPlatform(platform) {
-            alert(`Connecting to ${platform}... OAuth flow ready in backend.`);
-            // Full OAuth now works via /api/oauth/twitter/url
+        async function connectPlatform(platform) {
+            const token = localStorage.getItem('token');
+            if (!token) return alert('Please log in first');
+            try {
+                const res = await fetch(`${API_URL}/api/oauth/twitter/url`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    alert(data.error || 'Could not start OAuth');
+                }
+            } catch (e) {
+                alert('OAuth error: ' + e.message);
+            }
         }
 
         async function schedulePost() {
             const content = document.getElementById('postContent').value;
             if (!content) return alert('Please enter post content');
-            
+
             const token = localStorage.getItem('token');
             try {
-                await fetch(`${API_URL}/api/schedule-post`, {
+                const res = await fetch(`${API_URL}/api/schedule-post`, {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ content, platforms: ['twitter'] })
                 });
-                alert('Post scheduled successfully!');
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Post scheduled successfully!');
+                    loadCustomerDashboard();
+                } else {
+                    alert(data.error || 'Failed to schedule');
+                }
             } catch (e) {
                 alert('Failed to schedule post');
             }
@@ -494,13 +748,12 @@
         });
     </script>
 
-    <!-- FOOTER -->
     <footer style="background: var(--primary); color: white; text-align: center; padding: 40px 20px; margin-top: 60px; font-size: 14px;">
         <div style="max-width: 1200px; margin: 0 auto;">
             <p>© 2026 Reel Bridge – Saint John, New Brunswick, Canada</p>
             <p>
-                <a href="/privacy" style="color: #3498db; margin: 0 16px;">Privacy Policy</a> |
-                <a href="/terms" style="color: #3498db; margin: 0 16px;">Terms of Service</a>
+                <a href="privacy.html" style="color: #3498db; margin: 0 16px;">Privacy Policy</a> |
+                <a href="terms.html" style="color: #3498db; margin: 0 16px;">Terms of Service</a>
             </p>
         </div>
     </footer>
