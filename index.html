@@ -155,7 +155,7 @@
             <div class="form-group"><label>Icon (emoji)</label><input id="platIcon" placeholder="🐦"></div>
             <div class="form-group"><label>Client ID (OAuth)</label><input id="platClientId" placeholder="optional"></div>
             <div class="form-group"><label>Client Secret (OAuth)</label><input id="platClientSecret" type="password" placeholder="leave blank to keep existing"></div>
-            <div class="form-group"><label>Callback URL</label><input id="platCallback" placeholder="https://reelbridge-api.onrender.com/api/oauth/..."></div>
+            <div class="form-group"><label>Callback URL</label><input id="platCallback" placeholder="https://reelbridge-github-io.onrender.com/api/oauth/..."></div>
             <div class="form-group"><label>Enabled</label>
                 <select id="platEnabled"><option value="true">Yes</option><option value="false">No</option></select>
             </div>
@@ -357,12 +357,26 @@ async function loadCustomerDashboard() {
 }
 
 async function connectPlatform(platform) {
-    if (platform !== 'twitter') return alert('OAuth for ' + platform + ' — add client ID/secret in Admin, then wire the callback route.');
     try {
-        const res = await fetch(API_URL + '/api/oauth/twitter/url', { headers: authHeaders() });
+        const res = await fetch(API_URL + '/api/oauth/' + encodeURIComponent(platform) + '/url', { headers: authHeaders() });
         const data = await res.json();
-        if (data.url) window.location.href = data.url;
-        else alert(data.error || 'Could not start OAuth');
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            alert(data.error || 'Could not start OAuth. Configure Client ID/Secret in Admin or Render env vars.');
+        }
+    } catch (e) {
+        alert('Connect failed: ' + e.message);
+    }
+}
+
+async function disconnectPlatform(platform) {
+    if (!confirm('Disconnect ' + platform + '?')) return;
+    try {
+        await fetch(API_URL + '/api/social-accounts/' + encodeURIComponent(platform), {
+            method: 'DELETE', headers: authHeaders()
+        });
+        loadCustomerDashboard();
     } catch (e) { alert(e.message); }
 }
 
@@ -477,6 +491,18 @@ async function deletePlatform(id) {
     await fetch(API_URL + '/api/admin/platforms/' + id, { method: 'DELETE', headers: authHeaders() });
     loadAdminPlatforms();
 }
+
+
+window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('connected') === 'true') {
+        alert((params.get('platform') || 'Account') + ' connected successfully!');
+        history.replaceState({}, '', window.location.pathname);
+    } else if (params.get('error')) {
+        alert('Connection failed: ' + params.get('error'));
+        history.replaceState({}, '', window.location.pathname);
+    }
+});
 
 window.addEventListener('load', () => {
     const token = localStorage.getItem('token');
