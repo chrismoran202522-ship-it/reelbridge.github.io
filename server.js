@@ -428,21 +428,44 @@ app.get('/api/platforms', async (req, res) => {
 app.post('/api/schedule-post', authenticateToken, async (req, res) => {
     const { content, platforms } = req.body;
     try {
+        if (!content || !String(content).trim()) {
+            return res.status(400).json({ error: 'Post content is required' });
+        }
         const user = await pool.query('SELECT posts_remaining FROM users WHERE id = $1', [req.user.userId]);
         if (!user.rows[0] || user.rows[0].posts_remaining < 1) {
             return res.status(400).json({ error: 'No posts remaining. Upgrade your plan.' });
         }
-        await pool.query(
-            "INSERT INTO scheduled_posts (user_id, content, platforms, scheduled_time) VALUES ($1, $2, $3, NOW() + INTERVAL '1 hour')",
-            [req.user.userId, content, Array.isArray(platforms) ? platforms.join(',') : platforms]
+        const platformsStr = Array.isArray(platforms) ? platforms.join(',') : (platforms || 'twitter');
+
+        // Schedule for now so the worker can publish ASAP
+        const ins = await pool.query(
+            `INSERT INTO scheduled_posts (user_id, content, platforms, scheduled_time, status)
+             VALUES ($1, $2, $3, NOW(), 'pending') RETURNING id`,
+            [req.user.userId, content, platformsStr]
         );
         await pool.query(
             'UPDATE users SET posts_remaining = posts_remaining - 1, posts_used = posts_used + 1 WHERE id = $1',
             [req.user.userId]
         );
-        res.json({ success: true });
+
+        // Try to publish immediately
+        const postId = ins.rows[0].id;
+        const results = await publishPost(req.user.userId, content, platformsStr);
+        const anyOk = results.some(r => r.success);
+        await pool.query(
+            `UPDATE scheduled_posts SET status = $1 WHERE id = $2`,
+            [anyOk ? 'posted' : 'failed', postId]
+        );
+
+        res.json({
+            success: anyOk,
+            postId,
+            results,
+            message: anyOk ? 'Posted successfully' : 'Saved but publishing failed — check connected accounts and Twitter API access'
+        });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to schedule post' });
+        console.error('schedule-post error:', err);
+        res.status(500).json({ error: err.message || 'Failed to schedule post' });
     }
 });
 
@@ -738,8 +761,148 @@ app.delete('/api/admin/platforms/:id', authenticateToken, requireAdmin, async (r
     }
 });
 
-cron.schedule('*/10 * * * *', async () => {
-    console.log('Running scheduled post check...');
+
+// ====================== ACTUAL SOCIAL POSTING ======================
+async function refreshTwitterToken(userId, refreshToken) {
+    if (!refreshToken) throw new Error('No Twitter refresh token');
+    const response = await fetch('https://api.twitter.com/2/oauth2/token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': 'Basic ' + Buffer.from(
+                (process.env.TWITTER_CLIENT_ID || '') + ':' + (process.env.TWITTER_CLIENT_SECRET || '')
+            ).toString('base64')
+        },
+        body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken
+        })
+    });
+    const tokens = await response.json();
+    if (!tokens.access_token) throw new Error('Twitter token refresh failed: ' + JSON.stringify(tokens));
+    await pool.query(
+        'UPDATE social_accounts SET access_token = $1, refresh_token = COALESCE($2, refresh_token) WHERE user_id = $3 AND platform = $4',
+        [tokens.access_token, tokens.refresh_token || null, userId, 'twitter']
+    );
+    return tokens.access_token;
+}
+
+async function postToTwitter(userId, content) {
+    const result = await pool.query(
+        'SELECT access_token, refresh_token, account_username FROM social_accounts WHERE user_id = $1 AND platform = $2 AND is_active = true',
+        [userId, 'twitter']
+    );
+    if (!result.rows[0]) throw new Error('Twitter account not connected for this user');
+    let { access_token, refresh_token, account_username } = result.rows[0];
+
+    async function send(token) {
+        const response = await fetch('https://api.twitter.com/2/tweets', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: content })
+        });
+        const body = await response.json().catch(() => ({}));
+        return { ok: response.ok, status: response.status, body };
+    }
+
+    let res = await send(access_token);
+    if (res.status === 401 && refresh_token) {
+        access_token = await refreshTwitterToken(userId, refresh_token);
+        res = await send(access_token);
+    }
+    if (!res.ok) {
+        const detail = res.body?.detail || res.body?.title || JSON.stringify(res.body);
+        throw new Error('Twitter post failed (' + res.status + '): ' + detail);
+    }
+    return { platform: 'twitter', username: account_username, tweet: res.body };
+}
+
+async function publishPost(userId, content, platformsList) {
+    const results = [];
+    const platforms = (Array.isArray(platformsList) ? platformsList : String(platformsList || '').split(','))
+        .map(p => p.trim().toLowerCase()).filter(Boolean);
+
+    for (const platform of platforms) {
+        try {
+            if (platform === 'twitter') {
+                const r = await postToTwitter(userId, content);
+                results.push({ platform, success: true, data: r });
+            } else {
+                results.push({
+                    platform,
+                    success: false,
+                    error: platform + ' posting not implemented yet (connect works; publish API pending)'
+                });
+            }
+        } catch (err) {
+            console.error('Publish error', platform, err.message);
+            results.push({ platform, success: false, error: err.message });
+        }
+    }
+    return results;
+}
+
+async function processDuePosts() {
+    try {
+        const due = await pool.query(
+            `SELECT id, user_id, content, platforms FROM scheduled_posts
+             WHERE status = 'pending' AND scheduled_time <= NOW()
+             ORDER BY scheduled_time ASC LIMIT 20`
+        );
+        for (const row of due.rows) {
+            console.log('Publishing scheduled post', row.id, 'for user', row.user_id);
+            const results = await publishPost(row.user_id, row.content, row.platforms);
+            const anyOk = results.some(r => r.success);
+            await pool.query(
+                `UPDATE scheduled_posts SET status = $1 WHERE id = $2`,
+                [anyOk ? 'posted' : 'failed', row.id]
+            );
+            console.log('Post', row.id, anyOk ? 'posted' : 'failed', JSON.stringify(results));
+        }
+    } catch (err) {
+        console.error('processDuePosts error:', err.message);
+    }
+}
+
+// List current user's scheduled posts
+app.get('/api/scheduled-posts', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT id, content, platforms, scheduled_time, status, created_at
+             FROM scheduled_posts WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`,
+            [req.user.userId]
+        );
+        res.json({ posts: result.rows });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load posts' });
+    }
+});
+
+// Admin: see all recent scheduled posts
+app.get('/api/admin/scheduled-posts', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT sp.id, sp.content, sp.platforms, sp.scheduled_time, sp.status, sp.created_at, u.email
+             FROM scheduled_posts sp JOIN users u ON u.id = sp.user_id
+             ORDER BY sp.created_at DESC LIMIT 100`
+        );
+        res.json({ posts: result.rows });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load posts' });
+    }
+});
+
+// Admin: force process due posts now
+app.post('/api/admin/process-posts', authenticateToken, requireAdmin, async (req, res) => {
+    await processDuePosts();
+    res.json({ success: true, message: 'Processed due posts' });
+});
+
+cron.schedule('* * * * *', async () => {
+    await processDuePosts();
 });
 
 const PORT = process.env.PORT || 3000;
@@ -748,4 +911,6 @@ app.listen(PORT, async () => {
     await ensureSchema();
     if (!process.env.JWT_SECRET) console.warn('JWT_SECRET is not set');
     if (!process.env.TWITTER_CLIENT_ID) console.warn('TWITTER_CLIENT_ID not set — Twitter connect disabled until configured');
+    // Process any backlog shortly after boot
+    setTimeout(() => processDuePosts(), 5000);
 });
